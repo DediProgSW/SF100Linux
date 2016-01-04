@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 	int iExitCode=EXCODE_PASS;
 	bool bDetect=false;
 
-	printf("\nDpCmd Linux 1.1.0.05 Engine Version:\nLast Built on Jun 22 2015\n\n");
+	printf("\nDpCmd Linux 1.1.0.07 Engine Version:\nLast Built on Jan 04 2016\n\n");
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);

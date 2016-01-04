@@ -862,10 +862,12 @@ void threadRun(void* Type)
 
     if( opType==UPDATE_FIRMWARE )
     {
+		free(Type);
         return;
     }
     if(opType==AUTO_UPDATE_FIRMWARE)
     {
+		free(Type);
         return;
     }
 
@@ -879,55 +881,56 @@ void threadRun(void* Type)
 
         if(IdentifyChipBeforeOperation(Index)==false)
         {
-        		printf("Warning: Failed to detect flash.\r\n");
-            g_is_operation_on_going = false;
-            g_is_operation_successful = false;
-            SetLEDOnOff(g_is_operation_successful? SITE_OK:SITE_ERROR,Index);
+			printf("Warning: Failed to detect flash.\r\n");
+			g_is_operation_on_going = false;
+			g_is_operation_successful = false;
+			SetLEDOnOff(g_is_operation_successful? SITE_OK:SITE_ERROR,Index);
 			TurnOFFVcc(Index);
-
-            return;
+			free(Type);
+			return;
         }
         // operations
-        switch(opType)
-        {
-            case BLANKCHECK_WHOLE_CHIP:
-                threadBlankCheck(Index);
-                break;
+		switch(opType)
+		{
+			case BLANKCHECK_WHOLE_CHIP:
+				threadBlankCheck(Index);
+				break;
 
-            case ERASE_WHOLE_CHIP:
-                threadEraseWholeChip(Index);
-                break;
+			case ERASE_WHOLE_CHIP:
+				threadEraseWholeChip(Index);
+				break;
 
-            case PROGRAM_CHIP:
-                TurnONVpp();
-                threadProgram(Index);
-                break;
+			case PROGRAM_CHIP:
+				TurnONVpp();
+				threadProgram(Index);
+				break;
 
-            case READ_WHOLE_CHIP:
+			case READ_WHOLE_CHIP:
 //                    m threadReadChip(Index);
-                break;
+				break;
 
-            case READ_ANY_BY_PREFERENCE_CONFIGURATION:
-                threadConfiguredReadChip(Index);
-                break;
+			case READ_ANY_BY_PREFERENCE_CONFIGURATION:
+				threadConfiguredReadChip(Index);
+				break;
 
-            case VERIFY_CONTENT:
-                threadCompareFileAndChip(Index);
-                break;
+			case VERIFY_CONTENT:
+				threadCompareFileAndChip(Index);
+				break;
 
-            case AUTO:
-                TurnONVpp();
-                threadPredefinedBatchSequences(Index) ;
-                break;
+			case AUTO:
+				TurnONVpp();
+				threadPredefinedBatchSequences(Index) ;
+				break;
 
-            default:
-                break;
-        }
-    }
-    TurnOFFVcc(Index);
-    TurnOFFVpp();
-    SetLEDOnOff(g_is_operation_successful? SITE_OK:SITE_ERROR,Index);
-    g_is_operation_on_going  = false;
+			default:
+				break;
+		}
+	}
+	TurnOFFVcc(Index);
+	TurnOFFVpp();
+	SetLEDOnOff(g_is_operation_successful? SITE_OK:SITE_ERROR,Index);
+	g_is_operation_on_going  = false;
+	free(Type);
 }
 
 
@@ -936,10 +939,10 @@ void Run(OPERATION_TYPE type)
     pthread_t id;
     int i,ret;
     g_is_operation_on_going = true;
-    THREAD_STRUCT thread_data;
-    thread_data.type=type;
-    thread_data.USBIndex=0;
-    ret=pthread_create(&id,NULL,(void *) threadRun,(void*)&thread_data);
+    THREAD_STRUCT *thread_data=(THREAD_STRUCT*)malloc(sizeof(THREAD_STRUCT));
+    thread_data->type=type;
+    thread_data->USBIndex=0;
+    ret=pthread_create(&id,NULL,(void *) threadRun,(void*)thread_data);
 
 }
 
