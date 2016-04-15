@@ -21,7 +21,7 @@ extern volatile bool g_bIsSF600;
 extern char g_board_type[8];
 extern int g_firmversion;
 extern char* g_parameter_vcc;
-
+extern char* g_parameter_fw;
 //extern bool S19FileToBin(const char* filePath, unsigned char* vData,unsigned long* FileSize, unsigned char PaddingByte);
 //extern bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* FileSize,unsigned char PaddingByte);
 extern unsigned char mcode_WRSR;
@@ -862,6 +862,8 @@ void threadRun(void* Type)
 
     if( opType==UPDATE_FIRMWARE )
     {
+		g_is_operation_successful=UpdateFirmware(g_parameter_fw, Index);
+		g_is_operation_on_going=false;
 		free(Type);
         return;
     }
@@ -1074,6 +1076,24 @@ int is_SF600nBoardVersionGreaterThan_6_9_0(int Inde)
 	}
     return false;
 }
+
+int is_SF100nBoardVersionGreaterThan_5_2_0(int Inde)
+{
+	if((g_firmversion >= FIRMWARE_VERSION(5, 2, 0)) && strstr(g_board_type,"SF100") != NULL)
+        return true;
+    return false;
+}
+
+int is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Inde)
+{
+	if(strstr(g_board_type,"SF600") != NULL)
+	{
+		if((g_firmversion > FIRMWARE_VERSION(7, 0, 1)) || (g_firmversion == FIRMWARE_VERSION(6, 7, 0)))
+			return true;
+	}
+    return false;
+}
+
 
 CHIP_INFO GetFirstDetectionMatch(int Index)
 {

@@ -1,0 +1,135 @@
+#
+# This file is part of the flashrom project.
+#
+# Copyright (C) 2005 coresystems GmbH <stepan@coresystems.de>
+# Copyright (C) 2009,2010 Carl-Daniel Hailfinger
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+#
+
+PROGRAM = dpcmd
+
+CC      = gcc
+STRIP   = strip
+INSTALL = install
+DIFF    = diff
+PREFIX  = /usr/local
+MANDIR  = $(PREFIX)/share/man
+CFLAGS  = -Os -Wall -lpthread -Wshadow 
+EXPORTDIR = .
+AR      = ar
+RANLIB  = ranlib
+INC = -I /usr/foo/include
+LIB = -L /usr/foo/lib 
+
+
+
+#FEATURE_CFLAGS += -D'CONFIG_DEDIPROG=1'
+#FEATURE_CFLAGS += -std=gnu99
+FEATURE_LIBS += -lusb -lpthread
+PROGRAMMER_OBJS += dpcmd.o usbdriver.o FlashCommand.o SerialFlash.o parse.o board.o project.o IntelHexFile.o MotorolaFile.o
+#PROGRAMMER_OBJS += parse.o
+#PROGRAMMER_OBJS += dediprog.o
+
+
+
+FEATURE_CFLAGS += $(shell LC_ALL=C grep -q "UTSNAME := yes" .features && printf "%s" "-D'HAVE_UTSNAME=1'")
+
+# We could use PULLED_IN_LIBS, but that would be ugly.
+#FEATURE_LIBS += $(shell LC_ALL=C grep -q "NEEDLIBZ := yes" .libdeps && printf "%s" "-lz")
+
+LIBFLASHROM_OBJS = $(CHIP_OBJS) $(PROGRAMMER_OBJS) $(LIB_OBJS)
+OBJS = $(CLI_OBJS) $(LIBFLASHROM_OBJS) 
+
+$(PROGRAM)$(EXEC_SUFFIX): $(OBJS)
+	$(CC) $(LDFLAGS) -o $(PROGRAM)$(EXEC_SUFFIX) $(OBJS) $(FEATURE_LIBS) $(LIBS)
+
+libflashrom.a: $(LIBFLASHROM_OBJS)
+	$(AR) rcs $@ $^
+	$(RANLIB) $@
+
+# TAROPTIONS reduces information leakage from the packager's system.
+# If other tar programs support command line arguments for setting uid/gid of
+# stored files, they can be handled here as well.
+TAROPTIONS = $(shell LC_ALL=C tar --version|grep -q GNU && echo "--owner=root --group=root")
+
+%.o: %.c .features
+	$(CC) -MMD $(CFLAGS) $(CPPFLAGS) $(FEATURE_CFLAGS) $(SVNDEF) -o $@ -c $<
+
+# Make sure to add all names of generated binaries here.
+# This includes all frontends and libflashrom.
+# We don't use EXEC_SUFFIX here because we want to clean everything.
+clean:
+	rm -f $(PROGRAM) $(PROGRAM).exe libflashrom.a *.o *.d *.c~ *.h~ *~
+#	rm -f $(PROGRAM) $(PROGRAM).exe libflashrom.a IntelHexFile.o MotorolaFile.o parse.o project.o dpcmd.o *.d *.c~ *.h~ *~
+
+#cleanall:
+#	rm -f $(PROGRAM) $(PROGRAM).exe libflashrom.a *.o *.d *.c~ *.h~ *~
+
+distclean: clean
+	rm -f .features .libdeps
+
+strip: $(PROGRAM)$(EXEC_SUFFIX)
+	$(STRIP) $(STRIP_ARGS) $(PROGRAM)$(EXEC_SUFFIX)
+
+compiler: featuresavailable
+	@printf "Checking for a C compiler... "
+	@$(shell ( echo "int main(int argc, char **argv)"; \
+		   echo "{ (void) argc; (void) argv; return 0; }"; ) > .test.c )
+	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) .test.c -o .test$(EXEC_SUFFIX) >/dev/null &&	\
+		echo "found." || ( echo "not found."; \
+		rm -f .test.c .test$(EXEC_SUFFIX); exit 1)
+	@rm -f .test.c .test$(EXEC_SUFFIX)
+
+
+pciutils: compiler
+	@printf "" > .libdeps
+
+
+.features: features
+
+# If a user does not explicitly request a non-working feature, we should
+# silently disable it. However, if a non-working (does not compile) feature
+# is explicitly requested, we should bail out with a descriptive error message.
+ifeq ($(UNSUPPORTED_FEATURES), )
+featuresavailable:
+else
+featuresavailable:
+	@echo "The following features are unavailable on your machine: $(UNSUPPORTED_FEATURES)"
+	@false
+endif
+
+
+features: compiler
+	@echo "FEATURES := yes" > .features.tmp
+	@printf "Checking for utsname support... "
+	@$(shell ( echo "#include <sys/utsname.h>";		   \
+		   echo "struct utsname osinfo;";	   \
+		   echo "int main(int argc, char **argv)"; \
+		   echo "{ (void) argc; (void) argv; uname (&osinfo); return 0; }"; ) > .featuretest.c )
+	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) .featuretest.c -o .featuretest$(EXEC_SUFFIX) >/dev/null 2>&1 &&	\
+		( echo "found."; echo "UTSNAME := yes" >> .features.tmp ) ||	\
+		( echo "not found."; echo "UTSNAME := no" >> .features.tmp )
+	@$(DIFF) -q .features.tmp .features >/dev/null 2>&1 && rm .features.tmp || mv .features.tmp .features
+	@rm -f .featuretest.c .featuretest$(EXEC_SUFFIX)
+
+
+install: $(PROGRAM)$(EXEC_SUFFIX)
+	mkdir -p $(DESTDIR)$(PREFIX)/sbin
+	mkdir -p $(DESTDIR)$(MANDIR)/man8
+	$(INSTALL) -m 0755 $(PROGRAM)$(EXEC_SUFFIX) $(DESTDIR)$(PREFIX)/sbin
+	$(INSTALL) -m 0644 $(PROGRAM).8 $(DESTDIR)$(MANDIR)/man8
+
+
+-include $(OBJS:.o=.d)

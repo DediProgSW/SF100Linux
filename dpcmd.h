@@ -15,6 +15,7 @@ enum ErrorCode
 	EXCODE_FAIL_BATCH,
 	EXCODE_FAIL_CHKSUM,
 	EXCODE_FAIL_IDENTIFY,
+	EXCODE_FAIL_UPDATE_FW,
 	EXCODE_FAIL_OTHERS,
 };
 
@@ -92,6 +93,7 @@ bool ListTypes(void);
 void GetLogPath(char* path);
 bool Wait(const char* strOK,const char* strFail);
 void ExitProgram(void);
+int FirmwareUpdate();
 
 
 #endif

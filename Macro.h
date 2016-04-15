@@ -27,6 +27,19 @@
 //#define READ_EEPROM                     0x05
 //#define WRITE_EEPROM                    0x06
 // values of Request Field of a setup packet
+typedef struct FirmwareInfo
+{
+	char Programmer[20];
+	char Version[10];
+	char FPGAVersion[10];
+	unsigned int dwSignature;
+	unsigned int  Rev[3];
+	unsigned int  FirstIndex;
+	unsigned int  FirstSize;
+	unsigned int  SecondIndex;
+	unsigned int  SecondSize;
+}FW_INFO;
+
 typedef enum
 {
     TRANSCEIVE                      = 0x01,

@@ -67,6 +67,7 @@ char* g_parameter_target="1";
 char* g_parameter_vcc="NO";
 //char* g_parameter_spi_clk="2";
 char* g_parameter_blink="0";
+char* g_parameter_fw="\0";
 char g_LogPath[512]={0};
 
 unsigned long g_ucOperation;
@@ -113,8 +114,12 @@ static const char*    msg_info_autoOK       = "\nAutomatic program OK";
 static const char*    msg_info_autofail     = "\nError: Automatic program Failed";
 static const char*    msg_info_verifyOK     = "\nVerify OK";
 static const char*    msg_info_verifyfail   = "\nError: Verify Failed";
+static const char*    msg_info_firmwareupdate   = "\nUpdating firmware, please wait...";
+static const char*    msg_info_firmwareupdateOK    = "\nUpdate firmware OK";
+static const char*    msg_info_firmwareupdatefail   = "\nError: Update firmware Failed";
 
-char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:";
+
+char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:";
 
 struct option long_options[] = {
      { "help",                  0,   NULL,    '?'     },
@@ -150,6 +155,7 @@ struct option long_options[] = {
      { "spi-clk",               1,   NULL,    'k'     },
      { "set-io1",               1,   NULL,    '1'     },
      { "set-io4",               1,   NULL,    '4'     },
+     { "update-fw",               1,   NULL,    'U'     },
      {      0,                  0,     0,     0},
 };
 
@@ -432,7 +438,7 @@ int main(int argc, char *argv[])
 	int iExitCode=EXCODE_PASS;
 	bool bDetect=false;
 
-	printf("\nDpCmd Linux 1.1.0.07 Engine Version:\nLast Built on Jan 04 2016\n\n");
+	printf("\nDpCmd Linux 1.1.1.01 Engine Version:\nLast Built on Apr 13 2016\n\n");
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -579,6 +585,11 @@ int main(int argc, char *argv[])
 				l_opt_arg = optarg;
 				sscanf(l_opt_arg,"%d",&g_IO4Select);
 				break;
+			case 'U':
+				g_parameter_fw=optarg;
+				iExitCode=FirmwareUpdate();
+				goto Exit;
+				break;
 			default:
 				break;
 		}
@@ -623,6 +634,58 @@ void ExitProgram(void)
         free(pBufferforLoadedFile);
 }
 
+int FirmwareUpdate()
+{
+	FW_INFO Data;
+	FILE * pFile;
+    size_t result;
+	int fwVer;
+	unsigned char vBuffer[8] ;
+	int fw[3];
+
+    pFile = fopen( g_parameter_fw , "rb" );
+    if (pFile==NULL)
+    {
+        printf("Can not open %s \n",g_parameter_fw);
+        return EXCODE_FAIL_UPDATE_FW;
+    }
+
+    // obtain file size:
+    fseek (pFile , 0 , SEEK_END);
+	fseek (pFile , 0 , SEEK_SET);
+//    rewind (pFile);
+
+    // copy the file into the buffer:
+    result = fread ((unsigned char*)&Data,1,sizeof(FW_INFO),pFile);
+    fclose (pFile);
+
+	if(Data.dwSignature != 0x44504657)
+	{
+		printf("This file is not DediProg firmware format.\r\n");
+		return EXCODE_FAIL_UPDATE_FW;
+	}
+	sscanf(&Data.Version[0],"%d.%d.%d",&fw[0],&fw[1],&fw[2]);
+	fwVer=((fw[0]<<16) | (fw[1]<<8) | fw[2]);
+
+	printf("Current Firmware is %x, New Firmware Version is %x\r\n",g_firmversion,fwVer);
+
+	if(strstr(g_board_type,Data.Programmer)==NULL)
+		printf("Error: This firmware for %s!\r\n",Data.Programmer);
+
+	if((strstr(g_board_type,Data.Programmer)==NULL) ||((fwVer&0xff0000) != (g_firmversion & 0xff0000)))
+	{
+		printf("Error: This firmware can not be updated on this programmer!\r\n");
+		return EXCODE_FAIL_UPDATE_FW;
+	}
+
+	printf(msg_info_firmwareupdate);
+	Run(UPDATE_FIRMWARE);
+
+    if( Wait( msg_info_firmwareupdateOK, msg_info_firmwareupdatefail) )
+		return 0;
+
+	return 0;
+}
 
 void cli_classic_usage(bool IsShowExample)
 {
@@ -1019,7 +1082,7 @@ void do_DisplayOrSave(void)
             printf("%02X  ",pBufferForLastReadData[i]);
 
         }
-        printf(L"\n\n");
+        printf("\n\n");
     }
     else
     {
