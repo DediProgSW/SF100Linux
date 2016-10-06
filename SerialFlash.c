@@ -1103,7 +1103,7 @@ int SerialFlash_protectBlock(int bProtect,int Index)
     while( (tmpSRVal & 0x01) &&  numOfRetry > 0) // WIP = TRUE;
     {
         // read SR
-        result = SerialFlash_doRDSR(tmpSRVal,Index) ;
+        result = SerialFlash_doRDSR(&tmpSRVal,Index) ;
 
         if(! result) return false;
 
