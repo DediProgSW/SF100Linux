@@ -10,7 +10,7 @@ extern bool Is_NewUSBCommand(int Index);
 int FlashCommand_TransceiveOut(unsigned char *v, int len ,int has_result_in,int Index)
 {
     CNTRPIPE_RQ rq ;
-    int i;
+//    int i;
 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
     rq.Direction = VENDOR_DIRECTION_OUT ;

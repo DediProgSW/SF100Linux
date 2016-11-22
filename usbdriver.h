@@ -26,7 +26,6 @@
 
 #define DEFAULT_TIMEOUT                             30000
 
-static usb_dev_handle *dediprog_handle=NULL;
 #define MAX_Dev_Index   10
 
 typedef struct usb_device_entry {
@@ -56,6 +55,8 @@ usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
 #define ERROR_OFF	(1 << 2)
 
 int usb_driver_init(void);
+
+bool Is_usbworking(void);
 
 int usb_driver_release(void);
 
