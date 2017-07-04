@@ -177,6 +177,8 @@ typedef struct ChipInfo {
     #define SUPPORT_ST_M45PExx          "M45PExx"
     #define SUPPORT_NUMONYX_Alverstone  "Alverstone"
 	#define SUPPORT_NUMONYX_N25Qxxx_Large  "N25Qxxx_Large"
+	#define SUPPORT_NUMONYX_N25Qxxx_Large_2Die  "N25Qxxx_Large_2Die"
+	#define SUPPORT_NUMONYX_N25Qxxx_Large_4Die  "N25Qxxx_Large_4Die"
 #endif
 
 #ifdef SUPPORT_SST
@@ -200,8 +202,8 @@ typedef struct ChipInfo {
 #endif
 
 #ifdef SUPPORT_SPANSION
-    #define SUPPORT_SPANSION_S25FLxx    "S25FLxx"
-	#define SUPPORT_SPANSION_S25FLxx_Large    "S25FLxx_Large"
+    #define SUPPORT_SPANSION_S25FLxx    "S25FLxxx"
+	#define SUPPORT_SPANSION_S25FLxx_Large    "S25FLxxx_Large"
 #endif
 
 #ifdef SUPPORT_MACRONIX
@@ -263,7 +265,7 @@ typedef struct ChipInfo {
 
 
 // for usb
-#define USB_TIMEOUT                     8000                ///< time out value for usb EP2
+#define USB_TIMEOUT                     800000                ///< time out value for usb EP2
 
 // for SR reads
 #define MAX_TRIALS                      0x80000

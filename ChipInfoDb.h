@@ -23,7 +23,7 @@ void ChipInfoDump(long JedecDeviceIDToFind);
 
 long ChipInfoDumpChipSizeInKByte(long Jedec);
 int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO *Chip_Info, int search_all);
-void Dedi_Search_AllChip( CHIP_INFO *Chip_Info, int search_all);
+void getExecPath(char* Path);
 
 
 #endif

@@ -11,9 +11,10 @@ extern int g_firmversion;
 extern unsigned int g_IO1Select;
 extern unsigned int g_IO4Select;
 extern unsigned int g_Vcc;
-extern Sleep(unsigned int ms);
-extern int is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
-extern int is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
+extern void Sleep(unsigned int ms);
+extern bool Is_NewUSBCommand(int Index);
+//extern int is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
+//extern int is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
 
 void QueryBoard(int Index)
 {
@@ -26,7 +27,7 @@ void QueryBoard(int Index)
     }
 
     CNTRPIPE_RQ rq ;
-    char vBuffer[16];
+    unsigned char vBuffer[16];
 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
     rq.Direction = VENDOR_DIRECTION_IN ;
@@ -504,7 +505,7 @@ bool EraseST7Sectors(bool bSect1,int Index)
 	return true;
 }
 
-bool ProgramSectors(const unsigned char* sFilePath, bool bSect1,int Index)
+bool ProgramSectors(const char* sFilePath, bool bSect1,int Index)
 {
 	const unsigned int iSect1StartAddr  = 0xE000;
 	const unsigned int iSect2StartAddr  = 0x8000;
@@ -515,7 +516,7 @@ bool ProgramSectors(const unsigned char* sFilePath, bool bSect1,int Index)
 	unsigned char* pTmp=NULL;
 	FW_INFO fw_info;
 	FILE * pFile;
-	long lSize;
+	size_t lSize;
 	unsigned char Data;
 
 	unsigned int iStartAddr = bSect1 ? iSect1StartAddr : iSect2StartAddr;
@@ -533,7 +534,10 @@ bool ProgramSectors(const unsigned char* sFilePath, bool bSect1,int Index)
 	}
 
 	fseek (pFile , 0 , SEEK_SET);
-	fread ((unsigned char*)&fw_info,1,sizeof(FW_INFO),pFile);
+	lSize=fread ((unsigned char*)&fw_info,1,sizeof(FW_INFO),pFile);
+	if(lSize != sizeof(FW_INFO))
+		printf("Possible read length error %s\n", sFilePath);
+
 
 	if(bSect1==true)
 	{
@@ -549,7 +553,9 @@ bool ProgramSectors(const unsigned char* sFilePath, bool bSect1,int Index)
 	pBuffer = (unsigned char*)malloc(Size);
 	memset(pBuffer,0xFF,Size);
 	fseek (pFile , uiIndex, SEEK_SET);
-	fread(pBuffer,1,Size,pFile);
+	lSize = fread(pBuffer,1,Size,pFile);
+	if(lSize != Size)
+		printf("Possible read length error %s\n", sFilePath);
 
 	fclose (pFile);
 	pTmp=pBuffer;
@@ -712,7 +718,7 @@ bool ReadMemOnST7(unsigned int iAddr,int Index)
 	return true;
 }
 
-bool UpdateSF600Firmware(const unsigned char* sFolder,int Index)
+bool UpdateSF600Firmware(const char* sFolder,int Index)
 {
 	bool boResult=true;
 	unsigned char vUID[16];
@@ -760,11 +766,11 @@ void EncrypFirmware(unsigned char* vBuffer,unsigned int Size,int Index)
 	for(i=0; i<16; i++)
 		vBuffer[i]=vBuffer[i]^vUID[i];
 
-	for(i; i<Size; i++)
+	for(; i<Size; i++)
 		vBuffer[i]=vBuffer[i]^vBuffer[i-16];
 }
 
-bool UpdateSF600Flash(const unsigned char* sFilePath,int Index)
+bool UpdateSF600Flash(const char* sFilePath,int Index)
 {
 	CNTRPIPE_RQ rq ;
 	unsigned char* pBuffer;
@@ -772,6 +778,7 @@ bool UpdateSF600Flash(const unsigned char* sFilePath,int Index)
 	unsigned int dwsize=0;
 	FW_INFO fw_info;
 	FILE * pFile;
+	size_t lSize;
 	int i=0;
 
 	pFile = fopen( sFilePath , "rb" );
@@ -782,10 +789,16 @@ bool UpdateSF600Flash(const unsigned char* sFilePath,int Index)
 	}
 
 	fseek (pFile , 0 , SEEK_SET);
-	fread ((unsigned char*)&fw_info,1,sizeof(FW_INFO),pFile);
+	lSize = fread ((unsigned char*)&fw_info,1,sizeof(FW_INFO),pFile);
+	if(lSize != sizeof(FW_INFO))
+		printf("Possible read length error %s\n", sFilePath);
+
 	pBuffer = (unsigned char*) malloc(fw_info.FirstSize);
 	fseek (pFile , fw_info.FirstIndex, SEEK_SET);
-	fread (pBuffer,1,fw_info.FirstSize,pFile);
+	lSize = fread (pBuffer,1,fw_info.FirstSize,pFile);
+	if(lSize != fw_info.FirstSize)
+		printf("Possible read length error %s\n", sFilePath);
+
 	fclose(pFile);
 
 	EncrypFirmware(pBuffer,fw_info.FirstSize,Index);
@@ -844,7 +857,7 @@ bool UpdateSF600Flash(const unsigned char* sFilePath,int Index)
 	return true;
 }
 
-bool UpdateSF600Flash_FPGA(const unsigned char* sFilePath,int Index)
+bool UpdateSF600Flash_FPGA(const char* sFilePath,int Index)
 {
 	CNTRPIPE_RQ rq ;
 	unsigned char* pBuffer;
@@ -852,6 +865,7 @@ bool UpdateSF600Flash_FPGA(const unsigned char* sFilePath,int Index)
 	unsigned int dwsize=0;
 	FW_INFO fw_info;
 	FILE * pFile;
+	size_t lSize;
 	int i=0;
 
 	pFile = fopen( sFilePath , "rb" );
@@ -862,10 +876,16 @@ bool UpdateSF600Flash_FPGA(const unsigned char* sFilePath,int Index)
 	}
 
 	fseek (pFile , 0 , SEEK_SET);
-	fread ((unsigned char*)&fw_info,1,sizeof(FW_INFO),pFile);
+	lSize = fread ((unsigned char*)&fw_info,1,sizeof(FW_INFO),pFile);
+	if(lSize != sizeof(FW_INFO))
+		printf("Possible read length error %s\n", sFilePath);
+
 	pBuffer = (unsigned char*) malloc(fw_info.SecondSize);
 	fseek (pFile , fw_info.SecondIndex, SEEK_SET);
-	fread (pBuffer,1,fw_info.SecondSize,pFile);
+	lSize = fread (pBuffer,1,fw_info.SecondSize,pFile);
+	if(lSize != fw_info.SecondSize)
+		printf("Possible read length error %s\n", sFilePath);
+
 	fclose(pFile);
 
 	EncrypFirmware(pBuffer,fw_info.SecondSize,Index);
@@ -921,7 +941,7 @@ bool UpdateSF600Flash_FPGA(const unsigned char* sFilePath,int Index)
 	return true;
 }
 
-bool UpdateFirmware(const unsigned char* sFolder,int Index)
+bool UpdateFirmware(const char* sFolder,int Index)
 {
 	bool bResult = true;
 	unsigned int UID=0;

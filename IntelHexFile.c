@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <string.h>
+#include <stdlib.h>
 #include "Macro.h"
 #include "IntelHexFile.h"
 extern unsigned char* pBufferforLoadedFile;
@@ -98,17 +99,12 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* F
     unsigned int    Seg_Lin_Select = NO_ADDRESS_TYPE_SELECTED;
 
     const int CKS_8       = 0 ;
-    const int CKS_16LE  = 1 ;
-    const int CKS_16BE  = 2 ;
-
-    int PadByte = PaddingByte;
 
     /* line inputted from file */
     char Line[MAX_LINE_SIZE];
 
     /* flag that a file was read */
     bool Enable_Checksum_Error = false ;
-    bool Status_Checksum_Error = false ;
 
     /* cmd-line parameter # */
     unsigned char *p;
@@ -150,8 +146,6 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* F
     Lowest_Address = MEMORY_SIZE - 1;
     Highest_Address = 0;
 
-    int readCnt = 0 ;
-    int checkCnt = 0 ;
     bool boEndofFile=false;
 
     /* To begin, assume the lowest address is at the end of the memory.
@@ -166,7 +160,8 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* F
     do /* repeat until EOF(Filin) */
     {
         /* Read a line from input file. */
-        fgets(Line,MAX_LINE_SIZE,Filin);
+        if(fgets(Line,MAX_LINE_SIZE,Filin)==NULL)
+					break;
 
         /* Remove carriage return/line feed at the end of line. */
         i = strlen(Line)-1;
@@ -240,7 +235,6 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* F
 
                 if ((Checksum != 0) && Enable_Checksum_Error)
                 {
-                    Status_Checksum_Error = true;
                 }
             }
             else
@@ -279,8 +273,8 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* F
                 /* Verify Checksum value. */
                 Checksum = (Checksum + (Segment >> 8) + (Segment & 0xFF) + temp2) & 0xFF;
 
-                if ((Checksum != 0) && Enable_Checksum_Error)
-                    Status_Checksum_Error = true;
+//                if ((Checksum != 0) && Enable_Checksum_Error)
+//                    Status_Checksum_Error = true;
             }
             break;
 
@@ -311,8 +305,8 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* F
                 Checksum = (Checksum + (Upper_Address >> 8) + (Upper_Address & 0xFF) + temp2)
                     & 0xFF;
 
-                if ((Checksum != 0) && Enable_Checksum_Error)
-                    Status_Checksum_Error = true;
+//                if ((Checksum != 0) && Enable_Checksum_Error)
+//                    Status_Checksum_Error = true;
             }
             break;
 

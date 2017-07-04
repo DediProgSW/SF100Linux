@@ -10,12 +10,12 @@ extern volatile bool g_bIsSF600;
 extern int g_CurrentSeriase;
 extern char g_board_type[8];
 extern int g_firmversion;
-extern Sleep(unsigned int ms);
+extern void Sleep(unsigned int ms);
 extern CHIP_INFO Chip_Info;
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
 extern int is_SF100nBoardVersionGreaterThan_5_5_0(int Inde);
-
+//
 bool Is_NewUSBCommand(int Index)
 {
 	if(is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index))
@@ -60,9 +60,10 @@ void IsSF600(int Index)
         return ;
 
     memcpy(g_board_type,&vBuffer[0],8);
-	sscanf(&vBuffer[8],"V:%d.%d.%d",&fw[0],&fw[1],&fw[2]);
+	sscanf((char*)&vBuffer[8],"V:%d.%d.%d",&fw[0],&fw[1],&fw[2]);
 	g_firmversion=((fw[0]<<16) | (fw[1]<<8) | fw[2]);
 //	printf("g_firmversion=%x\r\n",g_firmversion);
+//	printf("g_board_type=%s\r\n",g_board_type);
     if(strstr(g_board_type,"SF600") != NULL)
         g_bIsSF600=true;
     else
@@ -99,7 +100,7 @@ static int FindUSBDevice(void)
 
 int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size ,int Index )
 {
-    unsigned long  bytesWrite;
+//    unsigned long  bytesWrite;
     int            requesttype;
     int            ret = 0;
 
@@ -146,7 +147,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
 {
 	//boost::mutex::scoped_lock l(mutex);
 
-	unsigned long   bytesRead;
+//	unsigned long   bytesRead;
     int             requesttype;
     int             ret = 0;
 
@@ -202,7 +203,7 @@ int dediprog_start_appli(int Index)
 
     ret = OutCtrlRequest(&rq, &vInstruction, 1, 0);
 
-    return 0;
+    return ret;
 }
 
 int dediprog_get_chipid(int Index)
@@ -240,7 +241,7 @@ int dediprog_get_chipid(int Index)
     rq.Length = 0x03 ;
 
     ret = InCtrlRequest(&rq, vInstruction, 3, Index);
-    return 0;
+    return ret;
 }
 
 // return size read
@@ -252,7 +253,7 @@ int BulkPipeRead(unsigned char *pBuff, unsigned int timeOut, int Index)
     if( Index==-1 )   Index = DevIndex;
 
     unsigned long cnRead = 512;
-    ret = usb_bulk_read(dediprog_handle, 0x82, pBuff, cnRead, DEFAULT_TIMEOUT);
+    ret = usb_bulk_read(dediprog_handle, 0x82, (char*)pBuff, cnRead, DEFAULT_TIMEOUT);
     cnRead = ret;
     return cnRead ;
 }
@@ -279,10 +280,10 @@ int BulkPipeWrite(unsigned char *pBuff, unsigned int size,unsigned int timeOut, 
 
 int dediprog_set_spi_voltage(int v,int Index)
 {
-    int ret;
-    int voltage_selector;
+    int ret = 0;
+//    int voltage_selector;
     CNTRPIPE_RQ rq ;
-    unsigned char vBuffer[12];
+//    unsigned char vBuffer[12];
 
     if(0 == v) Sleep(200);
 
@@ -349,7 +350,7 @@ int dediprog_set_spi_voltage(int v,int Index)
 	}
 #endif
     if(0 != v) Sleep(200);
-	return true;
+	return ret;
 }
 
 
@@ -474,7 +475,17 @@ int usb_driver_init(void)
         return 0;
     }
     ret = usb_set_configuration(dediprog_handle, 1);
+	if(ret)
+	{
+		printf("Error: Programmers USB set configuration: 0x%x.\n",ret);
+		return 0;
+	}
     ret = usb_claim_interface(dediprog_handle, 0);
+	if(ret)
+	{
+		printf("Error: Programmers USB claim interface: 0x%x.\n",ret);
+		return 0;
+	}
     g_bIsSF600=false;
 
     IsSF600(0);

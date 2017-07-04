@@ -152,6 +152,8 @@ int Dedi_Search_Chip_Db(long RDIDCommand, long UniqueID, CHIP_INFO *Chip_Info, i
 			tok = strtok(test,"\"= \t");
 			//printf("JedecDeviceID = 0x%lx\n",strtol(tok,NULL,16));
 			Chip_Info->JedecDeviceID = strtol(tok,NULL,16);
+			if((UniqueID == Chip_Info->JedecDeviceID))
+				found_flag = 1;
 			continue;
         }
 		pch=strstr(file_line_buf,"ChipSizeInKByte");
