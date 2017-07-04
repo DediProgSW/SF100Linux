@@ -101,6 +101,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <string.h>
+#include <stdlib.h>
 #include "Macro.h"
 #include "MotorolaFile.h"
 
@@ -117,8 +118,8 @@ bool S19FileToBin(const char* filePath, unsigned char* vData,unsigned long* File
     const int MAX_LINE_SIZE = 512 ;
 
     const int CKS_8       = 0 ;
-    const int CKS_16LE  = 1 ;
-    const int CKS_16BE  = 2 ;
+//    const int CKS_16LE  = 1 ;
+//    const int CKS_16BE  = 2 ;
 
     int PadByte = PaddingByte;
 
@@ -127,7 +128,7 @@ bool S19FileToBin(const char* filePath, unsigned char* vData,unsigned long* File
 
     /* flag that a file was read */
     bool Enable_Checksum_Error = false ;
-    bool Status_Checksum_Error = false ;
+//    bool Status_Checksum_Error = false ;
 
     /* cmd-line parameter # */
     unsigned char *p;
@@ -169,14 +170,16 @@ bool S19FileToBin(const char* filePath, unsigned char* vData,unsigned long* File
     Lowest_Address = MEMORY_SIZE - 1;
     Highest_Address = 0;
 
-    int readCnt = 0 ;
-    int checkCnt = 0 ;
+//    int readCnt = 0 ;
+//    int checkCnt = 0 ;
 
     /* Now read the file & process the lines. */
     do /* repeat until EOF(Filin) */
     {
         /* Read a line from input file. */
-        fgets(Line,MAX_LINE_SIZE,Filin);
+        if (NULL == fgets(Line,MAX_LINE_SIZE,Filin)) {
+	    break;
+	}
 
         /* Remove carriage return/line feed at the end of line. */
         i = strlen(Line)-1;
@@ -262,7 +265,7 @@ bool S19FileToBin(const char* filePath, unsigned char* vData,unsigned long* File
 
                 if ((temp2 != Checksum) && Enable_Checksum_Error)
                 {
-                    Status_Checksum_Error = true;
+//                    Status_Checksum_Error = true;
                 }
             }
             else
@@ -401,7 +404,7 @@ bool BinToS19File(const char* filePath, unsigned char* vData, unsigned long File
             chksum += recbuf[i];
             sprintf(s19buf + 2 * i, "%02X", (recbuf[i] & 0xff));
         }
-        fprintf(FileOut, s19buf) ;
+        fprintf(FileOut, "%s", s19buf) ;
 
         memset(s19buf, 0, sizeof(s19buf)) ;
         chksum =~ chksum;    /* one's complement */
@@ -428,7 +431,7 @@ bool BinToS19File(const char* filePath, unsigned char* vData, unsigned long File
             chksum += recbuf[i];
             sprintf(s19buf + 2 * i, "%02X", (recbuf[i] & 0xff));
         }
-        fprintf(FileOut,s19buf) ;
+        fprintf(FileOut, "%s", s19buf) ;
 
         memset(s19buf, 0, sizeof(s19buf)) ;
         chksum =~ chksum;    /* one's complement */
