@@ -435,7 +435,7 @@ void WriteLog(int ErrorCode, bool Init)
 
 int GetConfigVer()
 {
-	char path[512],fname[256];
+	char path[512];
 	char file_line_buf[512];
 	char test[80];
 	char *pch,*tok;
@@ -444,10 +444,7 @@ int GetConfigVer()
 	FILE* fp;       /*Declare file pointer variable*/
 	getExecPath(path);
 	if ((fp = fopen(path,"rt")) == NULL)
-	{
-		fprintf(stderr,"Error opening file: %s\n",fname);
 		return 1;
-	}
 
 	while(fgets(file_line_buf, 512, fp) != NULL)
 	{
