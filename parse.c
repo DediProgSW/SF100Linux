@@ -39,7 +39,7 @@ int Dedi_Search_Chip_Db(long RDIDCommand, long UniqueID, CHIP_INFO *Chip_Info, i
 {
 	FILE* fp;       /*Declare file pointer variable*/
 	int    found_flag = 0;
-	char file_line_buf[linebufsize], *tok, fname[256], *file_buf, test[256];
+	char file_line_buf[linebufsize], *tok, *file_buf, test[256];
 	char* pch;
 	long sz=0;
 	char Path[512];
@@ -49,7 +49,7 @@ int Dedi_Search_Chip_Db(long RDIDCommand, long UniqueID, CHIP_INFO *Chip_Info, i
      /*error message & return (1) control to the OS*/
 	if ((fp = fopen(Path,"rt")) == NULL)
 	{
-		fprintf(stderr,"Error opening file: %s\n",fname);
+		fprintf(stderr,"Error opening file: %s\n", Path);
 		return 1;
 	}
 	sz=fsize(fp);
