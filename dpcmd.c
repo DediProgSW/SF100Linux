@@ -1334,8 +1334,11 @@ bool Wait(const char* strOK,const char* strFail)
        if(g_bDisplayTimer==true)
        {
             timersub(&tv, &basetv, &diff);
-            printf("%0.6f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            printf("%0.0fs elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            fflush(stdout);
       }
+
+      sleep(1);
     }
     printf("\n%s\n",g_is_operation_successful? strOK : strFail);
     g_bStatus=g_is_operation_successful;
