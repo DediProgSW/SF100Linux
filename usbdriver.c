@@ -90,11 +90,17 @@ static int ResolveUSBDevice(void)
         return 0;
 
     if (stat(devpath, &stats))
-        return 0;
+    {
+        fprintf(stderr, "Failed to open %s\n", devpath);
+        exit(1);
+    }
 
     // skip non-USB devices
     if (major(stats.st_rdev) != 189)
-        return 0;
+    {
+        fprintf(stderr, "Device %s is not a Dediprog\n", devpath);
+        exit(1);
+    }
 
     // find USB bus and device numbers
     snprintf(busno, sizeof(busno), "%03u", (minor(stats.st_rdev) >> 7) + 1);
@@ -115,7 +121,8 @@ static int ResolveUSBDevice(void)
         }
     }
 
-    return 0;
+    fprintf(stderr, "Device %s is not a Dediprog\n", devpath);
+    exit(1);
 }
 
 
