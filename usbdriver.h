@@ -44,7 +44,7 @@ typedef struct {
 
 
 usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
-
+extern const char *devpath;
 
 /* Set/clear LEDs on dediprog */
 #define PASS_ON		(0 << 0)

@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <usb.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "Macro.h"
 #include "usbdriver.h"
 #include "project.h"
@@ -17,6 +20,7 @@ extern CHIP_INFO Chip_Info;
 #define SerialFlash_TRUE    1
 
 static usb_dev_handle *dediprog_handle;
+const char *devpath;
 
 bool Is_NewUSBCommand(int Index)
 {
@@ -74,6 +78,47 @@ void IsSF600(int Index)
 }
 
 
+static int ResolveUSBDevice(void)
+{
+    struct usb_bus *bus;
+    struct usb_device *dev;
+    struct stat stats;
+    char busno[8], devno[8];
+
+    // skip if no device path given
+    if (!devpath)
+        return 0;
+
+    if (stat(devpath, &stats))
+        return 0;
+
+    // skip non-USB devices
+    if (major(stats.st_rdev) != 189)
+        return 0;
+
+    // find USB bus and device numbers
+    snprintf(busno, sizeof(busno), "%03u", (minor(stats.st_rdev) >> 7) + 1);
+    snprintf(devno, sizeof(devno), "%03u", (minor(stats.st_rdev) % 128) + 1);
+
+    usb_db_init();
+
+    for (bus = usb_get_busses(); bus; bus = bus->next)
+    {
+        for (dev = bus->devices; dev; dev = dev->next)
+        {
+            if (!strcmp(dev->bus->dirname, busno) && !strcmp(dev->filename, devno))
+            {
+                usb_device_entry[0].usb_device_handler = *dev;
+                usb_device_entry[0].valid = 1;
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+
 /* Might be useful for other USB devices as well. static for now. */
 static int FindUSBDevice(void)
 {
@@ -83,6 +128,7 @@ static int FindUSBDevice(void)
     unsigned int vid = 0x0483;
     unsigned int pid = 0xdada;
     usb_db_init();
+
     for (bus = usb_get_busses(); bus; bus = bus->next)
     {
         for (dev = bus->devices; dev; dev = dev->next)
@@ -460,12 +506,14 @@ int usb_driver_init(void)
     dediprog_handle=NULL;
     usb_dev_init();
 
-    device_cnt = FindUSBDevice();
+    device_cnt = ResolveUSBDevice() || FindUSBDevice();
     if(usb_device_entry[device_cnt-1].valid==0)
     {
         printf("Error: Programmers are not connected.\n");
         return 0;
     }
+
+    printf("Using Dediprog at %s/%s\n", usb_device_entry[device_cnt-1].usb_device_handler.bus->dirname, usb_device_entry[device_cnt-1].usb_device_handler.filename);
 
     dediprog_handle = usb_open(&usb_device_entry[device_cnt-1].usb_device_handler);
     if(dediprog_handle==NULL)
