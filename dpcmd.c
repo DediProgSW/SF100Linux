@@ -19,6 +19,9 @@
 #include "dpcmd.h"
 #include "board.h"
 #include "FlashCommand.h"
+#include "ChipInfoDb.h"
+#include "parse.h"
+
 #define min(a,b) (a>b? b:a)
 
 extern unsigned char* pBufferForLastReadData;
@@ -1296,7 +1299,7 @@ bool CalChecksum(void)
 
         if( g_uiAddr==0 && g_uiLen ==0)
         {
-            printf("\nChecksum of the whole chip(address starting from: 0x%zX, 0x%X bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData,Chip_Info.ChipSizeInByte));
+            printf("\nChecksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData,Chip_Info.ChipSizeInByte));
         }
         else
         {

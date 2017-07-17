@@ -31,7 +31,6 @@ size_t AT45ChipSize=0;
 size_t AT45PageSize=0;
 bool AT45doRDSR(unsigned char* cSR, int Index)
 {
-    unsigned char Out=0xD7;
     CNTRPIPE_RQ rq ;
     unsigned char vInstruction;    //size 1
 

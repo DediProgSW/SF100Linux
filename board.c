@@ -273,7 +273,7 @@ bool BlinkProgBoard(bool boIsV5,int Index)
     return true;
 }
 
-bool ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index)
+static void ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index)
 {
     CNTRPIPE_RQ rq ;
     unsigned char vBuffer[16] ;
@@ -294,9 +294,8 @@ bool ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index)
     rq.Length = 16 ;
 
     if(InCtrlRequest(&rq, vBuffer,16,Index)==SerialFlash_FALSE)
-    {
-        return false;
-    }
+        return;
+
     memcpy(Data,vBuffer,16);
 }
 

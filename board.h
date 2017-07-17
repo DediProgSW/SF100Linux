@@ -16,7 +16,6 @@ bool SetLEDOnOff(size_t Color,int Index);
 bool SetCS(size_t value,int Index);
 bool SetIOModeToSF600(size_t value,int Index);
 bool BlinkProgBoard(bool boIsV5,int Index);
-bool ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index);
 bool LeaveSF600Standalone(bool Enable,int USBIndex);
 bool SetSPIClockValue(unsigned short v,int Index);
 unsigned int ReadUID(int Index);

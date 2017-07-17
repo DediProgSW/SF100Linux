@@ -3,6 +3,7 @@
 #include <usb.h>
 #include "Macro.h"
 #include "usbdriver.h"
+#include "project.h"
 
 unsigned int        m_nbDeviceDetected = 0;
 unsigned char       DevIndex = 0;
@@ -14,8 +15,9 @@ extern void Sleep(unsigned int ms);
 extern CHIP_INFO Chip_Info;
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
-extern int is_SF100nBoardVersionGreaterThan_5_5_0(int Inde);
-//
+
+static usb_dev_handle *dediprog_handle;
+
 bool Is_NewUSBCommand(int Index)
 {
 	if(is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index))
@@ -119,7 +121,7 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
 
 
     if (dediprog_handle ) {
-        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, buf, buf_size, DEFAULT_TIMEOUT);
+        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, (char *)buf, buf_size, DEFAULT_TIMEOUT);
     }// else
       //  printf("no device");
     if(ret != buf_size)
@@ -168,7 +170,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
     if( rq->Function==URB_FUNCTION_VENDOR_OTHER )       requesttype |= 0x43;
 
     if (dediprog_handle ) {
-        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, buf, buf_size, DEFAULT_TIMEOUT);
+        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, (char *)buf, buf_size, DEFAULT_TIMEOUT);
     }// else
       //  printf("no device");
 
@@ -453,9 +455,6 @@ int dediprog_set_spi_clk(int khz)
 
 int usb_driver_init(void)
 {
-    struct usb_bus *bus;
-    struct usb_device *dev;
-
     int device_cnt = 0;
     int ret;
     dediprog_handle=NULL;
