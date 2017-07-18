@@ -19,6 +19,9 @@
 #include "dpcmd.h"
 #include "board.h"
 #include "FlashCommand.h"
+#include "ChipInfoDb.h"
+#include "parse.h"
+
 #define min(a,b) (a>b? b:a)
 
 extern unsigned char* pBufferForLastReadData;
@@ -144,7 +147,7 @@ struct option long_options[] = {
      { "lock-start",            1,   NULL,    'S'     },
      { "lock-length",           1,   NULL,    'N'     },
      { "blink",                 1,   NULL,    'B'     },
-//     { "device",                1,   NULL,    'D'     },
+     { "device",                1,   NULL,    'D'     },
 //     { "fix-device",            1,   NULL,    'F'     },
      { "list-device-id",        1,   NULL,    'V'     },
      { "timeout",               1,   NULL,    't'     },
@@ -432,7 +435,7 @@ void WriteLog(int ErrorCode, bool Init)
 
 int GetConfigVer()
 {
-	char path[512],fname[256];
+	char path[512];
 	char file_line_buf[512];
 	char test[80];
 	char *pch,*tok;
@@ -441,10 +444,7 @@ int GetConfigVer()
 	FILE* fp;       /*Declare file pointer variable*/
 	getExecPath(path);
 	if ((fp = fopen(path,"rt")) == NULL)
-	{
-		fprintf(stderr,"Error opening file: %s\n",fname);
 		return 1;
-	}
 
 	while(fgets(file_line_buf, 512, fp) != NULL)
 	{
@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
 	int iExitCode=EXCODE_PASS;
 	bool bDetect=false;
 
-	printf("\nDpCmd Linux 1.1.2.%02d Engine Version:\nLast Built on Mar 13 2017\n\n",GetConfigVer());
+	printf("\nDpCmd Linux 1.1.3.%02d Engine Version:\nLast Built on Jul 17 2017\n\n",GetConfigVer());
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -486,12 +486,6 @@ int main(int argc, char *argv[])
 		cli_classic_usage(false);
 		return 0;
 	}
-	if(OpenUSB()==0)
-		iExitCode=EXCODE_FAIL_USB;
-
-//	QueryBoard(0);
-	LeaveStandaloneMode(0);
-	QueryBoard(0);
 
 	while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1)
 	{
@@ -578,8 +572,7 @@ int main(int argc, char *argv[])
 				g_ucOperation |= BLINK;
 				break;
 			case 'D': // device
-				l_opt_arg = optarg;
-				printf("activate only the programmer connected to USBx (with arg: %s)\n", l_opt_arg);
+				devpath = optarg;
 				break;
 			case 'F':
 				l_opt_arg = optarg;
@@ -633,6 +626,14 @@ int main(int argc, char *argv[])
 				break;
 		}
     }
+
+	if(OpenUSB()==0)
+		iExitCode=EXCODE_FAIL_USB;
+
+//	QueryBoard(0);
+	LeaveStandaloneMode(0);
+	QueryBoard(0);
+
 	if(bDetect==true)
 	{
 //		printf("%s\r\n",g_LogPath);
@@ -812,11 +813,7 @@ void cli_classic_usage(bool IsShowExample)
 //	       "                                            note: the sequence is assigned by OS during USB plug-in\n"
 	       "                                            - 1: Blink the programmer connected to USB1 3 times.\n"
 //	       "                                            - n: Blink the programmer connected to USBn 3 times.\n"
-//	       "    --device arg                            (work with all Basic Switchs)\n"
-//	       "                                            - 1: activate only the programmer connected to USB1\n"
-//	       "                                            - n: activate only the programmer connected to USBn\n"
-//	       "                                            note: if '--device' is not used, the command will\n"
-//	       "                                            be executed on all connected programmer.\n"
+	       "    --device <device-path>                  use programmer at <device-path> eg /dev/bus/usb/007/009 rather than first detected\n"
 //	       "    --fix-device arg                        Fix programmer serial number with programmer sequence.\n"
 //	       "                                            - instructions must be enclosed in double quotation marks(\"\")\n"
 //	       "                                            Example:\n"
@@ -1296,7 +1293,7 @@ bool CalChecksum(void)
 
         if( g_uiAddr==0 && g_uiLen ==0)
         {
-            printf("\nChecksum of the whole chip(address starting from: 0x%zX, 0x%X bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData,Chip_Info.ChipSizeInByte));
+            printf("\nChecksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData,Chip_Info.ChipSizeInByte));
         }
         else
         {
@@ -1334,8 +1331,11 @@ bool Wait(const char* strOK,const char* strFail)
        if(g_bDisplayTimer==true)
        {
             timersub(&tv, &basetv, &diff);
-            printf("%0.6f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            printf("%0.0fs elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            fflush(stdout);
       }
+
+      sleep(1);
     }
     printf("\n%s\n",g_is_operation_successful? strOK : strFail);
     g_bStatus=g_is_operation_successful;

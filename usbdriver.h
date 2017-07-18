@@ -26,7 +26,6 @@
 
 #define DEFAULT_TIMEOUT                             30000
 
-static usb_dev_handle *dediprog_handle=NULL;
 #define MAX_Dev_Index   10
 
 typedef struct usb_device_entry {
@@ -45,7 +44,7 @@ typedef struct {
 
 
 usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
-
+extern const char *devpath;
 
 /* Set/clear LEDs on dediprog */
 #define PASS_ON		(0 << 0)
@@ -71,6 +70,7 @@ int dediprog_set_vpp_voltage(int volt);
 
 long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size ,int Index);
 
+bool Is_usbworking(void);
 
 int BulkPipeWrite(unsigned char *pBuff, unsigned int size,unsigned int timeOut, int Index);
 

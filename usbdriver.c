@@ -1,8 +1,12 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <usb.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "Macro.h"
 #include "usbdriver.h"
+#include "project.h"
 
 unsigned int        m_nbDeviceDetected = 0;
 unsigned char       DevIndex = 0;
@@ -14,8 +18,10 @@ extern void Sleep(unsigned int ms);
 extern CHIP_INFO Chip_Info;
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
-extern int is_SF100nBoardVersionGreaterThan_5_5_0(int Inde);
-//
+
+static usb_dev_handle *dediprog_handle;
+const char *devpath;
+
 bool Is_NewUSBCommand(int Index)
 {
 	if(is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index))
@@ -72,6 +78,54 @@ void IsSF600(int Index)
 }
 
 
+static int ResolveUSBDevice(void)
+{
+    struct usb_bus *bus;
+    struct usb_device *dev;
+    struct stat stats;
+    char busno[8], devno[8];
+
+    // skip if no device path given
+    if (!devpath)
+        return 0;
+
+    if (stat(devpath, &stats))
+    {
+        fprintf(stderr, "Failed to open %s\n", devpath);
+        exit(1);
+    }
+
+    // skip non-USB devices
+    if (major(stats.st_rdev) != 189)
+    {
+        fprintf(stderr, "Device %s is not a Dediprog\n", devpath);
+        exit(1);
+    }
+
+    // find USB bus and device numbers
+    snprintf(busno, sizeof(busno), "%03u", (minor(stats.st_rdev) >> 7) + 1);
+    snprintf(devno, sizeof(devno), "%03u", (minor(stats.st_rdev) % 128) + 1);
+
+    usb_db_init();
+
+    for (bus = usb_get_busses(); bus; bus = bus->next)
+    {
+        for (dev = bus->devices; dev; dev = dev->next)
+        {
+            if (!strcmp(dev->bus->dirname, busno) && !strcmp(dev->filename, devno))
+            {
+                usb_device_entry[0].usb_device_handler = *dev;
+                usb_device_entry[0].valid = 1;
+                return 1;
+            }
+        }
+    }
+
+    fprintf(stderr, "Device %s is not a Dediprog\n", devpath);
+    exit(1);
+}
+
+
 /* Might be useful for other USB devices as well. static for now. */
 static int FindUSBDevice(void)
 {
@@ -81,6 +135,7 @@ static int FindUSBDevice(void)
     unsigned int vid = 0x0483;
     unsigned int pid = 0xdada;
     usb_db_init();
+
     for (bus = usb_get_busses(); bus; bus = bus->next)
     {
         for (dev = bus->devices; dev; dev = dev->next)
@@ -119,7 +174,7 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
 
 
     if (dediprog_handle ) {
-        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, buf, buf_size, DEFAULT_TIMEOUT);
+        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, (char *)buf, buf_size, DEFAULT_TIMEOUT);
     }// else
       //  printf("no device");
     if(ret != buf_size)
@@ -168,7 +223,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
     if( rq->Function==URB_FUNCTION_VENDOR_OTHER )       requesttype |= 0x43;
 
     if (dediprog_handle ) {
-        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, buf, buf_size, DEFAULT_TIMEOUT);
+        ret = usb_control_msg(dediprog_handle, requesttype, rq->Request, rq->Value, rq->Index, (char *)buf, buf_size, DEFAULT_TIMEOUT);
     }// else
       //  printf("no device");
 
@@ -453,20 +508,19 @@ int dediprog_set_spi_clk(int khz)
 
 int usb_driver_init(void)
 {
-    struct usb_bus *bus;
-    struct usb_device *dev;
-
     int device_cnt = 0;
     int ret;
     dediprog_handle=NULL;
     usb_dev_init();
 
-    device_cnt = FindUSBDevice();
+    device_cnt = ResolveUSBDevice() || FindUSBDevice();
     if(usb_device_entry[device_cnt-1].valid==0)
     {
         printf("Error: Programmers are not connected.\n");
         return 0;
     }
+
+    printf("Using Dediprog at %s/%s\n", usb_device_entry[device_cnt-1].usb_device_handler.bus->dirname, usb_device_entry[device_cnt-1].usb_device_handler.filename);
 
     dediprog_handle = usb_open(&usb_device_entry[device_cnt-1].usb_device_handler);
     if(dediprog_handle==NULL)
