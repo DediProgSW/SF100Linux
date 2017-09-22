@@ -5,6 +5,7 @@
 
 #include "Macro.h"
 #include "ChipInfoDb.h"
+
 #define linebufsize 512
 #define filebufsize 1024*1024
 #define min(a,b) (((a)>(b))? (b):(a))
@@ -314,7 +315,7 @@ int Dedi_Search_Chip_Db(long RDIDCommand, long UniqueID, CHIP_INFO *Chip_Info, i
 	return found_flag; /*Executed without errors*/
 }/*End main*/
 
-int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO *Chip_Info, int search_all)
+int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO *Chip_Info, int Index)
 {
 	FILE* fp;       /*Declare file pointer variable*/
 	int    found_flag = 0,i;

@@ -5,7 +5,13 @@
 
 PROGRAM = dpcmd
 CC      = gcc
-CFLAGS  = -Os -Wall -lpthread
+CFLAGS  = -Os -Wall -lpthread 
+
+UNAME_OS := $(shell lsb_release -si)
+
+ifneq ($(UNAME_OS),Ubuntu)
+     CFLAGS+=-D_NON_UBUNTU
+endif
 
 FEATURE_LIBS += -lusb -lpthread
 PROGRAMMER_OBJS += dpcmd.o usbdriver.o FlashCommand.o SerialFlash.o parse.o board.o project.o IntelHexFile.o MotorolaFile.o

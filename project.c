@@ -13,17 +13,21 @@
 #include "usbdriver.h"
 #include "board.h"
 
+#include <pthread.h>
 #define min(a,b) (a>b? b:a)
 
-unsigned char* pBufferForLastReadData=NULL;
+unsigned char* pBufferForLastReadData[16]={NULL};
 unsigned char* pBufferforLoadedFile=NULL;
 unsigned long g_ulFileSize=0;
 unsigned int g_uiFileChecksum=0;
 unsigned char g_BatchIndex=2;
+unsigned int CompleteCnt=0; 
+bool m_bOperationResult[16]; 
+bool bAuto[16]={false}; 
 extern unsigned int g_ucFill;
 extern int m_boEnReadQuadIO;
 extern int m_boEnWriteQuadIO;
-extern volatile bool g_bIsSF600;
+extern volatile bool g_bIsSF600[16];
 extern char g_board_type[8];
 extern int g_firmversion;
 extern char* g_parameter_vcc;
@@ -46,15 +50,17 @@ extern int g_CurrentSeriase;
 extern struct CAddressRange DownloadAddrRange;
 extern struct CAddressRange UploadAddrRange;
 extern bool g_is_operation_on_going;
-extern bool g_is_operation_successful;
+extern bool g_is_operation_successful[16];
 extern unsigned int g_Vcc;
 extern unsigned int g_Vpp;
 extern unsigned int g_uiAddr;
 extern size_t g_uiLen;
 extern bool g_bEnableVpp;
+extern unsigned int g_uiDevNum; //evy add
+extern int FlashIdentifier(CHIP_INFO * Chip_Info, int search_all,int Index);
 
-extern int FlashIdentifier(CHIP_INFO * Chip_Info, int search_all);
 
+pthread_mutex_t g_count_mutex;
 #define FIRMWARE_VERSION(x,y,z) ((x<<16) | (y<<8) | z)
 
 enum FILE_FORMAT{
@@ -68,27 +74,26 @@ void Sleep(unsigned int mSec)
     usleep(mSec*1000);
 }
 
-void TurnONVpp(void)
+void TurnONVpp(int Index)
 {
     if(g_bEnableVpp==true)
-        dediprog_set_vpp_voltage(Chip_Info.VppSupport);
+        dediprog_set_vpp_voltage(Chip_Info.VppSupport,Index);
 }
 
-void TurnOFFVpp(void)
+void TurnOFFVpp(int Index)
 {
     if(g_bEnableVpp==true)
-        dediprog_set_vpp_voltage(0);
+        dediprog_set_vpp_voltage(0,Index);
 }
 
 void TurnONVcc(int Index)
-{
-//	printf("g_Vcc=%x\n",g_Vcc);
-	dediprog_set_spi_voltage(g_Vcc,Index);
+{  
+	dediprog_set_spi_voltage(g_Vcc,Index); 
 }
 
 void TurnOFFVcc(int Index)
-{
-	dediprog_set_spi_voltage(0,Index);
+{ 
+	dediprog_set_spi_voltage(0,Index); 
 }
 
 
@@ -121,12 +126,12 @@ int ReadBINFile(const char *filename,unsigned char *buf, unsigned long* size)
     fseek (pFile , 0 , SEEK_END);
     lSize = ftell (pFile);
     rewind (pFile);
-
     // allocate memory to contain the whole file:
     if(pBufferforLoadedFile!=NULL)
-        free(pBufferforLoadedFile);
+        free(pBufferforLoadedFile); 
 
-    pBufferforLoadedFile = (unsigned char*) malloc (sizeof(char)*lSize);
+    pBufferforLoadedFile = (unsigned char*) malloc (lSize);
+ 
 
     if (pBufferforLoadedFile == NULL)
     {
@@ -202,6 +207,7 @@ int GetFileFormatFromExt(const char* csPath)
 
 bool ReadFile(const char* csPath, unsigned char* buffer,unsigned long* FileSize,unsigned char PaddingByte)
 {
+ 
     switch(GetFileFormatFromExt(csPath))
     {
         case HEX :
@@ -215,7 +221,7 @@ bool ReadFile(const char* csPath, unsigned char* buffer,unsigned long* FileSize,
 
 // write file
 bool WriteFile(const char* csPath, unsigned char* buffer,unsigned int FileSize)
-{
+{ 
     switch(GetFileFormatFromExt(csPath))
     {
         case HEX :
@@ -228,16 +234,17 @@ bool WriteFile(const char* csPath, unsigned char* buffer,unsigned int FileSize)
 }
 
 bool  LoadFile(char* filename)
-{
+{ 
     bool result=true;
     unsigned long size;
     result &= ReadFile(filename,pBufferforLoadedFile, &size, g_ucFill);
     g_uiFileChecksum=CRC32(pBufferforLoadedFile,g_ulFileSize);
+ 
     return result;
 }
 
 bool IdentifyChipBeforeOperation(int Index)
-{
+{ 
     bool result = false;
     CHIP_INFO binfo;
     binfo.UniqueID=0;
@@ -247,17 +254,17 @@ bool IdentifyChipBeforeOperation(int Index)
         strstr(Chip_Info.Class, SUPPORT_SILICONBLUE_iCE65) != NULL)
         return true;
 
-    Found=FlashIdentifier(&binfo,0);
+    Found=FlashIdentifier(&binfo,0,Index);
+
 //	printf("\n binfo.UniqueID = 0x%lx, Chip_Info.UniqueID = 0x%lx\n", binfo.UniqueID,Chip_Info.UniqueID);
 
 	if(Found && (binfo.UniqueID == Chip_Info.UniqueID ||  binfo.UniqueID == Chip_Info.JedecDeviceID))
-		result = true;
-
+		result = true; 
     return result;
 }
 
 void PrepareProgramParameters(int Index)
-{
+{    
     size_t len = 0;
     size_t addrStart = 0;
 
@@ -267,12 +274,12 @@ void PrepareProgramParameters(int Index)
     size_t addrLeng = (0 == len) ? g_ulFileSize: len;
     DownloadAddrRange.start=addrStart;
     DownloadAddrRange.end=addrStart +  addrLeng;
-    DownloadAddrRange.length=addrLeng;
-
+    DownloadAddrRange.length=addrLeng; 
 }
 
 bool ValidateProgramParameters(int Index)
-{
+{ 
+
     PrepareProgramParameters(Index);
 
     /// special treatment for AT45DBxxxD
@@ -299,16 +306,16 @@ bool ValidateProgramParameters(int Index)
 }
 
 bool ProgramChip(int Index)
-{
+{ 
     bool need_padding = (g_ucFill != 0xFF);
     unsigned char* vc;
-    struct CAddressRange real_addr;
-    real_addr.start=(DownloadAddrRange.start &(~(0x200 - 1)));
-    real_addr.end=((DownloadAddrRange.end + (0x200 - 1)) & (~(0x200 - 1)));
-    real_addr.length=real_addr.end-real_addr.start;
-
-    vc=(unsigned char*)malloc(real_addr.length);
-    memset(vc,g_ucFill,real_addr.length);
+    struct CAddressRange real_addr[16];
+    real_addr[Index].start=(DownloadAddrRange.start &(~(0x200 - 1)));
+    real_addr[Index].end=((DownloadAddrRange.end + (0x200 - 1)) & (~(0x200 - 1)));
+    real_addr[Index].length=real_addr[Index].end-real_addr[Index].start;
+ 
+    vc=(unsigned char*)malloc(real_addr[Index].length);
+    memset(vc,g_ucFill,real_addr[Index].length);
 
     if(need_padding==true)
     {
@@ -319,8 +326,7 @@ bool ProgramChip(int Index)
         memcpy(vc+(DownloadAddrRange.start & 0x1FF),pBufferforLoadedFile,DownloadAddrRange.length);
     }
 
-    bool result= SerialFlash_rangeProgram(&real_addr, vc,Index);
-
+    bool result= SerialFlash_rangeProgram(&real_addr[Index], vc,Index); 
     return result;
 
 }
@@ -341,75 +347,63 @@ bool ReadChip(const struct CAddressRange range,int Index)
 
     if(result)
     {
-        if(pBufferForLastReadData != NULL)
-            free(pBufferForLastReadData);
-
+        if(pBufferForLastReadData[Index] != NULL)
+	{ 
+            free(pBufferForLastReadData[Index]);
+	}
         unsigned int offset = (addrStart & 0x1FF);
-        pBufferForLastReadData=(unsigned char*)malloc(range.length);
-        memcpy(pBufferForLastReadData,vc+offset,range.length);
+        pBufferForLastReadData[Index]=(unsigned char*)malloc(range.length);
+        memcpy(pBufferForLastReadData[Index],vc+offset,range.length);
         UploadAddrRange=range;
     }
 
     if(vc != NULL)
         free (vc);
 
-	return result;
+    return result;
 
 }
 
 bool threadBlankCheck(int Index)
-{
-    bool result = false;
-//    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
+{  
+    bool result = false; 
     struct CAddressRange Addr;
     Addr.start=0;
-    Addr.end=Chip_Info.ChipSizeInByte;
-
-    //(L"Blank Checking ...");
-
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(SITE_BUSY,Index);
+    Addr.end=Chip_Info.ChipSizeInByte;  
 
     SetIOMode(false,Index);
 
 
     result = SerialFlash_rangeBlankCheck(&Addr,Index) ;
 
-//	m_bOperationResult[Index]=result? 1:RES_BLANK;
+    m_bOperationResult[Index]=result? 1:RES_BLANK;
 #if 0
-	if( !bAuto[Index] )
-	{
 
-		m_context.runtime.elapsed_time_of_last_operation = timer.elapsed() ;
-		Log(wformat(L"Operation completed. \n%1% seconds elapsed.")%m_context.runtime.elapsed_time_of_last_operation);
+	if( !bAuto[Index] ) //not batch
+	{ 
+  
+	    	CompleteCnt++;   
+		/*if( CompleteCnt==get_usb_dev_cnt())
+		{ 
+                        g_is_operation_on_going = false;
+			//SerialFlash_ClearCancelOperationFlag();
+		}*/
 
-		CompleteCnt++;
-
-		if( CompleteCnt==GetDevNum() )
-		{
-			m_context.runtime.is_operation_on_going  = false;
-			m_chip[Index]->ClearCancelOperationFlag();
-		}
-
-		if(is_greater_than_5_0_0)
-			m_board->SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
 	}
-#endif
-//    SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
-//    g_is_operation_on_going  = false;
-    g_is_operation_successful = result;
+	else //batch
+	{     
+	   // SerialFlash_ClearCancelOperationFlag();
+ 
+	}
+#endif  
+    g_is_operation_successful[Index] = result; 
     return result;
 }
 
 bool threadEraseWholeChip(int Index)
-{
-	bool result = false;
-//	bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
-
-//	if(is_greater_than_5_0_0)
-//		SetLEDOnOff(SITE_BUSY,Index);
-
-//	Log(L"Erasing a whole chip ...");
+{  
+	 bool result = false;
+   
 
 //	power::CAutoVccPower autopowerVcc(m_usb, m_context.power.vcc,Index);
 //	power::CAutoVppPower autopowerVpp(m_usb, SupportedVpp(),Index);
@@ -420,41 +414,33 @@ bool threadEraseWholeChip(int Index)
 
 //	Log(result ? L"A whole chip erased" : L"Error: Failed to erase a whole chip");
 
-//	m_bOperationResult[Index]=result? 1:RES_ERASE;
+	m_bOperationResult[Index]=result? 1:RES_ERASE; 
 #if 0
-	if( !bAuto[Index] )
-	{
-		m_context.runtime.is_operation_successful = result;
-		m_context.runtime.elapsed_time_of_last_operation = timer.elapsed() ;
-		Log(wformat(L"Operation completed. \n%1% seconds elapsed.")%m_context.runtime.elapsed_time_of_last_operation);
-
-		CompleteCnt++;
-
-		if( CompleteCnt==GetDevNum() )
-		{
-			m_context.runtime.is_operation_on_going  = false;
-			m_chip[Index]->ClearCancelOperationFlag();
-		}
-
-		if(is_greater_than_5_0_0)
-			m_board->SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
+	if( !bAuto[Index] ) //not batch
+	{ 
+  
+	    	CompleteCnt++;   
+		 if( CompleteCnt==get_usb_dev_cnt())
+		{ 
+			g_is_operation_on_going=false;
+ 
+			SerialFlash_ClearCancelOperationFlag();
+		} 
 	}
-#endif
-//    SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
-   g_is_operation_successful = result;
-//    g_is_operation_on_going  = false;
+	else
+	{ 
+		SerialFlash_ClearCancelOperationFlag();
+	}
+#endif   
+       g_is_operation_successful[Index] = result;   
 	return result;
 }
 
 bool threadReadRangeChip(struct CAddressRange range,int Index)
 {
     bool result = true;
-//    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
-    struct CAddressRange AddrRound;
-
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(SITE_BUSY,Index);
-
+     struct CAddressRange AddrRound;
+ 
     SetIOMode(false,Index);
 
     AddrRound.start= (range.start &(~(0x1FF)));
@@ -462,14 +448,14 @@ bool threadReadRangeChip(struct CAddressRange range,int Index)
     AddrRound.length=AddrRound.end-AddrRound.start;
     unsigned char *pBuffer = malloc(AddrRound.length);
 
-    if(pBufferForLastReadData==NULL)
-        pBufferForLastReadData=malloc(range.end-range.start);
+    if(pBufferForLastReadData[Index]==NULL)
+        pBufferForLastReadData[Index]=malloc(range.end-range.start);
     else
-    {
-        free(pBufferForLastReadData);
-        pBufferForLastReadData=malloc(range.end-range.start);
+    { 
+        free(pBufferForLastReadData[Index]);
+        pBufferForLastReadData[Index]=malloc(range.end-range.start);
     }
-    if(pBufferForLastReadData==NULL)
+    if(pBufferForLastReadData[Index]==NULL)
     {
         printf("allocate memory fail.\n");
         free(pBuffer);
@@ -482,44 +468,37 @@ bool threadReadRangeChip(struct CAddressRange range,int Index)
         UploadAddrRange.start = range.start;
         UploadAddrRange.end= range.end;
         UploadAddrRange.length = range.end-range.start;
-        memcpy(pBufferForLastReadData,pBuffer+ (UploadAddrRange.start & 0x1FF),UploadAddrRange.length);
+        memcpy(pBufferForLastReadData[Index],pBuffer+ (UploadAddrRange.start & 0x1FF),UploadAddrRange.length);
     }
-    free(pBuffer);
-
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
-
+     free(pBuffer); 
+ 
     return result;
-
 }
 
 bool threadReadChip(int Index)
 {
-    bool result = false;
-//    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
+    bool result = false; 
     struct CAddressRange Addr;
     Addr.start=0;
     Addr.end=Chip_Info.ChipSizeInByte;
-
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(SITE_BUSY,Index);
+ 
 
     SetIOMode(false,Index);
 
-    if(pBufferForLastReadData==NULL)
-            pBufferForLastReadData=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
+    if(pBufferForLastReadData[Index]==NULL)
+            pBufferForLastReadData[Index]=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
     else
     {
-        free(pBufferForLastReadData);
-        pBufferForLastReadData=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
+        free(pBufferForLastReadData[Index]);
+        pBufferForLastReadData[Index]=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
     }
-    if(pBufferForLastReadData==NULL)
+    if(pBufferForLastReadData[Index]==NULL)
     {
         printf("allocate memory fail.\n");
         return false;
     }
 
-    result =  SerialFlash_rangeRead(&Addr, pBufferForLastReadData,Index);
+    result =  SerialFlash_rangeRead(&Addr, pBufferForLastReadData[Index],Index);
 
     if(result)
     {
@@ -527,11 +506,9 @@ bool threadReadChip(int Index)
         UploadAddrRange.end=Chip_Info.ChipSizeInByte;
         UploadAddrRange.length=Chip_Info.ChipSizeInByte;
     }
+ 
 
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(result?SITE_OK:SITE_ERROR,Index);
-
-    g_is_operation_successful = result;
+    g_is_operation_successful[Index] = result;
 
     return result;
 }
@@ -560,49 +537,76 @@ bool threadConfiguredReadChip(int Index)
         result = threadReadRangeChip(addr,Index);
     }
 
-    g_is_operation_successful = result;
+    g_is_operation_successful[Index] = result;
 //    g_is_operation_on_going  = false;
     return result;
 }
 
 bool threadProgram(int Index)
-{
-    bool result = true;
+{ 
+    int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restricattr);
+ 
+    bool result = true; 
+
     SetIOMode(true,Index);
 
-
+    pthread_mutex_lock(&g_count_mutex); 
     if(g_ulFileSize== 0)
     {
-        result = false;
+        result = false; 
     }
 
     if( result && (!ValidateProgramParameters(Index)) )
     {
-        result = false;
-    }
+	//printf("evy - program failed1(%df)\n",Index);
+        result = false;  
+    } 
+    pthread_mutex_unlock(&g_count_mutex);
+
+    int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
     if( result && ProgramChip(Index))
     {
+	//printf("evy - program failed2(%d)\n",Index);
         result = true;
     }
     else
     {
-        result = false;
+	//printf("evy - program failed3(%d)\n",Index);
+        result = false; 
     }
 
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
-    g_is_operation_successful = result;
+#if 0
+
+    /*  if( !bAuto[Index] ) 
+    { 
+   	
+	 CompleteCnt++;   
+	
+       if( CompleteCnt==get_usb_dev_cnt() )
+	{
+		//m_context.runtime.is_operation_on_going  = false;
+		//m_chip[Index]->ClearCancelOperationFlag(); 
+                g_is_operation_on_going = false;
+		 SerialFlash_ClearCancelOperationFlag();
+	}
+
+    }
+    else
+    { 
+	  //  SerialFlash_ClearCancelOperationFlag();
+ 
+    }*/  
+#endif  
+ 
+                 
+    g_is_operation_successful[Index] = result;
     return result;
 }
 
 bool threadCompareFileAndChip(int Index)
-{
-    bool result = true;
-//    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
-
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(SITE_BUSY,Index);
+{ 
+    bool result = true;    
 
     SetIOMode(false,Index);
 
@@ -618,7 +622,7 @@ bool threadCompareFileAndChip(int Index)
 
         size_t offset = min(DownloadAddrRange.length,g_ulFileSize);
         unsigned int crcFile = CRC32(pBufferforLoadedFile,offset);
-        unsigned int crcChip = CRC32(pBufferForLastReadData,offset);
+        unsigned int crcChip = CRC32(pBufferForLastReadData[Index],offset);
 //        unsigned int i=0;
         #if 0
         for(i=0; i<10; i++)
@@ -630,11 +634,31 @@ bool threadCompareFileAndChip(int Index)
 
         result = (crcChip == crcFile);
     }
+ 
+#if 0
 
-//    if(is_greater_than_5_0_0)
-//        SetLEDOnOff(result? SITE_OK:SITE_ERROR,Index);
+	if( !bAuto[Index] ) //not batch
+	{  
+	    	 
+	    	CompleteCnt++;   
+		/*if( CompleteCnt==get_usb_dev_cnt() )
+		{
+			//m_context.runtime.is_operation_on_going  = false;
+			//m_chip[Index]->ClearCancelOperationFlag(); 
+                        g_is_operation_on_going = false;
+			//SerialFlash_ClearCancelOperationFlag();
+		}*/
 
-    g_is_operation_successful = result;
+	}
+	else
+	{ 
+  	  //  g_is_operation_on_going = false;
+	  //  SerialFlash_ClearCancelOperationFlag();
+ 
+	}
+#endif    
+
+    g_is_operation_successful[Index] = result;
     return result;
 }
 
@@ -689,6 +713,8 @@ bool BlazeUpdate(int Index)
 //        SetPageSize(&Chip_Info,Index);
 
     // dealwith lock phase 1
+ 
+
     struct CAddressRange down_with_lock_range;//(m_context.runtime.range_download);
     down_with_lock_range.start=DownloadAddrRange.start;
     down_with_lock_range.end=DownloadAddrRange.end;
@@ -699,14 +725,14 @@ bool BlazeUpdate(int Index)
     effectiveRange.start=down_with_lock_range.start &(~(Chip_Info.MaxErasableSegmentInByte - 1)) ;
     effectiveRange.end=(down_with_lock_range.end + (Chip_Info.MaxErasableSegmentInByte - 1)) & (~(Chip_Info.MaxErasableSegmentInByte - 1));
     effectiveRange.length=effectiveRange.end-effectiveRange.start;
-
+ 
     if(!threadReadRangeChip(effectiveRange,Index)) return false;
 
     unsigned int offsetOfRealStartAddrOffset = DownloadAddrRange.start - effectiveRange.start;
 
     unsigned char* vc;
     vc=(unsigned char*)malloc(effectiveRange.length);
-    memcpy(vc,pBufferForLastReadData,effectiveRange.length);
+    memcpy(vc,pBufferForLastReadData[Index],effectiveRange.length);
     uintptr_t* addrs=(size_t*)malloc(min(DownloadAddrRange.length,g_ulFileSize));
     size_t Leng=0;
     Leng=GenerateDiff(addrs,vc+offsetOfRealStartAddrOffset,DownloadAddrRange.length,pBufferforLoadedFile,g_ulFileSize,DownloadAddrRange.start,Chip_Info.MaxErasableSegmentInByte);
@@ -819,13 +845,12 @@ bool RangeUpdate(int Index)
         : RangeUpdateThruChipErase(Index);
 }
 bool ReplaceChipContentThruChipErase(int Index)
-{
-	if(!threadBlankCheck(Index))//not blank
-	{
-		if(!threadEraseWholeChip(Index))
-			return false;
-	}
-
+{  
+    if(!threadBlankCheck(Index))//not blank
+    { 
+        if(!threadEraseWholeChip(Index))
+	return false;
+    } 
     return threadProgram(Index);
 }
 
@@ -839,7 +864,7 @@ bool threadPredefinedBatchSequences(int Index)
 //    bool bVerifyAfterCompletion;
        //  07.11.2009
 //    bool bIdentifyBeforeOperation;
-
+ 
     if( result && (!ValidateProgramParameters(Index)) ) result = false;
 #if 0
     if(strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx)!= NULL
@@ -847,119 +872,152 @@ bool threadPredefinedBatchSequences(int Index)
 		||strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx_PP32)!=NULL)
 		Sleep(10);
 #endif
-
+ 
     if( result )
     {
     	switch(g_BatchIndex)
     	{
-    		case 1:
-				result=ReplaceChipContentThruChipErase(Index);
-				break;
-			case 2:
-			default:
-				result = RangeUpdate(Index);
-				break;
+    		case 1: //-z
+		    	result=ReplaceChipContentThruChipErase(Index);
+			break;
+		case 2:
+		default:
+			result = RangeUpdate(Index);
+			break;
     	}
-    }
-
+    } 
 	return result;
 }
 
 void threadRun(void* Type)
-{
+{    
+ 
     THREAD_STRUCT* thread_data=(THREAD_STRUCT*)Type;
     OPERATION_TYPE opType=thread_data->type;
-    int Index=thread_data->USBIndex;
-    g_is_operation_successful = true;
-
-    g_is_operation_on_going = true;
-
+    int Index=thread_data->USBIndex; 
+    g_is_operation_successful[Index] = true;
+    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
+   
+ 
     if( opType==UPDATE_FIRMWARE )
-    {
-		g_is_operation_successful=UpdateFirmware(g_parameter_fw, Index);
-		g_is_operation_on_going=false;
-		free(Type);
+    { 
+        g_is_operation_successful[Index]=UpdateFirmware(g_parameter_fw, Index);
+	g_is_operation_on_going=false;
+	free(Type);
         return;
     }
     if(opType==AUTO_UPDATE_FIRMWARE)
-    {
-		free(Type);
+    { 
+	free(Type);
         return;
     }
 
     if(1)//is_good())
-    {
+    {   
         TurnONVcc(Index);
-        bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
-
-        if(is_greater_than_5_0_0)
-            SetLEDOnOff(SITE_BUSY,Index);
-
+        if(is_greater_than_5_0_0) 
+	{
+	    SetLEDOnOff(SITE_BUSY,Index);   
+	} 
+        
         if(IdentifyChipBeforeOperation(Index)==false)
-        {
-			printf("Warning: Failed to detect flash.\r\n");
-			g_is_operation_on_going = false;
-			g_is_operation_successful = false;
-			SetLEDOnOff(g_is_operation_successful? SITE_OK:SITE_ERROR,Index);
-			TurnOFFVcc(Index);
-			free(Type);
-			return;
+        {  
+	    printf("Warning: Failed to detect flash (%d).\r\n",Index); 
+	    g_is_operation_successful[Index] = false; 
+	   
         }
-        // operations
-		switch(opType)
+        else
+	{
+		switch(opType) // operations
 		{
-			case BLANKCHECK_WHOLE_CHIP:
+			case BLANKCHECK_WHOLE_CHIP:  
 				threadBlankCheck(Index);
 				break;
-
-			case ERASE_WHOLE_CHIP:
+		
+			case ERASE_WHOLE_CHIP: 
 				threadEraseWholeChip(Index);
 				break;
 
-			case PROGRAM_CHIP:
-				TurnONVpp();
-				threadProgram(Index);
+			case PROGRAM_CHIP: 
+
+				TurnONVpp(Index);
+				threadProgram(Index); 
+    				TurnOFFVpp(Index); 
 				break;
 
 			case READ_WHOLE_CHIP:
-//                    m threadReadChip(Index);
+	//                   m threadReadChip(Index);
 				break;
 
 			case READ_ANY_BY_PREFERENCE_CONFIGURATION:
 				threadConfiguredReadChip(Index);
 				break;
 
-			case VERIFY_CONTENT:
+			case VERIFY_CONTENT: 
 				threadCompareFileAndChip(Index);
 				break;
 
-			case AUTO:
-				TurnONVpp();
+			case AUTO: 
+				TurnONVpp(Index);
+				bAuto[Index]=true;
 				threadPredefinedBatchSequences(Index) ;
+                                TurnOFFVpp(Index); 
 				break;
 
-			default:
+		 	default:
 				break;
 		}
-	}
-	TurnOFFVcc(Index);
-	TurnOFFVpp();
-	SetLEDOnOff(g_is_operation_successful? SITE_OK:SITE_ERROR,Index);
-	g_is_operation_on_going  = false;
-	free(Type);
+ 	} 
+	 
+    }  
+  
+    SetLEDOnOff(g_is_operation_successful[Index]? 	   SITE_OK:SITE_ERROR,Index); 
+
+    TurnOFFVcc(Index);   
+    free(Type);      
+    CompleteCnt++;
+    if(g_uiDevNum!=0)
+	g_is_operation_on_going = false;
+    else if( CompleteCnt==get_usb_dev_cnt())  
+        g_is_operation_on_going = false;  
+   
 }
 
 
-void Run(OPERATION_TYPE type)
-{
-    pthread_t id;
-//    int ret;
+void Run(OPERATION_TYPE type,int DevIndex)
+{   
+    int dev_cnt=get_usb_dev_cnt(); 
+    pthread_t id; 
+    THREAD_STRUCT *thread_data[16];  
+    CompleteCnt = 0; 
+ 
     g_is_operation_on_going = true;
-    THREAD_STRUCT *thread_data=(THREAD_STRUCT*)malloc(sizeof(THREAD_STRUCT));
-    thread_data->type=type;
-    thread_data->USBIndex=0;
-    pthread_create(&id,NULL,(void *) threadRun,(void*)thread_data);
 
+    if(DevIndex==0)//mutiple 
+    { 
+	for(int i=0;i<dev_cnt;i++)
+	{   
+            thread_data[i]=(THREAD_STRUCT*)malloc(sizeof(THREAD_STRUCT));
+	    thread_data[i]->type=type;
+	    bAuto[i]=false; 
+	    thread_data[i]->USBIndex=i;  
+   	    pthread_create(&id,NULL,(void *) threadRun,(void*)thread_data[i]); 
+   	     
+	}
+    }
+    else if(DevIndex<=dev_cnt)
+    { 	 
+        thread_data[DevIndex-1]=(THREAD_STRUCT*)malloc(sizeof(THREAD_STRUCT));
+        thread_data[DevIndex-1]->type=type;
+        bAuto[DevIndex-1]=false;
+	printf("\nSlot %d (%06d)",DevIndex,ReadUID(DevIndex-1)); 
+        thread_data[DevIndex-1]->USBIndex=DevIndex-1; //0;
+        pthread_create(&id,NULL,(void *) threadRun,(void*)thread_data[DevIndex-1]); 
+    }
+    else 
+        printf("Error: Did not find the programmer.\r\n");
+ 
+	
 }
 
 void SetIOMode(bool isProg,int Index)
@@ -968,7 +1026,7 @@ void SetIOMode(bool isProg,int Index)
     m_boEnReadQuadIO=0;
     m_boEnWriteQuadIO=0;
 
-    if(g_bIsSF600==false) return;
+    if(g_bIsSF600[Index]==false) return;
 
     SetIOModeToSF600(IOValue, Index);
     return;
@@ -1067,21 +1125,21 @@ void SetIOMode(bool isProg,int Index)
 #endif
 }
 
-int is_BoardVersionGreaterThan_5_0_0(int Index)
+bool is_BoardVersionGreaterThan_5_0_0(int Index)
 {
     if(g_firmversion < FIRMWARE_VERSION(5, 0, 0))
         return false;
     return true;
 }
 
-int is_SF100nBoardVersionGreaterThan_5_5_0(int Index)
+bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index)
 {
 	if((g_firmversion >= FIRMWARE_VERSION(5, 5, 0)) && strstr(g_board_type,"SF100") != NULL)
         return true;
     return false;
 }
 
-int is_SF600nBoardVersionGreaterThan_6_9_0(int Index)
+bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index)
 {
 //	printf("g_board_type=%s\r\n",g_board_type);
 	if(strstr(g_board_type,"SF600") != NULL)
@@ -1095,14 +1153,14 @@ int is_SF600nBoardVersionGreaterThan_6_9_0(int Index)
     return false;
 }
 
-int is_SF100nBoardVersionGreaterThan_5_2_0(int Index)
+bool is_SF100nBoardVersionGreaterThan_5_2_0(int Index)
 {
 	if((g_firmversion >= FIRMWARE_VERSION(5, 2, 0)) && strstr(g_board_type,"SF100") != NULL)
         return true;
     return false;
 }
 
-int is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Index)
+bool is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Index)
 {
 	if(strstr(g_board_type,"SF600") != NULL)
 	{
@@ -1132,9 +1190,9 @@ CHIP_INFO GetFirstDetectionMatch(int Index)
 			g_Vcc=vcc1_8V-i;
 
 		TurnONVcc(Index);
-		if(Is_usbworking())
+		if(Is_usbworking(Index))
 		{
-			if(g_bIsSF600==true)
+			if(g_bIsSF600[Index]==true)
 			{
 				int startmode;
 
@@ -1144,20 +1202,20 @@ CHIP_INFO GetFirstDetectionMatch(int Index)
 					SetTargetFlash(STARTUP_APPLI_SF_1,Index);
 
 				startmode=g_StartupMode;
-				Found=FlashIdentifier(&binfo,0);
+				Found=FlashIdentifier(&binfo,0,Index);
 				if(Found==0)
 				{
 					TurnOFFVcc(Index);
 					SetTargetFlash(STARTUP_APPLI_SF_SKT,Index);
 					g_CurrentSeriase=Seriase_25;
 					TurnONVcc(Index);
-					Found=FlashIdentifier(&binfo,0);
+					Found=FlashIdentifier(&binfo,0,Index);
 					if(Found==0)
 					{
 						TurnOFFVcc(Index);
 						g_CurrentSeriase=Seriase_45;
 						TurnONVcc(Index);
-						Found=FlashIdentifier(&binfo,0);
+						Found=FlashIdentifier(&binfo,0,Index);
 						if(Found==0)
 							g_StartupMode=startmode;
 					}
@@ -1165,7 +1223,7 @@ CHIP_INFO GetFirstDetectionMatch(int Index)
 			}
 			else
 			{
-				Found=FlashIdentifier(&binfo,0);
+				Found=FlashIdentifier(&binfo,0,Index);
 			}
 		}
 		TurnOFFVcc(Index);
@@ -1187,7 +1245,7 @@ void InitLED(int Index)
         SetLEDOnOff(SITE_NORMAL,Index);
 }
 
-void SetProgReadCommand(void)
+void SetProgReadCommand(int Index)
 {
     static const unsigned int AT26DF041 = 0x1F4400;
     static const unsigned int AT26DF004 = 0x1F0400;
@@ -1411,7 +1469,7 @@ bool ProjectInitWithID(CHIP_INFO chipinfo,int Index) // by designated ID
     DownloadAddrRange.end=Chip_Info.ChipSizeInByte;
     InitLED(Index);
 //    SetTargetFlash(g_StartupMode,Index); //for SF600 Freescale issue
-    SetProgReadCommand();
+    SetProgReadCommand(Index);
 	if(strcmp(g_parameter_vcc,"NO") == 0)
 	{
 		switch(Chip_Info.VoltageInMv)

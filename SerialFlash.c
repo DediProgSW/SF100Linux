@@ -30,8 +30,7 @@ unsigned int g_AT45_PageSizeMask=0;
 size_t AT45ChipSize=0;
 size_t AT45PageSize=0;
 bool AT45doRDSR(unsigned char* cSR, int Index)
-{
-    unsigned char Out=0xD7;
+{ 
     CNTRPIPE_RQ rq ;
     unsigned char vInstruction;    //size 1
 
@@ -1245,7 +1244,7 @@ int SerialFlash_Enable4ByteAddrMode(int bEnable,int Index)
 //			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
         return CN25Qxxx_LargeEnable4ByteAddrMode(bEnable, Index);
 
-	return SerialFlash_TRUE;
+    return SerialFlash_TRUE;
 }
 
 
@@ -1525,6 +1524,7 @@ int SerialFlash_chipErase(int Index)
         return AT45chipErase(0, Chip_Info.ChipSizeInByte, Index);
 
     if( SerialFlash_protectBlock(false,Index) == SerialFlash_FALSE)  return false ;
+
     SerialFlash_waitForWEL(Index) ;
     unsigned char v = mcode_ChipErase;
     FlashCommand_SendCommand_OutOnlyInstruction(&v,1,Index);

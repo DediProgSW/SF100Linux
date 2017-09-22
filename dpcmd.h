@@ -62,11 +62,11 @@ enum
 int Sequence();
 void cli_classic_usage(bool IsShowExample);
 bool InitProject(void);
-void CloseProject(void);
+void CloseProject(void); 
 bool DetectChip(void);
-void SetVpp(void);
-void SetSPIClock(void);
-void SetVcc(void);
+void SetVpp(int Index);
+void SetSPIClock(int Index);
+void SetVcc(int Index);
 int do_loadFile(void);
 void BlinkProgrammer(void);
 void ListSFSerialID(void);

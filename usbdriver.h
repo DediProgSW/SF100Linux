@@ -25,9 +25,8 @@
 #define VENDOR_DIRECTION_OUT                        0
 
 #define DEFAULT_TIMEOUT                             30000
-
-static usb_dev_handle *dediprog_handle=NULL;
-#define MAX_Dev_Index   10
+ 
+#define MAX_Dev_Index   16
 
 typedef struct usb_device_entry {
     struct usb_device usb_device_handler;
@@ -55,8 +54,9 @@ usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
 #define ERROR_ON	(0 << 2)
 #define ERROR_OFF	(1 << 2)
 
-int usb_driver_init(void);
-
+int dev_index;
+int usb_driver_init(void); 
+int get_usb_dev_cnt(void);
 int usb_driver_release(void);
 
 int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size ,int Index );
@@ -66,7 +66,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
 int BulkPipeRead(unsigned char *pBuff, unsigned int timeOut, int Index);
 
 int dediprog_set_spi_voltage(int millivolt, int Index);
-int dediprog_set_vpp_voltage(int volt);
+int dediprog_set_vpp_voltage(int volt,int Index);
 
 
 long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size ,int Index);

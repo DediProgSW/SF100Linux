@@ -20,7 +20,7 @@ void QueryBoard(int Index)
 {
 //	printf("QueryBoard\r\n");
     return;
-    if(!Is_usbworking())
+    if(!Is_usbworking(Index))
     {
 	 printf("Do not find SFxx programmer!!\n");
         return ;
@@ -148,7 +148,7 @@ bool SetTargetFlash(unsigned char StartupMode,int Index)
 
 bool SetLEDProgBoard(size_t Color,int Index)
 {
-    if(! Is_usbworking())
+    if(! Is_usbworking(Index))
     {
         return false;
     }
@@ -195,23 +195,28 @@ bool SetRedLEDOn(bool boOn, int Index)
 
 bool SetLEDOnOff(size_t Color,int Index)
 {
+    bool result=true;
     switch(Color)
     {
         case SITE_ERROR:
-            return SetRedLEDOn(true,Index);
+            result&=SetRedLEDOn(true,Index);
+	    break;
         case SITE_BUSY:
-            return SetOrangeLEDOn(true,Index);
+            result&=SetOrangeLEDOn(true,Index);
+	    break;
         case SITE_OK:
-            return SetGreenLEDOn(true,Index);
+            result&=SetGreenLEDOn(true,Index);
+	    break;
         case SITE_NORMAL:
-            return SetLEDProgBoard(0x0709,Index);// Turn off LED
-    }
-    return false;
+            result&=SetLEDProgBoard(0x0709,Index);// Turn off LED
+	    break;
+    }  
+    return result;
 }
 
 bool SetCS(size_t value,int Index)
 {
-    if(! Is_usbworking())
+    if(! Is_usbworking(Index))
     {
         return false;
     }
@@ -235,7 +240,7 @@ bool SetCS(size_t value,int Index)
 
 bool SetIOModeToSF600(size_t value,int Index)
 {
-    if(! Is_usbworking())
+    if(! Is_usbworking(Index))
     {
         return false;
     }
@@ -259,16 +264,16 @@ bool SetIOModeToSF600(size_t value,int Index)
 
 bool BlinkProgBoard(bool boIsV5,int Index)
 {
-    if(! Is_usbworking() )
+    if(! Is_usbworking(Index) )
     {
         return false;
     }
 
-    SetGreenLEDOn(true,0);
+    SetGreenLEDOn(true,Index);
 
     Sleep(500);
 
-    SetGreenLEDOn(false,0);
+    SetGreenLEDOn(false,Index);
 
     return true;
 }
@@ -300,9 +305,9 @@ bool ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index)
     memcpy(Data,vBuffer,16);
 }
 
-bool LeaveSF600Standalone(bool Enable,int USBIndex)
+bool LeaveSF600Standalone(bool Enable,int Index)
 {
-    if(! Is_usbworking())
+    if(! Is_usbworking(Index))
     {
         return false;
     }
@@ -316,7 +321,7 @@ bool LeaveSF600Standalone(bool Enable,int USBIndex)
     rq.Index = RFU ;
     rq.Length = 0 ;
 
-    if(OutCtrlRequest(&rq,&vBuffer,0,USBIndex)==SerialFlash_FALSE)
+    if(OutCtrlRequest(&rq,&vBuffer,0,Index)==SerialFlash_FALSE)
     {
         return false;
     }
@@ -326,7 +331,7 @@ bool LeaveSF600Standalone(bool Enable,int USBIndex)
 
 bool SetSPIClockValue(unsigned short v,int Index)
 {
-    if(!Is_usbworking() )
+    if(!Is_usbworking(Index) )
         return false;
 
     // send request
@@ -347,7 +352,7 @@ bool SetSPIClockValue(unsigned short v,int Index)
 
 unsigned int ReadUID(int Index)
 {
-    if(! Is_usbworking() )
+    if(! Is_usbworking(Index) )
     {
         return false;
     }
@@ -383,7 +388,7 @@ unsigned int ReadUID(int Index)
 
 bool SetSPIClockDefault(int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 			return false;
 	// send request
 	CNTRPIPE_RQ rq ;
@@ -406,7 +411,7 @@ bool SetSPIClockDefault(int Index)
 
 bool SetVpp4IAP(bool bOn,int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 	// send request
 	CNTRPIPE_RQ rq ;
@@ -430,7 +435,7 @@ bool SetVpp4IAP(bool bOn,int Index)
 
 bool UnlockRASS(int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	// send request
@@ -453,7 +458,7 @@ bool UnlockRASS(int Index)
 
 unsigned char ReadManufacturerID(int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	if(g_bIsSF600==true)
@@ -484,7 +489,7 @@ unsigned char ReadManufacturerID(int Index)
 
 bool EraseST7Sectors(bool bSect1,int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	// send request
@@ -602,7 +607,7 @@ bool ProgramSectors(const char* sFilePath, bool bSect1,int Index)
 
 bool UpdateChkSum(int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	CNTRPIPE_RQ rq ;
@@ -626,7 +631,7 @@ bool UpdateChkSum(int Index)
 
 bool WriteUID(unsigned int dwUID,int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	if(g_bIsSF600)
@@ -669,7 +674,7 @@ bool WriteUID(unsigned int dwUID,int Index)
 
 bool WriteManufacturerID(unsigned char ManuID,int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	if(g_bIsSF600)
@@ -696,7 +701,7 @@ bool WriteManufacturerID(unsigned char ManuID,int Index)
 
 bool ReadMemOnST7(unsigned int iAddr,int Index)
 {
-	if(!Is_usbworking() )
+	if(!Is_usbworking(Index) )
 		return false;
 
 	CNTRPIPE_RQ rq ;

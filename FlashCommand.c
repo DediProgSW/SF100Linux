@@ -60,7 +60,7 @@ int FlashCommand_TransceiveIn(unsigned char *v, int len, int Index)
 
 
 int FlashCommand_SendCommand_OutOnlyInstruction(unsigned char *v, int len, int Index)
-{
+{ 	 
    return FlashCommand_TransceiveOut(v, len,NO_RESULT_IN, Index);
 }
 
@@ -145,8 +145,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange *AddrR
 		rq.Value = (unsigned short)(AddrRange->start  & 0xffff) ;           //16 bits LSB
 		rq.Index = (unsigned short)((AddrRange->start >> 16) & 0xffff) ;    //16 bits MSB
 		rq.Length = (unsigned long)(5) ;
-	}
-
+	} 
     // send rq via control pipe
     return OutCtrlRequest(&rq, vInstruction, rq.Length,Index);
 }
