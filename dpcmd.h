@@ -94,6 +94,6 @@ void GetLogPath(char* path);
 bool Wait(const char* strOK,const char* strFail);
 void ExitProgram(void);
 int FirmwareUpdate();
-
+void sin_handler(int sig);
 
 #endif
