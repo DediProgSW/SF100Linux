@@ -20,6 +20,8 @@
 #include "board.h"
 #include "FlashCommand.h"
 #define min(a,b) (a>b? b:a)
+ 
+#include <signal.h> 
 
 extern unsigned char* pBufferForLastReadData[16];
 extern unsigned char* pBufferforLoadedFile;
@@ -491,7 +493,12 @@ int main(int argc, char *argv[])
 	bool bDetect=false;
 	bool bDevice=false;
 
-	printf("\nDpCmd Linux 1.2.1.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
+
+	
+
+	signal(SIGINT, sin_handler);
+
+	printf("\nDpCmd Linux 1.3.1.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -668,24 +675,27 @@ int main(int argc, char *argv[])
 				
 			    int dwUID=ReadUID(i); 
 			    if((dwUID/600000)>0)
-			        printf("\nDevice %d (SF%06d):\tdetecting chip\r\n",i+1,dwUID);  
-		   	    else 
+			    {
+				printf("\nDevice %d (SF%06d):\tdetecting chip\r\n",i+1,dwUID);  
+			    }
+		   	    else
+			    { 
 				printf("\nDevice %d (DP%06d):\tdetecting chip\r\n",i+1,dwUID); 
- 
-				WriteLog(iExitCode, true); 
-				Chip_Info=GetFirstDetectionMatch(i);
-				if(Chip_Info.UniqueID !=0 )
-				{
-					printf("By reading the chip ID, the chip applies to [ %s ]\r\n", Chip_Info.TypeName);
-					printf("%s chip size is %zd bytes.\r\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
-				}
-				else
-				{ 
-                                    printf("%s",msg_err_identifychip);
-				    iExitCode=EXCODE_FAIL_IDENTIFY;
-				}
-			}
-		}
+ 			    }
+			    WriteLog(iExitCode, true); 
+			    Chip_Info=GetFirstDetectionMatch(i);
+			    if(Chip_Info.UniqueID !=0 )
+			    {
+				printf("By reading the chip ID, the chip applies to [ %s ]\r\n", Chip_Info.TypeName);
+				printf("%s chip size is %zd bytes.\r\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
+			    }
+			    else
+			    { 
+                                printf("%s",msg_err_identifychip);
+				iExitCode=EXCODE_FAIL_IDENTIFY;
+			    } 
+		        }
+	 	}
 		else if(g_uiDevNum!=0)
 		{	
 			WriteLog(iExitCode, true);
@@ -936,6 +946,15 @@ int OpenUSB(void)
      return usb_driver_init();
 }
 
+
+void sin_handler(int sig)
+{
+	if(sig==SIGINT)
+	{	
+		;
+	}
+}
+
 int Handler(void)
 {
     if(Is_usbworking(0)==true)
@@ -960,6 +979,10 @@ int Handler(void)
             ListSFSerialID();
             return EXCODE_PASS;
         }
+	
+
+
+
     }
     else
     {
