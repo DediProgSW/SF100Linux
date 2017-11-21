@@ -1722,7 +1722,7 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
         }
     }
     else
-    {
+    { 
         pageNum = AddrRange->length >> 9 ;
         FlashCommand_SendCommand_SetupPacketForBulkRead(AddrRange, modeRead,ReadCom,Index);
         for(i = 0; i < pageNum; ++ i)
@@ -1732,13 +1732,14 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
             {
                 return false ;
             }
-            //memcpy(vData + i*ret, v, ret);
+            //memcpy(vData + i*ret, v, ret); 
         }
     }
     if(SerialFlash_EnableQuadIO(false,m_boEnReadQuadIO,Index) == SerialFlash_FALSE)
         return false;
     SerialFlash_Enable4ByteAddrMode(false, Index);
-	return true ;
+{ 
+	return true ; }
 }
 
 

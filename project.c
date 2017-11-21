@@ -437,7 +437,7 @@ bool threadEraseWholeChip(int Index)
 }
 
 bool threadReadRangeChip(struct CAddressRange range,int Index)
-{
+{ 
     bool result = true;
      struct CAddressRange AddrRound;
  
@@ -445,7 +445,8 @@ bool threadReadRangeChip(struct CAddressRange range,int Index)
 
     AddrRound.start= (range.start &(~(0x1FF)));
     AddrRound.end=((range.end +0x1FF) & (~(0x1FF)));
-    AddrRound.length=AddrRound.end-AddrRound.start;
+    AddrRound.length=AddrRound.end-AddrRound.start; 
+
     unsigned char *pBuffer = malloc(AddrRound.length);
 
     if(pBufferForLastReadData[Index]==NULL)
@@ -463,13 +464,16 @@ bool threadReadRangeChip(struct CAddressRange range,int Index)
     }
 
     result = SerialFlash_rangeRead(&AddrRound,  pBuffer, Index);
+ 
     if(result)
     {
         UploadAddrRange.start = range.start;
         UploadAddrRange.end= range.end;
         UploadAddrRange.length = range.end-range.start;
         memcpy(pBufferForLastReadData[Index],pBuffer+ (UploadAddrRange.start & 0x1FF),UploadAddrRange.length);
-    }
+ 
+    } 
+
      free(pBuffer); 
  
     return result;
@@ -530,7 +534,7 @@ bool threadConfiguredReadChip(int Index)
     }
     else if(0 == addr.start && (0 == addr.length))
     {
-        result = threadReadChip(Index);
+        result = threadReadChip(Index); 
     }
     else
     {
@@ -897,7 +901,15 @@ void threadRun(void* Type)
     int Index=thread_data->USBIndex; 
     g_is_operation_successful[Index] = true;
     bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
-   
+     
+    int dwUID=ReadUID(Index);
+    if( g_uiAddr==0 && g_uiLen ==0)
+    {  
+        if((dwUID / 600000)==0) 
+            printf("\nDevice %d (DP%06d):",Index,dwUID);  
+        else 
+            printf("\nDevice %d (SF%06d):",Index,dwUID); 
+    }
  
     if( opType==UPDATE_FIRMWARE )
     { 
@@ -997,6 +1009,7 @@ void Run(OPERATION_TYPE type,int DevIndex)
     { 
 	for(int i=0;i<dev_cnt;i++)
 	{   
+	  
             thread_data[i]=(THREAD_STRUCT*)malloc(sizeof(THREAD_STRUCT));
 	    thread_data[i]->type=type;
 	    bAuto[i]=false; 
@@ -1009,8 +1022,7 @@ void Run(OPERATION_TYPE type,int DevIndex)
     { 	 
         thread_data[DevIndex-1]=(THREAD_STRUCT*)malloc(sizeof(THREAD_STRUCT));
         thread_data[DevIndex-1]->type=type;
-        bAuto[DevIndex-1]=false;
-	printf("\nSlot %d (%06d)",DevIndex,ReadUID(DevIndex-1)); 
+        bAuto[DevIndex-1]=false; 
         thread_data[DevIndex-1]->USBIndex=DevIndex-1; //0;
         pthread_create(&id,NULL,(void *) threadRun,(void*)thread_data[DevIndex-1]); 
     }

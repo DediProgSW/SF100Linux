@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 
 	signal(SIGINT, sin_handler);
 
-	printf("\nDpCmd Linux 1.3.1.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.3.2.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -1333,17 +1333,20 @@ void do_DisplayOrSave(void)
     if(g_uiDevNum==0)
     {
 	    for(int icnt=0;icnt<dev_cnt;icnt++)
-	    {
+	    { 
+		
 		if(strcmp(g_parameter_read, "STDOUT")==0)
 		{
 		    int i,Len=UploadAddrRange.end-UploadAddrRange.start;
 		    printf("\n");
-		    printf("Hex value display (starting from 0x%02X, 0x%02zXbytes in total): \n",g_uiAddr,g_uiLen);
+		    printf("Hex value display (starting from 0x%02X, 0x%02zX bytes in total): \n",g_uiAddr,g_uiLen); 
 		    for(i=0; i<Len; i++)
-		    {
+		    { 
 		        if((i%16==0) && i != 0)
-		        printf("\n");
-		        printf("%02X  ",pBufferForLastReadData[icnt]); 
+		        {
+				printf("\n");
+		        }
+			printf("%02X  ",*(pBufferForLastReadData[icnt]+i)); 
 		    }
 		    printf("\n\n");
 		}
@@ -1364,17 +1367,17 @@ void do_DisplayOrSave(void)
 	    }	
     }
     else if(g_uiDevNum!=0)
-    {	  
+    {	   
 	if(strcmp(g_parameter_read, "STDOUT")==0)
         {
             int i,Len=UploadAddrRange.end-UploadAddrRange.start;
             printf("\n");
-            printf("Hex value display (starting from 0x%02X, 0x%02zXbytes in total): \n",g_uiAddr,g_uiLen);
+            printf("Hex value display (starting from 0x%02X, 0x%02zX bytes in total): \n",g_uiAddr,g_uiLen);
             for(i=0; i<Len; i++)
             {
                 if((i%16==0) && i != 0)
                 printf("\n");
-                printf("%02X  ",pBufferForLastReadData[g_uiDevNum-1]); 
+                printf("%02X  ",*(pBufferForLastReadData[g_uiDevNum-1]+i)); 
             }
             printf("\n\n");
         }
