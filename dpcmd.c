@@ -482,6 +482,8 @@ int GetConfigVer()
 
 }
 
+extern void func(int);
+
 int main(int argc, char *argv[])
 {
 	#if 0 //Check all USB device capability
@@ -492,13 +494,10 @@ int main(int argc, char *argv[])
 	int iExitCode=EXCODE_PASS;
 	bool bDetect=false;
 	bool bDevice=false;
+ 
+	//signal(SIGINT, sin_handler);
 
-
-	
-
-	signal(SIGINT, sin_handler);
-
-	printf("\nDpCmd Linux 1.3.2.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.3.1.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -949,10 +948,55 @@ int OpenUSB(void)
 
 void sin_handler(int sig)
 {
-	if(sig==SIGINT)
-	{	
-		;
-	}
+	struct timeval basetv[3];
+		  
+	/*if(sig==SIGINT)
+	{	 
+		ctrlCCount++;  
+		printf("\n\nevy - ctrlCCount=%d\n",ctrlCCount);
+
+		gettimeofday (&(basetv[ctrlCCount]) , NULL);   
+		if(ctrlCCount==1)
+		{	
+			tvSec=basetv[1].tv_sec;
+			tvUsec=basetv[1].tv_usec;	
+			printf("\n\nevy - tvSec[1]=%d\n\n",tvSec);
+			printf("\n\nevy - tvUsec[1]=%d\n\n",tvUsec);	
+		}
+		if(ctrlCCount>1)
+		{  
+			printf("\n\nevy - tvSec=%d\n\n",tvSec);
+			printf("\n\nevy - tvUsec=%d\n\n",tvUsec);
+			
+			printf("\n\nevy - tvSecnew=%d\n\n",basetv[ctrlCCount].tv_sec);
+			printf("\n\nevy - tvUsecnew=%d\n\n",basetv[ctrlCCount].tv_usec);
+			 
+			if((basetv[ctrlCCount].tv_sec-tvSec)==0)
+			{ 
+				tvSec=basetv[ctrlCCount].tv_sec;
+				tvUsec=basetv[ctrlCCount].tv_usec;
+				ctrlCCount=1;
+				printf("\n\n\n\n\nnevy - (basetv[ctrlCCount].tv_sec-tvSec)==0\n\n\n\n");
+				;//return; 
+			}
+			else if((basetv[ctrlCCount].tv_sec-tvSec)==1)
+			{	
+				printf("\n\n\n\nevy - (basetv[ctrlCCount].tv_sec-tvSec)==0\n\n\n\n");
+				if(basetv[ctrlCCount].tv_usec<tvUsec)
+				{
+					
+					tvSec=basetv[ctrlCCount].tv_sec;
+					tvUsec=basetv[ctrlCCount].tv_usec;
+					ctrlCCount=1;	
+				printf("\n\nevy - basetv[ctrlCCount].tv_usec<tvuSec\n\n");
+					;//return; 
+				}	
+			}
+			tvSec=basetv[ctrlCCount].tv_sec;
+			tvUsec=basetv[ctrlCCount].tv_usec;
+			ctrlCCount=1;
+		}
+	}*/
 }
 
 int Handler(void)
