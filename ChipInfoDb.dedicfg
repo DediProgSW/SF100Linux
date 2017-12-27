@@ -2,7 +2,7 @@
 <DediProgChipDatabase 
     Description="DediProg Pro Supported memory info" 
     Creator="DediProg Pro" 
-    Ver="3.00" 
+    Ver="4.00" 
     CreateDate="2007-September-25" 
     Locale="2052">
 <Portofolio 
@@ -13440,7 +13440,7 @@ BlockSizeInByte="65536"
 AddrWidth="3"
 RDIDCommand="0x9F"/>
 <Chip TypeName="MX25U1001E"
-Description="1M-BIT [x 1/x 4] CMOS MXSMIOÆÊ SERIAL FLASH MEMORY"
+Description="1M-BIT [x 1/x 4] CMOS MXSMIO\C6\CA SERIAL FLASH MEMORY"
 Manufacturer="Macronix"
 ManufactureUrl="www.Macronix.com"
 Voltage="1.8V"
@@ -13460,7 +13460,7 @@ BlockSizeInByte="65536"
 AddrWidth="3"
 RDIDCommand="0x9F"/>
 <Chip TypeName="MX25U5121E"
-Description="512K-BIT [x 1/x 4] CMOS MXSMIOÆÊ SERIAL FLASH MEMORY"
+Description="512K-BIT [x 1/x 4] CMOS MXSMIO\C6\CA SERIAL FLASH MEMORY"
 Manufacturer="Macronix"
 ManufactureUrl="www.Macronix.com"
 Voltage="1.8V"
@@ -15607,6 +15607,7 @@ RDIDCommand="0x9F"/>
     Clock="108MHz" 
     ManufactureID="0x20" 
     JedecDeviceID="0x20BA21" 
+    DeviceID="0x20BA21"
     ChipSizeInKByte="131072" 
     SectorSizeInByte="67108864" 
     PageSizeInByte="256" 

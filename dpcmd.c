@@ -908,7 +908,7 @@ void cli_classic_usage(bool IsShowExample)
 	       "                                                3, Socket\n"
 	       "                                                0, reference card\n"
 	       "    --vcc arg (=0)                          specify vcc\n"
-	       "                                                0, 3.5V(Default)\n"
+	       "                                                0, 3.5V\n"
 	       "                                                1, 2.5V\n"
 	       "                                                2, 1.8V\n"
 	       "                                                1800 ~ 3800, 1.8V ~ 3.8V\n"
