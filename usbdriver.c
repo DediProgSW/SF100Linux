@@ -160,7 +160,7 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
 
 
 int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, int Index )
-{
+{ 
 	//boost::mutex::scoped_lock l(mutex);
 
 //	unsigned long   bytesRead;
@@ -193,7 +193,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
 //        printf("Control Pipe input error!\n");
         return -1;
     }
-
+ 
     return ret;
 }
 
@@ -499,10 +499,8 @@ if(g_uiDevNum == 0)
              printf("Error: Programmers are not connected.\n");
 		return 0;
 	 } 
-	 ret = usb_set_configuration(dediprog_handle[i], 1);
-	
-	 
-	
+	 ret = usb_set_configuration(dediprog_handle[i], 1); 
+ 
 	if(ret)
 	{
 		printf("Error: Programmers USB set configuration: 0x%x.\n",ret);

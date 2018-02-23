@@ -213,7 +213,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange *AddrRa
 
     vInstruction[0] = (unsigned char)(pageNum & 0xff) ;                // lowest byte of length : page number
     vInstruction[1] = (unsigned char)( (pageNum >> 8) &  0xff) ;        // highest byte of length: page number
-    vInstruction[2] = (unsigned char)( (pageNum >> 16) &  0xff) ;                                                        // reserved
+    vInstruction[2] = (unsigned char)( (pageNum >> 16) &  0xff) ;       // reserved
     vInstruction[3] = modeRead; // BULK_NORM_READ, BULK_FAST_READ
     vInstruction[4] = ReadCom;
 
@@ -223,7 +223,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange *AddrRa
 		vInstruction[6] = (AddrRange->start  & 0xff);
 		vInstruction[7] = ((AddrRange->start >> 8)	& 0xff);
 		vInstruction[8] = ((AddrRange->start >> 16)  & 0xff);
-		vInstruction[9] = ((AddrRange->start >> 24)  & 0xff);
+		vInstruction[9] = ((AddrRange->start >> 24)  & 0xff); 
 		rq.Value = 0;
 		rq.Index = 0;
 		rq.Length = (unsigned long)(10) ;

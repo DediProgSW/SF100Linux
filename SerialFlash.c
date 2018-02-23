@@ -23,8 +23,10 @@ unsigned char mcode_SegmentErase=SE;
 unsigned char mcode_ChipErase=CHIP_ERASE;
 unsigned char mcode_Program=PAGE_PROGRAM;
 unsigned char mcode_ProgramCode_4Adr=0x02;
+unsigned char mcode_ProgramCode_4Adr_S70FSxxx=0x12;
 unsigned char mcode_Read=BULK_FAST_READ;
 unsigned char mcode_ReadCode=0x0B;
+unsigned char mcode_ReadCode_S70FSxxx=0x0C;
 unsigned int g_AT45_PageSize=0;
 unsigned int g_AT45_PageSizeMask=0;
 size_t AT45ChipSize=0;
@@ -662,6 +664,123 @@ int SerialFlash_doRDSR(unsigned char *cSR,int Index)
 	return SerialFlash_TRUE;
 }
 
+int S70FSxxx_Large_doRDSR1V(bool die1, unsigned char *cSR,int Index)
+{  
+	CNTRPIPE_RQ rq ;
+	unsigned char vInstruction[7]={0};    //size 1
+
+	// first control packet
+	vInstruction[0] = 0x65;
+	vInstruction[1] = ((0x800000>>24)|(die1?0:(0x4000000>>24)));
+	vInstruction[2] = 0x800000>>16;
+	vInstruction[3] = 0x800000>>8;
+	vInstruction[4] = 0x800000;
+	vInstruction[5] = 0;
+	vInstruction[6] = 0; 
+
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_OUT ;
+	rq.Request = TRANSCEIVE ;
+	if(Is_NewUSBCommand(Index))
+	{
+		rq.Value = RESULT_IN ;
+		rq.Index = RFU ;
+	}
+	else
+	{
+		rq.Value = RFU ;
+		rq.Index = RESULT_IN ;
+	}
+	rq.Length = 7;//(unsigned long) 1 ;
+
+	if(OutCtrlRequest(&rq, &vInstruction, 7, Index) == SerialFlash_FALSE)
+		return SerialFlash_FALSE ;
+ 
+
+	// second control packet : fetch data
+	unsigned char vBuffer ;        //just read one bytes , in fact more bytes are also available
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_IN ;
+	rq.Request = TRANSCEIVE ;
+	if(Is_NewUSBCommand(Index))
+	{
+		rq.Value = 1;
+		rq.Index = 0;
+	}
+	else
+	{
+		rq.Value = CTRL_TIMEOUT ;
+		rq.Index = NO_REGISTER ;
+	}
+	rq.Length = 1;//(unsigned long) 1;
+
+	if(InCtrlRequest(&rq, &vBuffer, 1, Index) == SerialFlash_FALSE)
+	 	return SerialFlash_FALSE ; 
+
+	*cSR = vBuffer;
+ 
+	return SerialFlash_TRUE;
+}
+
+int S70FSxxx_Large_doRDCR2V(bool die1, unsigned char *cSR,int Index)
+{  
+	CNTRPIPE_RQ rq ;
+	unsigned char vInstruction[7]={0};    //size 1
+
+	// first control packet
+	vInstruction[0] = 0x65;
+	vInstruction[1] = ((0x800003>>24)|(die1?0:(0x4000000>>24)));
+	vInstruction[2] = 0x800003>>16;
+	vInstruction[3] = 0x800003>>8;
+	vInstruction[4] = 0x800003;
+	vInstruction[5] = 0;
+	vInstruction[6] = 0; 
+
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_OUT ;
+	rq.Request = TRANSCEIVE ;
+	if(Is_NewUSBCommand(Index))
+	{
+		rq.Value = RESULT_IN ;
+		rq.Index = RFU ;
+	}
+	else
+	{
+		rq.Value = RFU ;
+		rq.Index = RESULT_IN ;
+	}
+	rq.Length = 7;//(unsigned long) 1 ;
+
+	if(OutCtrlRequest(&rq, &vInstruction, 7, Index) == SerialFlash_FALSE)
+		return SerialFlash_FALSE ;
+ 
+
+	// second control packet : fetch data
+	unsigned char vBuffer ;        //just read one bytes , in fact more bytes are also available
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_IN ;
+	rq.Request = TRANSCEIVE ;
+	if(Is_NewUSBCommand(Index))
+	{
+		rq.Value = 1;
+		rq.Index = 0;
+	}
+	else
+	{
+		rq.Value = CTRL_TIMEOUT ;
+		rq.Index = NO_REGISTER ;
+	}
+	rq.Length = 1;//(unsigned long) 1;
+
+	if(InCtrlRequest(&rq, &vBuffer, 1, Index) == SerialFlash_FALSE)
+	 	return SerialFlash_FALSE ; 
+ 
+	*cSR = vBuffer;
+
+	return SerialFlash_TRUE;
+}
+
+
 
 //
 /**
@@ -690,6 +809,19 @@ void SerialFlash_waitForWEL(int Index)
 	}while(((cSR & 0x02) == 0)  && (i-- > 0)) ;
 }
 
+void S70FSxxx_Large_waitForWEL(bool die1,int Index)
+{ 
+	unsigned char cSR=0;
+	size_t i = 10;
+	
+	do{// wait until WIP = 0 and WEL = 1
+		SerialFlash_doWREN(Index) ;
+
+		// read SR to check WEL until WEL = 1
+		S70FSxxx_Large_doRDSR1V(die1,&cSR,Index) ; 
+	}while(((cSR & 0x02) == 0)  && (i-- > 0)) ;
+}
+
 
 /**
  * \brief
@@ -704,6 +836,22 @@ void SerialFlash_waitForWEL(int Index)
  *   SRWD    0   0   BP2 BP1 BP0 WEL WIP
  *
  */
+bool S70FSxxx_Large_waitForWIP(bool die1,int Index)
+{ 
+    unsigned char cSR ;
+    size_t i = Chip_Info.Timeout*100;
+    if(i==0)
+        i=MAX_TRIALS;
+	// wait until WIP = 0
+    do{
+        S70FSxxx_Large_doRDSR1V(die1,&cSR,Index) ;
+        Sleep(5);
+    }while((cSR & 0x01) && (i-- > 0)) ;
+    if(i<=0)
+        return false;
+    return true;
+}
+
 bool SerialFlash_waitForWIP(int Index)
 {
     unsigned char cSR ;
@@ -720,9 +868,8 @@ bool SerialFlash_waitForWIP(int Index)
     return true;
 }
 
-
 int SerialFlash_doWREN(int Index)
-{
+{ 
     unsigned char v=mcode_WREN;;
 	return FlashCommand_SendCommand_OutOnlyInstruction(&v, 1,Index);
 
@@ -1231,13 +1378,58 @@ bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index)
 #endif
 }
 
+int S70FSxxx_Large_Enable4ByteAddrMode(int Enable4Byte,int Index)
+{   
+     if(Enable4Byte)
+    {
+        unsigned char v= EN4B;
+         int numOfRetry = 5 ;
+        unsigned char re;
+        do{
+          //  SerialFlash_waitForWEL(Index);
+            FlashCommand_TransceiveOut(&v,1,false,Index);
+            Sleep(100);
+            S70FSxxx_Large_doRDCR2V(false, &re,Index);
+        }while((re & 0x80)==0 && numOfRetry-- > 0);
+        do{
+          //  SerialFlash_waitForWEL(Index);
+            FlashCommand_TransceiveOut(&v,1,false,Index);
+            Sleep(100);
+            S70FSxxx_Large_doRDCR2V(true, &re,Index);
 
+        }while((re & 0x80)==0 && numOfRetry-- > 0);
+        return true;
+    }
+    else
+    {
+        unsigned char re; 
+        unsigned char v= EXIT4B;
+        int numOfRetry = 5 ;
+
+        do{
+          // SerialFlash_waitForWEL(Index);
+            FlashCommand_TransceiveOut(&v,1,false,Index);
+            Sleep(100);
+            S70FSxxx_Large_doRDCR2V(false, &re,Index);
+        }while((re & 0x80)==0 && numOfRetry-- > 0);
+
+        do{
+          // SerialFlash_waitForWEL(Index);
+            FlashCommand_TransceiveOut(&v,1,false,Index);
+            Sleep(100);
+            S70FSxxx_Large_doRDCR2V(true, &re,Index);
+        }while((re & 0x80)==0 && numOfRetry-- > 0);
+        return true;
+    } 
+} 
 //Simon: unused ???
 int SerialFlash_Enable4ByteAddrMode(int bEnable,int Index)
-{
+{ 
     if(strstr(Chip_Info.Class,SUPPORT_EON_EN25QHxx_Large) != NULL || strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx_Large) != NULL
         || strstr(Chip_Info.Class,SUPPORT_WINBOND_W25Pxx_Large) != NULL)
         return CEN25QHxx_LargeEnable4ByteAddrMode(bEnable,Index);
+    if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!= NULL)
+ 	return S70FSxxx_Large_Enable4ByteAddrMode(bEnable,Index);
 
     if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)// ||
 //			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
@@ -1318,6 +1510,16 @@ int SerialFlash_rangeProgram(struct CAddressRange *AddrRange, unsigned char *vDa
         else
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_12,mcode_ProgramCode_4Adr,Index);
     }
+    else if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!=NULL)
+    { 
+
+	if(g_bIsSF600==true)
+	{ 
+            return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_S70FS01GS,mcode_ProgramCode_4Adr_S70FSxxx,Index);
+        }
+	else
+            return false;
+    }
     else
         return SerialFlash_bulkPipeProgram(AddrRange, vData, mcode_Program, mcode_ProgramCode_4Adr,Index);
 }
@@ -1330,6 +1532,13 @@ int SerialFlash_rangeRead(struct CAddressRange *AddrRange, unsigned char *vData,
             return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ,mcode_ReadCode,Index);
         else
             return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ_MICRON,mcode_ReadCode,Index);
+    }
+    if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!=NULL)
+    { 
+        if(g_bIsSF600==true)
+            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ,mcode_ReadCode_S70FSxxx,Index);
+        else
+	    return false;
     }
     else
 	return SerialFlash_bulkPipeRead(AddrRange, vData, (unsigned char) mcode_Read, (unsigned char) mcode_ReadCode, Index);
@@ -1517,11 +1726,48 @@ int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddres
     return true ;
 }
 
+bool S70FSxxx_Large_chipErase(unsigned int Addr,unsigned int Length,int USBIndex)
+{
+    	S70FSxxx_Large_Enable4ByteAddrMode(true, USBIndex);
+ 
+ 
+	// wait until WIP = 0
+	S70FSxxx_Large_waitForWIP(true,USBIndex) ; 
+	// wait until WEL = 1
+	S70FSxxx_Large_waitForWEL(true,USBIndex) ; 
+	unsigned char vInstruction[5]={0};
+	vInstruction[0]=0xFE;
+	vInstruction[1]=0x00;
+	vInstruction[2]=0x00;
+	vInstruction[3]=0x00;
+	vInstruction[4]=0x00;
+    	FlashCommand_SendCommand_OutOnlyInstruction(&vInstruction,5,USBIndex);
+ 
+	S70FSxxx_Large_waitForWIP(true,USBIndex) ; //check die 1
+
+
+    	S70FSxxx_Large_Enable4ByteAddrMode(false, USBIndex);
+	S70FSxxx_Large_waitForWIP(false,USBIndex) ;
+
+	// wait until WEL = 1
+	S70FSxxx_Large_waitForWEL(false,USBIndex) ; 
+	vInstruction[0]=0xFE;
+	vInstruction[1]=0x04;
+	vInstruction[2]=0x00;
+	vInstruction[3]=0x00;
+	vInstruction[4]=0x00;
+    	FlashCommand_SendCommand_OutOnlyInstruction(&vInstruction,5,USBIndex);
+ 
+	S70FSxxx_Large_waitForWIP(false,USBIndex) ; //check die 2
+}
+
 /// chip erase
 int SerialFlash_chipErase(int Index)
 {
     if(strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxB) != NULL || strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxD) != NULL)
         return AT45chipErase(0, Chip_Info.ChipSizeInByte, Index);
+    if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large) != NULL)
+	return S70FSxxx_Large_chipErase(0, Chip_Info.ChipSizeInByte, Index);
 
     if( SerialFlash_protectBlock(false,Index) == SerialFlash_FALSE)  return false ;
 
@@ -1607,9 +1853,10 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange *AddrRange, unsigned char *
             divider=8;
             break;
     }
-
+ 
     if((AddrRange->end/0x1000000)>(AddrRange->start/0x1000000))//(AddrRange.end>0x1000000 && AddrRange.start<0x1000000) ||(AddrRange.end>0x2000000 && AddrRange.start<0x2000000) ||
     {
+ 
         struct CAddressRange down_range;
         struct CAddressRange range_temp;
         range_temp.start= AddrRange->start&0xFF000000;
@@ -1648,7 +1895,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange *AddrRange, unsigned char *
         }
     }
     else
-    {
+    { 
         size_t packageNum = (AddrRange->end - AddrRange->start) >> divider ;
         FlashCommand_SendCommand_SetupPacketForBulkWrite(AddrRange, modeWrite,WriteCom,Index);
         for(i = 0; i < packageNum; ++ i)

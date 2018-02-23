@@ -38,8 +38,11 @@ int SerialFlash_doWRSR(unsigned char cSR,int Index);
 
 int SerialFlash_doRDSR(unsigned char *cSR,int Index);
 
+void S70FSxxx_Large_waitForWEL(bool die1,int Index);
+int S70FSxxx_Large_doRDSR1V(bool die1, unsigned char *cSR,int Index);
+int S70FSxxx_Large_doRDCR2V(bool die1, unsigned char *cSR,int Index);
 void SerialFlash_waitForWEL(int Index);
-
+bool S70FSxxx_Large_waitForWIP(bool die1,int Index);
 bool SerialFlash_waitForWIP(int Index);
 
 int SerialFlash_doWREN(int Index);

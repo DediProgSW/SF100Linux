@@ -110,13 +110,14 @@ typedef struct ChipInfo {
 #define PP_32BYTE			0x0A
 #define PP_4ADDR_256BYTE_12 0x0B
 #define PP_4ADDR_256BYTE_MICROM 0x0C
+#define PP_4ADDR_256BYTE_S70FS01GS 0x0D
 
 // bulk read mode
 #define BULK_NORM_READ                  0x01                ///< read via bulk pipes
 #define BULK_FAST_READ                  0x02                ///< fast read via bulk pipes
 #define BULK_AT45xx_READ                  0x03                ///< fast read via bulk pipes
 #define BULK_4BYTE_FAST_READ		0x04		///< For size is bigger than 128Mb
-#define BULK_4BYTE_FAST_READ_MICRON 0x05
+#define BULK_4BYTE_FAST_READ_MICRON 0x05 
 
 //for flash card
 #define POLLING                         0x02                ///< polling
@@ -204,6 +205,7 @@ typedef struct ChipInfo {
 #ifdef SUPPORT_SPANSION
     #define SUPPORT_SPANSION_S25FLxx    "S25FLxxx"
 	#define SUPPORT_SPANSION_S25FLxx_Large    "S25FLxxx_Large"
+	#define SUPPORT_SPANSION_S70FSxx_Large    "S70FSxxx_Large"
 #endif
 
 #ifdef SUPPORT_MACRONIX

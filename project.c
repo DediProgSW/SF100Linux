@@ -114,7 +114,7 @@ int ReadBINFile(const char *filename,unsigned char *buf, unsigned long* size)
     long lSize;
     size_t result;
 
-    pFile = fopen( filename , "rb" );
+    pFile = fopen( filename , "rb" ); 
     if (pFile==NULL)
     {
         printf("Open %s failed\n",filename);
@@ -125,6 +125,9 @@ int ReadBINFile(const char *filename,unsigned char *buf, unsigned long* size)
     // obtain file size:
     fseek (pFile , 0 , SEEK_END);
     lSize = ftell (pFile);
+
+ 
+
     rewind (pFile);
     // allocate memory to contain the whole file:
     if(pBufferforLoadedFile!=NULL)
@@ -151,6 +154,7 @@ int ReadBINFile(const char *filename,unsigned char *buf, unsigned long* size)
 
     // terminate
     g_ulFileSize=lSize;
+
     fclose (pFile);
     return 1;
 }
@@ -274,7 +278,8 @@ void PrepareProgramParameters(int Index)
     size_t addrLeng = (0 == len) ? g_ulFileSize: len;
     DownloadAddrRange.start=addrStart;
     DownloadAddrRange.end=addrStart +  addrLeng;
-    DownloadAddrRange.length=addrLeng; 
+    DownloadAddrRange.length=addrLeng;  
+
 }
 
 bool ValidateProgramParameters(int Index)
@@ -294,14 +299,13 @@ bool ValidateProgramParameters(int Index)
     /// if user-specified length exceeds, just ignore
     if(DownloadAddrRange.start > Chip_Info.ChipSizeInByte - 1)
         return false;
-
+ 
     size_t size = DownloadAddrRange.length;
     if(size > g_ulFileSize && g_ucFill==0xFF)
         return false;
-
+ 
     if(DownloadAddrRange.end > Chip_Info.ChipSizeInByte)
-        return false;
-
+        return false; 
     return true;
 }
 
@@ -309,7 +313,7 @@ bool ProgramChip(int Index)
 { 
     bool need_padding = (g_ucFill != 0xFF);
     unsigned char* vc;
-    struct CAddressRange real_addr[16];
+    struct CAddressRange real_addr[16]; 
     real_addr[Index].start=(DownloadAddrRange.start &(~(0x200 - 1)));
     real_addr[Index].end=((DownloadAddrRange.end + (0x200 - 1)) & (~(0x200 - 1)));
     real_addr[Index].length=real_addr[Index].end-real_addr[Index].start;
@@ -325,7 +329,7 @@ bool ProgramChip(int Index)
     {
         memcpy(vc+(DownloadAddrRange.start & 0x1FF),pBufferforLoadedFile,DownloadAddrRange.length);
     }
-
+ 
     bool result= SerialFlash_rangeProgram(&real_addr[Index], vc,Index); 
     return result;
 
@@ -770,7 +774,7 @@ bool BlazeUpdate(int Index)
             addr_range.start=addrs[i];
             addr_range.end=addrs[i]+Chip_Info.MaxErasableSegmentInByte;
             addr_range.length=addr_range.end-addr_range.start;
-
+ 
             if(SerialFlash_rangeProgram(&addr_range,vc+idx_in_vc,Index)==0)
             {
                 free(vc);
@@ -835,8 +839,7 @@ bool RangeUpdateThruChipErase(int Index)
     SetIOMode(true, Index);
     addr.start=0;
     addr.end=Chip_Info.ChipSizeInByte;
-    addr.length=Chip_Info.ChipSizeInByte;
-
+    addr.length=Chip_Info.ChipSizeInByte; 
     return SerialFlash_rangeProgram(&addr, vc,Index);
 }
 
@@ -1195,6 +1198,7 @@ CHIP_INFO GetFirstDetectionMatch(int Index)
 
 	for(i=0; i<Loop; i++)
 	{
+ 
 		if(Found==1) break;
 		if(Loop==1)
 			g_Vcc=vcc3_5V;

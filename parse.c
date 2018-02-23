@@ -20,8 +20,8 @@ void getExecPath(char* Path)
 		dirname (Path);
 //		printf("%s\r\n",Path);
 		strcat(Path,"/ChipInfoDb.dedicfg");
-//		printf("%s\r\n",Path);
-
+ 	//	printf("%s\r\n",Path);
+////
 	}
 }
 
