@@ -28,6 +28,8 @@
  
 #define MAX_Dev_Index   16
 
+bool Is_usbworking(int Index);
+
 typedef struct usb_device_entry {
     struct usb_device usb_device_handler;
     int valid;
