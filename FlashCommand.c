@@ -202,6 +202,7 @@ int FlashCommand_SendCommand_SetupPacketForAT45DBBulkWrite(struct CAddressRange 
 
 int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange *AddrRange, unsigned char modeRead,unsigned char ReadCom,int Index)
 {
+ 
 	unsigned char vInstruction[10] ;
 	CNTRPIPE_RQ rq ;
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;

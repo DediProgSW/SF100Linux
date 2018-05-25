@@ -56,6 +56,7 @@ struct CAddressRange DownloadAddrRange;
 struct CAddressRange UploadAddrRange;
 char* g_parameter_read="\0";
 char* g_parameter_program="\0";
+char* g_parameter_loadfile="\0";
 char* g_parameter_auto="\0";
 char* g_parameter_batch="\0";
 char* g_parameter_fsum="\0";
@@ -148,6 +149,7 @@ struct option long_options[] = {
      { "device",                1,   NULL,    'D'     },
 //     { "fix-device",            1,   NULL,    'F'     },
      { "list-device-id",        1,   NULL,    'V'     },
+     { "load-file",        	1,   NULL,    'F'     },
      { "timeout",               1,   NULL,    't'     },
      { "target",                1,   NULL,    'g'     },
      { "vcc",                   1,   NULL,    'c'     },
@@ -315,8 +317,7 @@ int Check(int argc, char *argv[])
 int Sequence()
 {
     // *** the calling order in the following block must be kept as is ***
-    bool boResult=true;
- 
+    bool boResult=true; 
     boResult &= BlankCheck();
     if(boResult==false)
     {
@@ -497,7 +498,7 @@ int main(int argc, char *argv[])
  
 	//signal(SIGINT, sin_handler);
 
-	printf("\nDpCmd Linux 1.4.1.%02d Engine Version:\nLast Built on Sep 22 2017\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.5.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -609,10 +610,13 @@ int main(int argc, char *argv[])
 				sscanf(optarg,"%x",&g_uiDevNum); 
 				//devpath = optarg; 
 				break;
-			case 'F':
-				l_opt_arg = optarg;
-				printf("Fix programmer serial number with programmer sequence. (with arg: %s)\n", l_opt_arg);
-				break;
+			case 'F': 
+			//	l_opt_arg = optarg;
+			//	printf("Fix programmer serial number with programmer sequence. (with arg: %s)\n", l_opt_arg);
+			//	break;
+				g_parameter_loadfile= optarg;
+				g_ucOperation |= LOADFILE;	
+				break;		
 			case 'V':
 				sscanf(optarg,"%d",&g_uiDeviceID);
 				g_ucOperation |= DEVICE_ID; //list device id
@@ -722,7 +726,6 @@ int main(int argc, char *argv[])
 		WriteLog(iExitCode, true);
 
 	if(iExitCode != EXCODE_PASS) goto Exit;
-
 	iExitCode=Handler();
 
 Exit:
@@ -898,6 +901,8 @@ void cli_classic_usage(bool IsShowExample)
 //	       "                                            note: the sequence is assigned by OS during USB plug-in.\n"
 	       "                                            - 1: Prompt the device ID of programmer connected to USB1.\n"
 //	       "                                            - n: Prompt the device ID of programmer connected to USBn.\n"
+	       "    --load-file arg                         -Load a bin/hex/s19 file and compare with the memory conten.\n"
+	       "                                            -work with --verify only"  
 	       "\n"
 	       "Miscellaneous options:\n"
 	       "    -t [ --timeout ] arg (=300)             Timeout value in seconds\n"
@@ -958,6 +963,7 @@ void sin_handler(int sig)
 
 int Handler(void)
 {
+
     if(Is_usbworking(0)==true)
     {
     #if 0
@@ -969,6 +975,7 @@ int Handler(void)
 
         AssignedDevice();
     #endif
+ 
         if((g_ucOperation & BLINK)==BLINK)
         {
             BlinkProgrammer();
@@ -976,7 +983,7 @@ int Handler(void)
         }
 
         if((g_ucOperation & DEVICE_ID)==DEVICE_ID)
-        {
+        { 
             ListSFSerialID();
             return EXCODE_PASS;
         }
@@ -990,11 +997,13 @@ int Handler(void)
         printf("Error: Programmers are not connected.\r\n");
         return EXCODE_FAIL_OTHERS;
     }
+ 
     if(!InitProject()) return EXCODE_FAIL_OTHERS;
-    //my_timer t;                           // opertion timer
+    //my_timer t;                           // opertion timer 
 
     if(ListTypes()) return EXCODE_PASS;
 
+ 
 
     if(strlen(g_parameter_type)>0)
     {   
@@ -1013,12 +1022,15 @@ int Handler(void)
 
   		}
  		else
-         	printf("Error: Did not find the programmer.\r\n"); 
-          
+		{
+         		printf("Error: Did not find the programmer.\r\n"); 
+			return EXCODE_FAIL_OTHERS;		
+		}          
         return Sequence();
     }
     else if(DetectChip())
     {
+ 
         return Sequence();
     }
     else
@@ -1189,10 +1201,12 @@ void SetVcc(int Index)
 }
 
 int do_loadFile(void)
-{
+{ 
     char* filename;
     if(g_ucOperation & PROGRAM)
         filename=g_parameter_program;
+    else if(g_ucOperation & LOADFILE)
+        filename=g_parameter_loadfile;
     else if(g_ucOperation & BATCH)
     {
     	switch(g_BatchIndex)
@@ -1270,7 +1284,7 @@ void ListSFSerialID(void)
          }
     }
     else
-    {
+    { 
 	if(g_uiDeviceID>dev_cnt)
             printf("The number of programmer is not defined!\r\n");
     	else
@@ -1282,6 +1296,7 @@ void ListSFSerialID(void)
           	printf("%d,\tSF%06d\r\n",g_uiDeviceID,dwUID);
 	    }
     }
+
 }
 
 void do_BlankCheck(void)
@@ -1426,7 +1441,10 @@ void do_Auto(void)
 }
 
 void do_Verify(void)
-{
+{ 
+    if(g_ucOperation & LOADFILE) 
+        do_loadFile();
+ 
     printf("%s",msg_info_verifying);
     Run(VERIFY_CONTENT,g_uiDevNum);
 
@@ -1535,6 +1553,7 @@ bool Auto(void)
 
 bool Verify(void)
 {
+ 
     if(g_ucOperation & VERIFY)
         do_Verify();
     return g_bStatus;
@@ -1542,20 +1561,18 @@ bool Verify(void)
 
 
 bool CalChecksum(void)
-{
+{ 
     int dev_cnt = get_usb_dev_cnt();
     if(g_ucOperation & FSUM)
-    {
+    { 
         do_loadFile();
         printf("\nChecksum(file): 0x%08X\n",g_uiFileChecksum);
     }
-
     if(g_ucOperation & CSUM)
-    {
-        do_Read();
-        
+    {  
+        do_Read(); 
 	if(g_uiDevNum==0)
-	{  
+	{   
     	    for(int i=0;i<dev_cnt;i++)
 	    {	 
 		int dwUID=ReadUID(i);
@@ -1579,8 +1596,8 @@ bool CalChecksum(void)
 		}
 	    }
 	}
-	else if(g_uiDevNum!=0)
-	{	 
+	else if(g_uiDevNum!=0)  
+	{
 	    int dwUID=ReadUID(g_uiDevNum-1);
  	    if( g_uiAddr==0 && g_uiLen ==0)
        	    {
@@ -1602,11 +1619,9 @@ bool CalChecksum(void)
 	}
 	else
 	    printf("The number of programmer is not defined!\n");
-		
- 
-
+		 
     }
-
+ 
     return g_bStatus;
 }
 

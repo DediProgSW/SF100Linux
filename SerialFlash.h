@@ -91,7 +91,9 @@ bool SST25xFxx_protectBlock(int bProtect,int Index);
 bool AT25FSxxx_protectBlock(int bProtect,int Index);
 bool  CEN25QHxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index);
 bool CN25Qxxx_LargeRDFSR(unsigned char *cSR, int Index);
-bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index);
+bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index); 
+bool CN25Qxxx_MutipleDIe_LargeWREAR(unsigned char cSR, int Index);
+bool CN25Qxxx_MutipleDIe_LargeRDEAR(unsigned char *cSR, int Index);
 size_t GetChipSize(void);
 size_t GetPageSize(void);
 

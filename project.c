@@ -100,11 +100,14 @@ void TurnOFFVcc(int Index)
 unsigned int CRC32(unsigned char* v, unsigned long size)
 {
     unsigned int checksum = 0;
+    unsigned int dwCrc32 = 0xFFFFFFFF;
     unsigned long i;
     for(i=0;i<size;i++)
-        checksum += v[i];
+         dwCrc32 = ((dwCrc32) >> 8) ^ crc32_tab[(v[i]) ^ ((dwCrc32) & 0x000000FF)];
+	//checksum += v[i];
 
-    return checksum;// & 0xFFFF;
+    dwCrc32 = ~dwCrc32;  
+    return dwCrc32;// & 0xFFFF;
 
 }
 
@@ -125,7 +128,6 @@ int ReadBINFile(const char *filename,unsigned char *buf, unsigned long* size)
     // obtain file size:
     fseek (pFile , 0 , SEEK_END);
     lSize = ftell (pFile);
-
  
 
     rewind (pFile);
@@ -155,7 +157,7 @@ int ReadBINFile(const char *filename,unsigned char *buf, unsigned long* size)
     // terminate
     g_ulFileSize=lSize;
 
-    fclose (pFile);
+    fclose (pFile); 
     return 1;
 }
 
@@ -210,8 +212,7 @@ int GetFileFormatFromExt(const char* csPath)
 }
 
 bool ReadFile(const char* csPath, unsigned char* buffer,unsigned long* FileSize,unsigned char PaddingByte)
-{
- 
+{ 
     switch(GetFileFormatFromExt(csPath))
     {
         case HEX :
@@ -241,9 +242,8 @@ bool  LoadFile(char* filename)
 { 
     bool result=true;
     unsigned long size;
-    result &= ReadFile(filename,pBufferforLoadedFile, &size, g_ucFill);
-    g_uiFileChecksum=CRC32(pBufferforLoadedFile,g_ulFileSize);
- 
+    result &= ReadFile(filename,pBufferforLoadedFile, &size, g_ucFill); 
+    g_uiFileChecksum=CRC32(pBufferforLoadedFile,g_ulFileSize); 
     return result;
 }
 
@@ -345,8 +345,7 @@ bool ReadChip(const struct CAddressRange range,int Index)
     addr.start=	range.start &(~(0x200 - 1));
     addr.end=(range.end + (0x200 - 1)) & (~(0x200 - 1));
     addr.length=addr.end-addr.start;
-    vc=(unsigned char*)malloc(addr.length);
-
+    vc=(unsigned char*)malloc(addr.length); 
     result = SerialFlash_rangeRead(&addr, vc, Index);
 
     if(result)
@@ -626,8 +625,9 @@ bool threadCompareFileAndChip(int Index)
 
     if( result )
     {
-        ReadChip(DownloadAddrRange,Index);
 
+        ReadChip(DownloadAddrRange,Index);
+	
         size_t offset = min(DownloadAddrRange.length,g_ulFileSize);
         unsigned int crcFile = CRC32(pBufferforLoadedFile,offset);
         unsigned int crcChip = CRC32(pBufferForLastReadData[Index],offset);
@@ -909,9 +909,9 @@ void threadRun(void* Type)
     if( g_uiAddr==0 && g_uiLen ==0)
     {  
         if((dwUID / 600000)==0) 
-            printf("\nDevice %d (DP%06d):",Index,dwUID);  
+            printf("\nDevice %d (DP%06d):",Index+1,dwUID);  
         else 
-            printf("\nDevice %d (SF%06d):",Index,dwUID); 
+            printf("\nDevice %d (SF%06d):",Index+1,dwUID); 
     }
  
     if( opType==UPDATE_FIRMWARE )
@@ -1354,7 +1354,7 @@ void SetProgReadCommand(int Index)
         {
             mcode_Program = PAGE_PROGRAM;
         }
-    }
+    } 
     else if(strstr(Chip_Info.Class,SUPPORT_ESMT_F25Lxx) != NULL)
     {
         const unsigned int F25L04UA=0x8C8C8C;
@@ -1401,21 +1401,24 @@ void SetProgReadCommand(int Index)
         mcode_ReadCode = 0x0C;
         //printf("Read Code=%X\r\n",mcode_ReadCode);
     }
-	else if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL || strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
-	{
-		 mcode_RDSR = RDSR;
+    else if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL || strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
+    {
+	mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = 0xC4;
-        mcode_Read      = BULK_4BYTE_FAST_READ_MICRON;
+        mcode_Read      = BULK_NORM_READ;
         mcode_Program   = PP_4ADDR_256BYTE_MICROM ;
         if(strstr(Chip_Info.TypeName,"N25Q512") != NULL)
             mcode_SegmentErase  = 0xD4;
         else
             mcode_SegmentErase  = 0xD8;
         mcode_ProgramCode_4Adr = 0x02;
-        mcode_ReadCode = 0x0B;
-	}
-	else if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
+        mcode_ReadCode = 0x03;
+
+
+
+    }
+    else if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
     {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
@@ -1474,9 +1477,7 @@ void SetProgReadCommand(int Index)
         Chip_Info.ChipSizeInByte=GetChipSize();
         Chip_Info.PageSizeInByte=GetPageSize();
     }
-//	printf("Erase Code=%X\r\n",mcode_ChipErase);
-//    printf("Read Code=%X\r\n",mcode_ReadCode);
-//    printf("mcode_ProgramCode_4Adr=%X\r\n",mcode_ProgramCode_4Adr);
+ 
 }
 
 bool ProjectInitWithID(CHIP_INFO chipinfo,int Index) // by designated ID
