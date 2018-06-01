@@ -36,7 +36,7 @@ unsigned int g_uiAddr=0;
 size_t g_uiLen=0;
 unsigned int g_ucFill=0xFF;
 unsigned int g_ucTarget=1;
-unsigned int g_uiTimeout=300;
+unsigned int g_uiTimeout=1800;
 unsigned int g_ucSPIClock=clk_12M;
 unsigned int g_uiBlink=0;
 unsigned int g_uiDevNum=0;
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
  
 	//signal(SIGINT, sin_handler);
 
-	printf("\nDpCmd Linux 1.5.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.6.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -1640,11 +1640,12 @@ bool Wait(const char* strOK,const char* strFail)
     {
         gettimeofday (&tv , NULL);
         if(tv.tv_sec-basetv.tv_sec > timeOut)
-        {
-            timersub(&tv, &basetv, &diff);
+        { 
             printf("%0.2f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
-            printf("%s",msg_err_timeout_abortion);
+            printf("%s",msg_err_timeout_abortion); 
+	    g_is_operation_on_going=false;
             g_bStatus=false;
+            timersub(&tv, &basetv, &diff);
             return false;
         }
 

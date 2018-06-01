@@ -365,7 +365,17 @@ int dediprog_set_spi_voltage(int v,int Index)
 		return false;
 	}
 #endif
-    if(0 != v)  Sleep(200); 
+        
+
+
+
+    if(0 != v)  
+    {
+	Sleep(200); 
+	unsigned char v[4]={0xff,0xff,0xff,0xff};
+        FlashCommand_SendCommand_OutOnlyInstruction(v,4,Index);
+    }
+
 	return ret;
 }
 
