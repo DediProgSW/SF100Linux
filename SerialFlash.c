@@ -11,11 +11,11 @@ extern int m_bProtectAfterWritenErase;
 extern int m_boEnReadQuadIO;
 extern int m_boEnWriteQuadIO;
 extern CHIP_INFO Chip_Info;
-extern volatile bool g_bIsSF600;
+extern volatile bool g_bIsSF600[16];
 extern void Sleep(unsigned int ms);
 extern bool Is_NewUSBCommand(int Index);
 
-unsigned short g_micron_usNVCR=0xFFFF;
+unsigned char g_micron_usVCR=0xFFFF;
 
 unsigned char mcode_WRSR=0x01;
 unsigned char mcode_WRDI=0x04;
@@ -1336,47 +1336,40 @@ bool CN25Qxxx_LargeRDFSR(unsigned char *cSR, int Index)
 	*cSR = vBuffer;
 	return SerialFlash_TRUE; 
 }
-bool CN25Qxxx_Large_doWRNVCR(unsigned short sNVCR,int Index)
+bool CN25Qxxx_Large_doWRVCR(unsigned char sVCR,int Index)
 {
-	unsigned char vInstruction[3];    //size 1
+	unsigned char vInstruction[2];    //size 1
 
         SerialFlash_waitForWIP(Index);
         SerialFlash_waitForWEL(Index);
-	vInstruction[0]=0xB1;
-	vInstruction[1]=sNVCR&0xFF;
-	vInstruction[2]=(sNVCR>>8)&0xFF;
+	vInstruction[0]=0x81;
+	vInstruction[1]=sVCR&0xFF; 
 	
-	FlashCommand_TransceiveOut(&vInstruction,3,false,Index);
+	FlashCommand_TransceiveOut(&vInstruction,2,false,Index);
 	
         SerialFlash_waitForWIP(Index);
 
-	unsigned short sRDNVCR=0xFFFF;
+	unsigned char sRDVCR=0xFF;
 	
         int numOfRetry = 5 ;
         unsigned char re;
-        do{
-            SerialFlash_waitForWEL(Index);
-            CN25Qxxx_Large_doRDNVCR(&sRDNVCR,Index);
+        //do{ 
+            CN25Qxxx_Large_doRDVCR(&sRDVCR,Index);
             Sleep(100); 
-        }while(sRDNVCR !=sNVCR && numOfRetry-- > 0);
+       // }while(sRDVCR !=sVCR && numOfRetry-- > 0);
     
-	if(numOfRetry<=0) 
-	    return false; 
-	
-	TurnOFFVcc(Index);
- 	Sleep(100);
-	TurnONVcc(Index);
- 	Sleep(100);
+	//if(numOfRetry<=0) 
+	//    return false;  
 
 	return true;
 }
 
 
-bool CN25Qxxx_Large_doRDNVCR(unsigned short *sNVCR,int Index)
+bool CN25Qxxx_Large_doRDVCR(unsigned char *sVCR,int Index)
 {
 	CNTRPIPE_RQ rq ;
 	unsigned char vInstruction;    //size 1
-	vInstruction=0xB5;
+	vInstruction=0x85;
 	
 	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
 	rq.Direction = VENDOR_DIRECTION_OUT ;
@@ -1397,7 +1390,7 @@ bool CN25Qxxx_Large_doRDNVCR(unsigned short *sNVCR,int Index)
 		return SerialFlash_FALSE ;
 
 	// second control packet : fetch data
-	unsigned short vBuffer;     
+	unsigned char vBuffer;     
 	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
 	rq.Direction = VENDOR_DIRECTION_IN ;
 	rq.Request = TRANSCEIVE ;
@@ -1411,13 +1404,13 @@ bool CN25Qxxx_Large_doRDNVCR(unsigned short *sNVCR,int Index)
 		rq.Value = CTRL_TIMEOUT ;
 		rq.Index = NO_REGISTER ;
 	}
-	rq.Length = 2;
+	rq.Length = 1;
 
-	if(InCtrlRequest(&rq, &vBuffer, 2, Index) == SerialFlash_FALSE)
+	if(InCtrlRequest(&rq, &vBuffer, 1, Index) == SerialFlash_FALSE)
 		return SerialFlash_FALSE ;
 	///printf("evy &vBuffer=%x",&vBuffer);
 	///printf("evy vBuffer=%x",vBuffer);
-	*sNVCR = vBuffer;
+	*sVCR = vBuffer;
 	return SerialFlash_TRUE;
 
 }
@@ -1491,9 +1484,9 @@ bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index)
     if(Enable4Byte)
     {
         WORD cSR;
-        RDNVCR(cSR, Index);
+        RDVCR(cSR, Index);
         cSR &= 0xFFFE;
-        WRNVCR(cSR, Index);
+        WRVCR(cSR, Index);
     }
     return true;
 #else
@@ -2085,7 +2078,7 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
     if(!SerialFlash_StartofOperation(Index)) 
 	return false;
     if(!(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL &&
- 	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL))
+ 	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL && g_bIsSF600==true))
 	SerialFlash_Enable4ByteAddrMode(true, Index);
 
     if(SerialFlash_EnableQuadIO(true, m_boEnReadQuadIO,Index)== SerialFlash_FALSE)
@@ -2110,9 +2103,9 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
 
         for(j=0; j<loop; j++)
         {
-	    if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
- 			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
-        		{
+	    if(g_bIsSF600[Index]==false && (strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
+ 			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL))
+        		{	 
 				 unsigned char re=0;
 				 int numOfRetry = 5 ; 
 				 do{ 
@@ -2155,9 +2148,9 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
     else
     {  
           unsigned char EAR=(AddrRange->start*0x1000000)>>24;
-	  if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
- 			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
-        		{
+	    if(g_bIsSF600[Index]==false &&(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
+ 			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL))
+			{ 
 				 unsigned char re=0;
 				 int numOfRetry = 5 ; 
 				 do{ 
@@ -2231,18 +2224,11 @@ bool SerialFlash_StartofOperation(int Index)
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL ||
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
 	{ 
-		g_micron_usNVCR=0xFFFF;
-		if(CN25Qxxx_Large_doRDNVCR(&g_micron_usNVCR,Index))
-		{ 
-			if(g_micron_usNVCR!=0xFFFF)
-			{ 
-				if(CN25Qxxx_Large_doWRNVCR(0xFFFF,Index)==false)
-					return false;			
-			}		
-			return true;
-		}
-		return false;
-
+		g_micron_usVCR=0xFF;
+		if(CN25Qxxx_Large_doWRVCR(g_micron_usVCR,Index)==false)
+		   return false;
+		else 
+		   return true;  
 	}
 	return true;
 }
@@ -2254,15 +2240,7 @@ bool SerialFlash_EndofOperation(int Index)
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL ||
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
 	{ 
-		unsigned short sNVCR=0xFFFF;
-		if(g_micron_usNVCR!=0xFFFF)
-		{ 
-			if(CN25Qxxx_Large_doWRNVCR(g_micron_usNVCR,Index)==false)
-				return false;
-			CN25Qxxx_Large_doRDNVCR(&sNVCR,Index); 
-			if(sNVCR!=g_micron_usNVCR)
-				return; 
-		}
+		 
 		return true;
 	}
 	return true;

@@ -94,8 +94,8 @@ bool CN25Qxxx_LargeRDFSR(unsigned char *cSR, int Index);
 bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index); 
 bool CN25Qxxx_MutipleDIe_LargeWREAR(unsigned char cSR, int Index);
 bool CN25Qxxx_MutipleDIe_LargeRDEAR(unsigned char *cSR, int Index);
-bool CN25Qxxx_Large_doRDNVCR(unsigned short *sNVCR,int Index); 
-bool CN25Qxxx_Large_doWRNVCR(unsigned short sNVCR,int Index);
+bool CN25Qxxx_Large_doRDVCR(unsigned char *sVCR,int Index); 
+bool CN25Qxxx_Large_doWRVCR(unsigned char sVCR,int Index);
 
 size_t GetChipSize(void);
 size_t GetPageSize(void);

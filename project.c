@@ -1406,14 +1406,22 @@ void SetProgReadCommand(int Index)
 	mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = 0xC4;
-        mcode_Read      = BULK_NORM_READ;
         mcode_Program   = PP_4ADDR_256BYTE_MICROM ;
         if(strstr(Chip_Info.TypeName,"N25Q512") != NULL)
             mcode_SegmentErase  = 0xD4;
         else
             mcode_SegmentErase  = 0xD8;
         mcode_ProgramCode_4Adr = 0x02;
-        mcode_ReadCode = 0x03;
+        if(strstr(g_board_type,"SF100") != NULL) //is sf100
+	{
+        	mcode_ReadCode = 0x03;
+        	mcode_Read      = BULK_NORM_READ; 
+	}
+	else
+	{
+        	mcode_ReadCode = 0x0B;
+        	mcode_Read      = BULK_4BYTE_FAST_READ_MICRON; 
+	}
 
 
 

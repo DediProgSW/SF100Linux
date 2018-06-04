@@ -80,6 +80,7 @@ void do_Auto(void);
 void do_Verify(void);
 void do_ReadSR(int Index);
 void do_RawInstructions(int Index);
+void do_RawInstructinos_2(int outDLen, char* para, int Index);
 void RawInstructions(int Index);
 bool BlankCheck(void);
 bool Erase(void);

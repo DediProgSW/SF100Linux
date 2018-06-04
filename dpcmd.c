@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
  
 	//signal(SIGINT, sin_handler);
 
-	printf("\nDpCmd Linux 1.6.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.7.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -858,8 +858,10 @@ void cli_classic_usage(bool IsShowExample)
 	       "                                            after issuing raw instructions.\n"
 	       "                                            - used along with --raw-instruction only.\n"
 	       "                                            Example:\n"
-	       "                                            dpcmd --raw-instruction '03 FF 00 12' \n"
+	       "                                            dpcmd --raw-instruction \"03 FF 00 12\" \n"
 	       "                                            --raw-require-return 1\n"
+	       "                                            dpcmd --raw-instruction \"06|01 0C|05\"  \n"
+	       "                                            --raw-require-return \"0|0|1\"	\n" 
 	       "\n"
 	       "Optional Switches that add fine-tune ability to Basic Switches:\n"
 	       "    -a [ --addr ] arg                       hexadecimal starting address hexadecimal(e.g.\n"
@@ -1462,40 +1464,87 @@ void do_ReadSR(int Index)
 
 }
 
-void do_RawInstructions(int Index)
-{
+void do_RawInstructinos_2(int outDLen, char* para, int Index)
+{	 
     unsigned char vOut[512];
     unsigned char vIn[512]={0xFF,0xFF,0xFF,0};
     unsigned char Length=0;
     int i=0;
     char* pch;
+
+ 	pch = strtok (para, " ,;-");
+	    while( pch!= NULL)
+	    { 
+		sscanf(pch,"%02hhx",&vOut[i]); 
+		i++;
+		pch = strtok (NULL, " ,;-");
+	    }
+
+	   // if(strlen(g_parameter_raw_return)>0)
+	//	sscanf(g_parameter_raw_return,"%hhu",&Length);
+
+	    if(outDLen>0)
+		FlashCommand_SendCommand_OneOutOneIn(vOut,i,vIn,outDLen,Index);
+	    else
+		FlashCommand_SendCommand_OutOnlyInstruction(vOut,i,Index);
+
+	    if(outDLen>0)
+	    {
+		printf("issuing raw instruction \"%s\" returns %d bytes as required:\n",g_parameter_raw,outDLen);
+		for(i=0; i<outDLen; i++)
+		    printf("%02X ",vIn[i]);
+		printf("\n");
+	    }
+   
+        do_ReadSR(Index);  
+}
+
+void do_RawInstructions(int Index)
+{  
+    char* pch[30];
+    char* pchR;
+    unsigned char pchReturn[30];
     char parameter[40];
+	 	  
+    unsigned char Length=0;
+    char retrunParameter[40];
+    int iReturn=0;
+    int i=0;	
     strcpy(parameter,g_parameter_raw);
-   TurnONVcc(Index);
-    pch = strtok (parameter," ,;-");
-    while( pch!= NULL)
-    {
-        sscanf(pch,"%02hhx",&vOut[i]);
-        i++;
-        pch = strtok (NULL, " ,;-");
+    TurnONVcc(Index); 
+    pch[i] = strtok (parameter,"|");  
+    while(pch[i]!=NULL)
+    {   i++;
+    	pch[i] = strtok (NULL,"|"); 
+	
+    } 
+ 
+   if(strlen(g_parameter_raw_return)>0)
+   {
+	    sscanf(g_parameter_raw_return,"%hhu",&Length);
+	    strcpy(retrunParameter,g_parameter_raw_return);
+	    
+	    pchR = strtok (retrunParameter,"|");  
+	    while(pchR!=NULL)
+	    {   
+		sscanf(pchR,"%02hhx",&pchReturn[iReturn]);  
+		iReturn++;
+	    	pchR = strtok (NULL,"|"); 
+	    }
+	    if(iReturn!=i)
+	    {
+		printf("\nError: value of --raw-require-return failed. No return value!\n\n");   
+		memset(pchReturn,0,30); 
+	    }
+    }
+  
+    for(int j=0;j<i;j++)
+    { 
+	do_RawInstructinos_2(pchReturn[j], pch[j],Index);
     }
 
-    if(strlen(g_parameter_raw_return)>0)
-        sscanf(g_parameter_raw_return,"%hhu",&Length);
 
-    if(Length>0)
-        FlashCommand_SendCommand_OneOutOneIn(vOut,i,vIn,Length,Index);
-    else
-        FlashCommand_SendCommand_OutOnlyInstruction(vOut,i,Index);
 
-    if(Length>0)
-    {
-        printf("issuing raw instruction \"%s\" returns %d bytes as required:\n",g_parameter_raw,Length);
-        for(i=0; i<Length; i++)
-            printf("%02X ",vIn[i]);
-        printf("\n");
-    }
-        do_ReadSR(Index); 
 }
 
 void RawInstructions(int Index)
@@ -1504,7 +1553,6 @@ void RawInstructions(int Index)
     {
 	printf("\nDevice %d:\n",Index+1);
         do_RawInstructions(Index);
-
 	 
     }
 }
