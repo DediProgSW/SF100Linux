@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
  
 	//signal(SIGINT, sin_handler);
 
-	printf("\nDpCmd Linux 1.7.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.8.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);

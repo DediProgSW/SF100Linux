@@ -1336,36 +1336,114 @@ bool CN25Qxxx_LargeRDFSR(unsigned char *cSR, int Index)
 	*cSR = vBuffer;
 	return SerialFlash_TRUE; 
 }
-bool CN25Qxxx_Large_doWRVCR(unsigned char sVCR,int Index)
+bool CN25Qxxx_Large_doWRVCR(unsigned char ucVCR,int Index)
 {
 	unsigned char vInstruction[2];    //size 1
 
         SerialFlash_waitForWIP(Index);
         SerialFlash_waitForWEL(Index);
 	vInstruction[0]=0x81;
-	vInstruction[1]=sVCR&0xFF; 
+	vInstruction[1]=ucVCR&0xFF; 
 	
 	FlashCommand_TransceiveOut(&vInstruction,2,false,Index);
 	
         SerialFlash_waitForWIP(Index);
 
-	unsigned char sRDVCR=0xFF;
+	unsigned char ucRDVCR=0xFF;
 	
         int numOfRetry = 5 ;
         unsigned char re;
-        //do{ 
-            CN25Qxxx_Large_doRDVCR(&sRDVCR,Index);
+         do{ 
+            CN25Qxxx_Large_doRDVCR(&ucRDVCR,Index);
             Sleep(100); 
-       // }while(sRDVCR !=sVCR && numOfRetry-- > 0);
+         }while(ucRDVCR !=ucVCR && numOfRetry-- > 0);
     
-	//if(numOfRetry<=0) 
-	//    return false;  
+	 if(numOfRetry<=0) 
+	     return false;  
 
 	return true;
 }
 
 
-bool CN25Qxxx_Large_doRDVCR(unsigned char *sVCR,int Index)
+bool CN25Qxxx_Large_doRDENVCR(unsigned char *ucENVCR,int Index)
+{
+	CNTRPIPE_RQ rq ;
+	unsigned char vInstruction;    //size 1
+	vInstruction=0x65;
+	
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_OUT ;
+	rq.Request = TRANSCEIVE ;
+	if(Is_NewUSBCommand(Index))
+	{
+		rq.Value = RESULT_IN ;
+		rq.Index = RFU ;
+	}
+	else
+	{
+		rq.Value = RFU ;
+		rq.Index = RESULT_IN ;
+	}
+	rq.Length = 1;//(unsigned long) 1 ;
+
+	if(OutCtrlRequest(&rq, &vInstruction, 1, Index) == SerialFlash_FALSE)
+		return SerialFlash_FALSE ;
+
+	// second control packet : fetch data
+	unsigned char vBuffer;     
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_IN ;
+	rq.Request = TRANSCEIVE ;
+	if(Is_NewUSBCommand(Index))
+	{
+		rq.Value = 1;
+		rq.Index = 0;
+	}
+	else
+	{
+		rq.Value = CTRL_TIMEOUT ;
+		rq.Index = NO_REGISTER ;
+	}
+	rq.Length = 1;
+
+	if(InCtrlRequest(&rq, &vBuffer, 1, Index) == SerialFlash_FALSE)
+		return SerialFlash_FALSE ; 
+	*ucENVCR = vBuffer;
+	return SerialFlash_TRUE;
+
+}
+
+
+bool CN25Qxxx_Large_doWRENVCR(unsigned char ucENVCR,int Index)
+{
+	unsigned char vInstruction[2];    //size 1
+
+        SerialFlash_waitForWIP(Index);
+        SerialFlash_waitForWEL(Index);
+	vInstruction[0]=0x61;
+	vInstruction[1]=ucENVCR&0xFF; 
+	
+	FlashCommand_TransceiveOut(&vInstruction,2,false,Index);
+	
+        SerialFlash_waitForWIP(Index);
+
+	unsigned char ucRDENVCR=0xFF;
+	
+        int numOfRetry = 5 ;
+        unsigned char re;
+         do{ 
+            CN25Qxxx_Large_doRDENVCR(&ucRDENVCR,Index);
+            Sleep(100); 
+         }while(ucRDENVCR !=ucENVCR && numOfRetry-- > 0);
+    
+	 if(numOfRetry<=0) 
+	     return false;  
+
+	return true;
+}
+
+
+bool CN25Qxxx_Large_doRDVCR(unsigned char *ucVCR,int Index)
 {
 	CNTRPIPE_RQ rq ;
 	unsigned char vInstruction;    //size 1
@@ -1407,10 +1485,8 @@ bool CN25Qxxx_Large_doRDVCR(unsigned char *sVCR,int Index)
 	rq.Length = 1;
 
 	if(InCtrlRequest(&rq, &vBuffer, 1, Index) == SerialFlash_FALSE)
-		return SerialFlash_FALSE ;
-	///printf("evy &vBuffer=%x",&vBuffer);
-	///printf("evy vBuffer=%x",vBuffer);
-	*sVCR = vBuffer;
+		return SerialFlash_FALSE ; 
+	*ucVCR = vBuffer;
 	return SerialFlash_TRUE;
 
 }
@@ -2223,19 +2299,21 @@ bool SerialFlash_StartofOperation(int Index)
     if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL ||
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
-	{ 
-		g_micron_usVCR=0xFF;
-		if(CN25Qxxx_Large_doWRVCR(g_micron_usVCR,Index)==false)
+	{  
+		if(CN25Qxxx_Large_doWRVCR(0xFB,Index)==false)
 		   return false;
-		else 
-		   return true;  
+		if(CN25Qxxx_Large_doWRENVCR(0xFF,Index)==false)
+		   return false;
+			   
+		return true;  
 	}
-	return true;
+    return true;
 }
 				   
 
 bool SerialFlash_EndofOperation(int Index)
 {  
+    return true;
     if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL ||
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
@@ -2243,6 +2321,5 @@ bool SerialFlash_EndofOperation(int Index)
 		 
 		return true;
 	}
-	return true;
 }
 

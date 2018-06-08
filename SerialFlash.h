@@ -89,13 +89,15 @@ int SerialFlash_is_protectbits_set(int Index);
 bool SST25xFxxA_protectBlock(int bProtect,int Index);
 bool SST25xFxx_protectBlock(int bProtect,int Index);
 bool AT25FSxxx_protectBlock(int bProtect,int Index);
-bool  CEN25QHxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index);
+bool CEN25QHxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index);
 bool CN25Qxxx_LargeRDFSR(unsigned char *cSR, int Index);
 bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index); 
 bool CN25Qxxx_MutipleDIe_LargeWREAR(unsigned char cSR, int Index);
 bool CN25Qxxx_MutipleDIe_LargeRDEAR(unsigned char *cSR, int Index);
-bool CN25Qxxx_Large_doRDVCR(unsigned char *sVCR,int Index); 
-bool CN25Qxxx_Large_doWRVCR(unsigned char sVCR,int Index);
+bool CN25Qxxx_Large_doRDVCR(unsigned char *ucVCR,int Index); 
+bool CN25Qxxx_Large_doWRVCR(unsigned char ucVCR,int Index);
+bool CN25Qxxx_Large_doRDENVCR(unsigned char *ucENVCR,int Index); 
+bool CN25Qxxx_Large_doWRENVCR(unsigned char ucENVCR,int Index);
 
 size_t GetChipSize(void);
 size_t GetPageSize(void);
