@@ -2180,7 +2180,7 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
         for(j=0; j<loop; j++)
         {
 	    if(g_bIsSF600[Index]==false && (strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
- 			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL))
+ 			strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL))//for sf100
         		{	 
 				 unsigned char re=0;
 				 int numOfRetry = 5 ; 
@@ -2307,19 +2307,30 @@ bool SerialFlash_StartofOperation(int Index)
 			   
 		return true;  
 	}
+	else if(strstr(Chip_Info.Class,SUPPORT_ST_M25Pxx) != NULL)
+	{
+		if(strstr(Chip_Info.TypeName,"N25Q064")!=NULL )
+		{  
+			if(CN25Qxxx_Large_doWRVCR(0xFB,Index)==false)
+			   return false;
+			if(CN25Qxxx_Large_doWRENVCR(0xDF,Index)==false)
+			   return false; 
+		}	
+		if(strstr(Chip_Info.TypeName,"N25Q128")!=NULL )
+		{  
+			if(CN25Qxxx_Large_doWRVCR(0xFB,Index)==false)
+			   return false;
+			if(CN25Qxxx_Large_doWRENVCR(0xF7,Index)==false)
+			   return false; 
+		}	
+	}
+        
     return true;
 }
 				   
 
 bool SerialFlash_EndofOperation(int Index)
 {  
-    return true;
-    if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ||
- 	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL ||
- 	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
-	{ 
-		 
-		return true;
-	}
+    return true; 
 }
 
