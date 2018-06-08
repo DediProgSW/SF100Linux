@@ -1720,7 +1720,7 @@ int SerialFlash_rangeProgram(struct CAddressRange *AddrRange, unsigned char *vDa
         return AT45rangeProgram(AddrRange, vData,mcode_Program, mcode_ProgramCode_4Adr, Index);
     else if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S25FLxx_Large)!=NULL)
     {
-        if(g_bIsSF600==true)
+        if(g_bIsSF600[Index]==true)
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADR_256BYTE,mcode_ProgramCode_4Adr,Index);
         else
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_12,mcode_ProgramCode_4Adr,Index);
@@ -1728,7 +1728,7 @@ int SerialFlash_rangeProgram(struct CAddressRange *AddrRange, unsigned char *vDa
     else if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!=NULL)
     { 
 
-	if(g_bIsSF600==true)
+	if(g_bIsSF600[Index]==true)
 	{ 
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_S70FS01GS,mcode_ProgramCode_4Adr_S70FSxxx,Index);
         }
@@ -1744,14 +1744,14 @@ int SerialFlash_rangeRead(struct CAddressRange *AddrRange, unsigned char *vData,
 
     if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S25FLxx_Large)!=NULL)
     { 
-        if(g_bIsSF600==true)
-            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ,mcode_ReadCode,Index);
-        else
-            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ_MICRON,mcode_ReadCode,Index);
+        if(g_bIsSF600[Index]==true) 
+            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ,mcode_ReadCode,Index); 
+       else 
+            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ_MICRON,mcode_ReadCode,Index); 
     }
     if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!=NULL)
     {  
-        if(g_bIsSF600==true)
+        if(g_bIsSF600[Index]==true)
             return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ,mcode_ReadCode_S70FSxxx,Index);
         else
 	    return false;
@@ -2154,7 +2154,7 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
     if(!SerialFlash_StartofOperation(Index)) 
 	return false;
     if(!(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL &&
- 	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL && g_bIsSF600==true))
+ 	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL && g_bIsSF600[Index]==true))
 	SerialFlash_Enable4ByteAddrMode(true, Index);
 
     if(SerialFlash_EnableQuadIO(true, m_boEnReadQuadIO,Index)== SerialFlash_FALSE)

@@ -623,9 +623,19 @@ bool threadCompareFileAndChip(int Index)
     if( result && (!ValidateProgramParameters(Index)) )
         result = false;
 
-    if( result )
-    {
 
+    //refresh vcc before verify
+  //  TurnOFFVcc(Index);
+  //  Sleep(1000); 
+  //  TurnONVcc(Index);
+  //  Sleep(1000); 
+
+  //  if(IdentifyChipBeforeOperation(Index)==false) 
+//	result = false;
+
+    if( result )
+    { 
+ 
         ReadChip(DownloadAddrRange,Index);
 	
         size_t offset = min(DownloadAddrRange.length,g_ulFileSize);
