@@ -625,13 +625,13 @@ bool threadCompareFileAndChip(int Index)
 
 
     //refresh vcc before verify
-  //  TurnOFFVcc(Index);
-  //  Sleep(1000); 
-  //  TurnONVcc(Index);
-  //  Sleep(1000); 
+    TurnOFFVcc(Index);
+     Sleep(100); 
+     TurnONVcc(Index);
+     Sleep(100); 
 
-  //  if(IdentifyChipBeforeOperation(Index)==false) 
-//	result = false;
+     if(IdentifyChipBeforeOperation(Index)==false) 
+ 	result = false;
 
     if( result )
     { 
