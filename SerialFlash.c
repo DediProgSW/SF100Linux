@@ -1726,8 +1726,7 @@ int SerialFlash_rangeProgram(struct CAddressRange *AddrRange, unsigned char *vDa
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_12,mcode_ProgramCode_4Adr,Index);
     }
     else if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!=NULL)
-    { 
-
+    {  
 	if(g_bIsSF600[Index]==true)
 	{ 
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_S70FS01GS,mcode_ProgramCode_4Adr_S70FSxxx,Index);
@@ -1815,12 +1814,12 @@ int SerialFlash_is_good()
 }
 
 int SerialFlash_batchErase(uintptr_t* vAddrs,size_t AddrSize,int Index)
-{
+{ 
     if(!SerialFlash_StartofOperation(Index)) 
 	return false;
 //    if(strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxB) != NULL || strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxD) != NULL)
 //        return AT45batchErase(vAddrs, AddrSize,Index);
-
+ 
     if(0 == mcode_SegmentErase) return 1;      //  chipErase code not initialised or not supported, please check chip class ctor.
 
    if(SerialFlash_protectBlock(false,Index) == SerialFlash_FALSE)
@@ -1848,12 +1847,10 @@ int SerialFlash_batchErase(uintptr_t* vAddrs,size_t AddrSize,int Index)
 	    rq.Value = RFU ;
     	rq.Index = NO_RESULT_IN ;
 	}
-    rq.Length = 5;
-
+    rq.Length = 5; 
     for(i=0; i<AddrSize; i++)
     {
-        SerialFlash_waitForWEL(Index) ;
-
+        SerialFlash_waitForWEL(Index) ; 
         if(Chip_Info.ChipSizeInByte>0x1000000)
         {
             // MSB~ LSB (31...0)
@@ -1877,7 +1874,7 @@ int SerialFlash_batchErase(uintptr_t* vAddrs,size_t AddrSize,int Index)
     }
     SerialFlash_Enable4ByteAddrMode(false, Index);
     if(!SerialFlash_EndofOperation(Index)) 
-	return false;
+	return false; 
     return true ;
 }
 
@@ -2082,10 +2079,10 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange *AddrRange, unsigned char *
             divider=8;
             break;
     }
- 
+  
     if((AddrRange->end/0x1000000)>(AddrRange->start/0x1000000))//(AddrRange.end>0x1000000 && AddrRange.start<0x1000000) ||(AddrRange.end>0x2000000 && AddrRange.start<0x2000000) ||
     {
- 
+  
         struct CAddressRange down_range;
         struct CAddressRange range_temp;
         range_temp.start= AddrRange->start&0xFF000000;
@@ -2124,7 +2121,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange *AddrRange, unsigned char *
         }
     }
     else
-    { 
+    {  
         size_t packageNum = (AddrRange->end - AddrRange->start) >> divider ;
         FlashCommand_SendCommand_SetupPacketForBulkWrite(AddrRange, modeWrite,WriteCom,Index);
         for(i = 0; i < packageNum; ++ i)
@@ -2134,14 +2131,14 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange *AddrRange, unsigned char *
                 return false ;
         }
     }
-
+ 
     if(mcode_Program==AAI_2_BYTE)
         SerialFlash_doWRDI(Index);
 
     if(SerialFlash_protectBlock(m_bProtectAfterWritenErase,Index) == SerialFlash_FALSE)      return false ;
     if(SerialFlash_EnableQuadIO(false,m_boEnWriteQuadIO,Index)== SerialFlash_FALSE) return false;
     SerialFlash_Enable4ByteAddrMode(false, Index);
-
+ 
     if(!SerialFlash_EndofOperation(Index)) 
 	return false;
     return true ;

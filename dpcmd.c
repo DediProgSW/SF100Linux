@@ -54,6 +54,11 @@ CHIP_INFO Chip_Info;
 char *l_opt_arg;
 struct CAddressRange DownloadAddrRange;
 struct CAddressRange UploadAddrRange;
+struct CAddressRange LockAddrrange;
+
+unsigned int g_uiLockLen=0;
+unsigned int g_uiLockStart=0;
+
 char* g_parameter_read="\0";
 char* g_parameter_program="\0";
 char* g_parameter_loadfile="\0";
@@ -590,13 +595,15 @@ int main(int argc, char *argv[])
 			case 'T':
 				g_parameter_type= optarg; //type
 				break;
-			case 'S': //lock start
-//                 l_opt_arg = optarg;
+			case 'S': //lock start		 
+				sscanf(optarg,"%x",&g_uiLockStart); 
+ //                l_opt_arg = optarg;
 //             printf("hexadecimal starting address (with arg: %s)\n", l_opt_arg);
 				break;
-			case 'N': //lock length
+			case 'N': //lock length	 
+				sscanf(optarg,"%x",&g_uiLockLen); 
 //                 l_opt_arg = optarg;
-//             printf("hexadecimal length of area that will be kept unchanged while updating (with arg: %s)\n", l_opt_arg);
+ //            printf("hexadecimal length of area that will be kept unchanged while updating (with arg: %s)\n", l_opt_arg);
 				break;
 			case 'B':
 				sscanf(optarg,"%d",&g_uiBlink);
@@ -878,11 +885,11 @@ void cli_classic_usage(bool IsShowExample)
 	       "    --type arg                              Specify a type to override auto detection\n"
 	       "                                            - use --list arguement to look up supported type.\n"
 	       "    --lock-start arg                        hexadecimal starting address(e.g. 0x1000),\n"
-	       "                                            - works with --prog/read/sum/auto only\n"
+	       "                                            - works with --auto/lock-length\n"
 	       "                                            - defaults to 0, if omitted.\n"
 	       "    --lock-length arg                       hexadecimal length of area that will be kept\n"
 	       "                                            unchanged while updating\n"
-	       "                                            - used along with --auto only.\n"
+	       "                                            - used along with --auto/lock-start only.\n"
 	       "    --blink arg                             \n"
 //	       "                                            - 0 : Blink green LED 3 times from USB1 to USBn\n"
 //	       "                                            (Default)\n"
@@ -1415,7 +1422,10 @@ void do_DisplayOrSave(void)
 }
 
 void SaveProgContextChanges(void)
-{
+{  
+	LockAddrrange.start=g_uiLockStart;
+	LockAddrrange.length=g_uiLockLen;
+	LockAddrrange.end=g_uiLockStart+g_uiLockLen;
 #if 0
     using numeric_conversion::hexstring_to_size_t;
 

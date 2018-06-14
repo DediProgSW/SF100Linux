@@ -49,6 +49,7 @@ extern int g_StartupMode;
 extern int g_CurrentSeriase;
 extern struct CAddressRange DownloadAddrRange;
 extern struct CAddressRange UploadAddrRange;
+extern struct CAddressRange LockAddrrange;
 extern bool g_is_operation_on_going;
 extern bool g_is_operation_successful[16];
 extern unsigned int g_Vcc;
@@ -57,8 +58,7 @@ extern unsigned int g_uiAddr;
 extern size_t g_uiLen;
 extern bool g_bEnableVpp;
 extern unsigned int g_uiDevNum; //evy add
-extern int FlashIdentifier(CHIP_INFO * Chip_Info, int search_all,int Index);
-
+extern int FlashIdentifier(CHIP_INFO * Chip_Info, int search_all,int Index); 
 
 pthread_mutex_t g_count_mutex;
 #define FIRMWARE_VERSION(x,y,z) ((x<<16) | (y<<8) | z)
@@ -279,7 +279,7 @@ void PrepareProgramParameters(int Index)
     DownloadAddrRange.start=addrStart;
     DownloadAddrRange.end=addrStart +  addrLeng;
     DownloadAddrRange.length=addrLeng;  
-
+  
 }
 
 bool ValidateProgramParameters(int Index)
@@ -564,8 +564,7 @@ bool threadProgram(int Index)
     }
 
     if( result && (!ValidateProgramParameters(Index)) )
-    {
-	//printf("evy - program failed1(%df)\n",Index);
+    { 
         result = false;  
     } 
     pthread_mutex_unlock(&g_count_mutex);
@@ -573,13 +572,11 @@ bool threadProgram(int Index)
     int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
     if( result && ProgramChip(Index))
-    {
-	//printf("evy - program failed2(%d)\n",Index);
+    { 
         result = true;
     }
     else
-    {
-	//printf("evy - program failed3(%d)\n",Index);
+    { 
         result = false; 
     }
 
@@ -621,9 +618,7 @@ bool threadCompareFileAndChip(int Index)
         result = false;
 
     if( result && (!ValidateProgramParameters(Index)) )
-        result = false;
-
-
+        result = false;  
     //refresh vcc before verify
     TurnOFFVcc(Index);
      Sleep(100); 
@@ -684,12 +679,13 @@ size_t GenerateDiff(uintptr_t* Addr,unsigned char* in1, unsigned long long size1
 {
     size_t upper = min(size1, size2);
     size_t realAddr;
-	uintptr_t i,j=0;
+    uintptr_t i,j=0; 
+ 
 
     for(i = 0; i < upper; ++i)
     {
         if(in1[i] != in2[i])
-        {
+        { 
             realAddr = i + baseAddr;
             Addr[j++]=(realAddr & (~(step - 1)));
 
@@ -724,7 +720,7 @@ size_t Condense(uintptr_t* out,unsigned char* vc, uintptr_t* addrs, size_t addrS
 extern void SetPageSize(CHIP_INFO* mem, int USBIndex);
 
 bool BlazeUpdate(int Index)
-{
+{ 
 //    struct CAddressRange addr_round;//(Chip_Info.MaxErasableSegmentInByte);
 
 //    if(strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxD) != NULL)
@@ -733,39 +729,66 @@ bool BlazeUpdate(int Index)
     // dealwith lock phase 1
  
 
-    struct CAddressRange down_with_lock_range;//(m_context.runtime.range_download);
+
+    struct CAddressRange down_with_lock_range; 
     down_with_lock_range.start=DownloadAddrRange.start;
     down_with_lock_range.end=DownloadAddrRange.end;
-    DownloadAddrRange.length=DownloadAddrRange.end-DownloadAddrRange.start;
     down_with_lock_range.length=down_with_lock_range.end-down_with_lock_range.start;
+    DownloadAddrRange.length= down_with_lock_range.length;
+
+    if(LockAddrrange.length>0)
+    {  
+        if(LockAddrrange.start<DownloadAddrRange.start)
+	     down_with_lock_range.start=LockAddrrange.start;
+        if((LockAddrrange.start+LockAddrrange.length)>DownloadAddrRange.end)
+ 	     down_with_lock_range.end=LockAddrrange.start+LockAddrrange.length; 
+    }
 
     struct CAddressRange effectiveRange;//(addr_round.SectionRound(down_with_lock_range));
     effectiveRange.start=down_with_lock_range.start &(~(Chip_Info.MaxErasableSegmentInByte - 1)) ;
     effectiveRange.end=(down_with_lock_range.end + (Chip_Info.MaxErasableSegmentInByte - 1)) & (~(Chip_Info.MaxErasableSegmentInByte - 1));
     effectiveRange.length=effectiveRange.end-effectiveRange.start;
- 
+  
     if(!threadReadRangeChip(effectiveRange,Index)) return false;
 
-    unsigned int offsetOfRealStartAddrOffset = DownloadAddrRange.start - effectiveRange.start;
-
+    unsigned int offsetOfRealStartAddrOffset = 0; 
     unsigned char* vc;
-    vc=(unsigned char*)malloc(effectiveRange.length);
-    memcpy(vc,pBufferForLastReadData[Index],effectiveRange.length);
+    unsigned char* vc2;
+
+    vc=(unsigned char*)malloc(effectiveRange.length); 
+    vc2=(unsigned char*)malloc(effectiveRange.length); 
+
     uintptr_t* addrs=(size_t*)malloc(min(DownloadAddrRange.length,g_ulFileSize));
     size_t Leng=0;
-    Leng=GenerateDiff(addrs,vc+offsetOfRealStartAddrOffset,DownloadAddrRange.length,pBufferforLoadedFile,g_ulFileSize,DownloadAddrRange.start,Chip_Info.MaxErasableSegmentInByte);
 
-//    printf("Leng=%X\r\n",Leng);
+    memcpy(vc,pBufferForLastReadData[Index],effectiveRange.length); //memory data
+
+ 
+
+    if(LockAddrrange.length>0)
+    {  	 
+	unsigned int offsetOfRealStartAddrOffset = LockAddrrange.start-effectiveRange.start; //DownloadAddrRange.start - effectiveRange.start; 
+        memcpy(pBufferforLoadedFile+offsetOfRealStartAddrOffset,pBufferForLastReadData[Index]+offsetOfRealStartAddrOffset,LockAddrrange.length); 
+    	Leng=GenerateDiff(addrs,vc,DownloadAddrRange.length,pBufferforLoadedFile,g_ulFileSize,DownloadAddrRange.start,Chip_Info.MaxErasableSegmentInByte);
+    }
+    else
+    {       
+	unsigned int offsetOfRealStartAddrOffset = DownloadAddrRange.start - effectiveRange.start; 
+	Leng=GenerateDiff(addrs,vc+offsetOfRealStartAddrOffset,DownloadAddrRange.length,pBufferforLoadedFile,g_ulFileSize,DownloadAddrRange.start,Chip_Info.MaxErasableSegmentInByte);
+    }
+   
+  
     if(Leng==0)  // speed optimisation
     {
         return true;
     }
     else
     {
+
         uintptr_t* condensed_addr=(size_t*)malloc(min(DownloadAddrRange.length,g_ulFileSize));
-        size_t condensed_size;
+        size_t condensed_size; 
         condensed_size=Condense(condensed_addr,vc, addrs, Leng, effectiveRange.start,Chip_Info.MaxErasableSegmentInByte);
-//        printf("condensed_size=%d\r\n",condensed_size);
+  
         SerialFlash_batchErase(condensed_addr,condensed_size,Index);
 
         if(strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx) != NULL)
@@ -773,9 +796,9 @@ bool BlazeUpdate(int Index)
             TurnOFFVcc(Index);
             Sleep(100);
             TurnONVcc(Index);
-        }
-
-        memcpy(vc+offsetOfRealStartAddrOffset,pBufferforLoadedFile,DownloadAddrRange.length);
+        } 
+ 
+        memcpy(vc+offsetOfRealStartAddrOffset,pBufferforLoadedFile,DownloadAddrRange.length); 
         size_t i = 0;
         for(i=0; i<Leng; i++)
         {
@@ -783,10 +806,9 @@ bool BlazeUpdate(int Index)
             struct CAddressRange addr_range;
             addr_range.start=addrs[i];
             addr_range.end=addrs[i]+Chip_Info.MaxErasableSegmentInByte;
-            addr_range.length=addr_range.end-addr_range.start;
- 
+            addr_range.length=addr_range.end-addr_range.start; 
             if(SerialFlash_rangeProgram(&addr_range,vc+idx_in_vc,Index)==0)
-            {
+            { 
                 free(vc);
                 free(addrs);
                 free(condensed_addr);
@@ -794,11 +816,13 @@ bool BlazeUpdate(int Index)
             }
         }
         free(vc);
+        free(vc2);
         free(addrs);
         free(condensed_addr);
         return true;
     }
     free(vc);
+    free(vc2);
     free(addrs);
     return true;
 }
@@ -982,7 +1006,7 @@ void threadRun(void* Type)
 				threadCompareFileAndChip(Index);
 				break;
 
-			case AUTO: 
+			case AUTO:  
 				TurnONVpp(Index);
 				bAuto[Index]=true;
 				threadPredefinedBatchSequences(Index) ;
