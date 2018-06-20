@@ -1743,21 +1743,22 @@ bool Wait(const char* strOK,const char* strFail)
 
 int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index) 
 {
-    long UniqueID = 0;
-    int rc = 0; 
+    
+   long UniqueID = 0;
+    int rc = 0;
+    UniqueID = flash_ReadId(0x9f, 4, Index);
+    if (UniqueID != 0) 
+   { 
+        rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+        if(rc && (search_all == 0))
+            return rc;
+    }  
+    UniqueID = 0;
+    rc = 0;
     UniqueID = flash_ReadId(0x9f, 3, Index);
 
     if (UniqueID != 0) 
     { 
-        rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
-        if(rc && (search_all == 0))
-            return rc;
-    }
-    UniqueID = 0;
-    rc = 0;
-    UniqueID = flash_ReadId(0x9f, 4, Index);
-    if (UniqueID != 0) 
-   { 
         rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
         if(rc && (search_all == 0))
             return rc;
