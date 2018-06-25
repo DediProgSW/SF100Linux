@@ -98,7 +98,7 @@ bool CN25Qxxx_Large_doRDVCR(unsigned char *ucVCR,int Index);
 bool CN25Qxxx_Large_doWRVCR(unsigned char ucVCR,int Index);
 bool CN25Qxxx_Large_doRDENVCR(unsigned char *ucENVCR,int Index); 
 bool CN25Qxxx_Large_doWRENVCR(unsigned char ucENVCR,int Index);
-
+bool CS25FLxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index);
 size_t GetChipSize(void);
 size_t GetPageSize(void);
 bool SerialFlash_StartofOperation(int Index);

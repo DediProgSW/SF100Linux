@@ -1553,7 +1553,46 @@ bool CN25Qxxx_MutipleDIe_LargeWREAR(unsigned char cSR, int Index)
     FlashCommand_TransceiveOut(v,2,false,Index);
    return true; 
 }
- 
+
+bool CS25FLxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index)
+{ 
+  if((strstr(Chip_Info.TypeName,"S25FL512Sxxxxxx1x")!=NULL)||
+     (strstr(Chip_Info.TypeName,"S25FL512Sxxxxxx1x(Secure)")!=NULL))
+   {  
+	SerialFlash_waitForWEL(Index);
+ 	if(Enable4Byte)
+	{
+	   unsigned char v[2];
+    	   v[0]=0x17;
+ 	   v[1]=0x80;
+           FlashCommand_TransceiveOut(&v,2,false,Index);
+        }
+	else
+	{
+	   unsigned char v[2];
+    	   v[0]=0x17;
+ 	   v[1]=0x00;
+           FlashCommand_TransceiveOut(&v,2,false,Index);
+	} 
+   } 
+   else
+   {
+        if(Enable4Byte)
+        {
+            unsigned char v= EN4B;  
+            FlashCommand_TransceiveOut(&v,1,false,Index);
+            return true;
+	} 
+   	else
+    	{ 
+        	unsigned char v= EXIT4B;  
+        	FlashCommand_TransceiveOut(&v,1,false,Index); 
+        	return true;
+    	}
+   }  
+   return true;
+
+}
 bool CN25Qxxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index)
 {
 #if 0
@@ -1644,13 +1683,16 @@ int S70FSxxx_Large_Enable4ByteAddrMode(int Enable4Byte,int Index)
 //Simon: unused ???
 int SerialFlash_Enable4ByteAddrMode(int bEnable,int Index)
 {  
-    if(strstr(Chip_Info.Class,SUPPORT_EON_EN25QHxx_Large) != NULL || strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx_Large) != NULL
-        || strstr(Chip_Info.Class,SUPPORT_WINBOND_W25Pxx_Large) != NULL)
+    if(strstr(Chip_Info.Class,SUPPORT_EON_EN25QHxx_Large) != NULL || 
+       strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx_Large) != NULL || 
+       strstr(Chip_Info.Class,SUPPORT_WINBOND_W25Pxx_Large) != NULL)
         return CEN25QHxx_LargeEnable4ByteAddrMode(bEnable,Index);
     else if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S70FSxx_Large)!= NULL)
  	return S70FSxxx_Large_Enable4ByteAddrMode(bEnable,Index);
    else if(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large) != NULL)
 	return CN25Qxxx_LargeEnable4ByteAddrMode(bEnable, Index);
+   else if(strstr(Chip_Info.Class,SUPPORT_SPANSION_S25FLxx_Large)!=NULL)
+	return CS25FLxx_LargeEnable4ByteAddrMode(bEnable, Index);
     return SerialFlash_TRUE;
 }
 
