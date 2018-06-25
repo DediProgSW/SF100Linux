@@ -91,6 +91,7 @@ int m_boEnWriteQuadIO = 0;
 volatile bool g_is_operation_on_going=false;
 bool g_is_operation_successful[16]={false};
 bool g_bDisplayTimer=true;
+bool isSendFFsequence=false;
 
 
 //char* const short_options = "?Ldber:p:u:sf:I:R:a:l:vx:T:S:N:B:D:F:V:t:g:c:POik:";
@@ -503,7 +504,7 @@ int main(int argc, char *argv[])
  
 	//signal(SIGINT, sin_handler);
 
-	printf("\nDpCmd Linux 1.9.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
+	printf("\nDpCmd Linux 1.10.1.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.config
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
@@ -1078,6 +1079,8 @@ bool InitProject(void)
 		        printf("Chip Type %s is applied manually.\r\n",Chip_Info.TypeName);
 		        printf("%s chip size is %zd bytes.\n\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
 		        ProjectInitWithID(Chip_Info,i);
+                        if(Chip_Info.Class=="N25Qxxx_Large")
+			    isSendFFsequence=true;
 		    }
 		    else
 		    {
@@ -1743,35 +1746,55 @@ bool Wait(const char* strOK,const char* strFail)
 
 int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index) 
 {
-    
-   long UniqueID = 0;
+    long UniqueID = 0;
     int rc = 0;
-    UniqueID = flash_ReadId(0x9f, 4, Index);
-    if (UniqueID != 0) 
-   { 
-        rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
-        if(rc && (search_all == 0))
-            return rc;
-    }  
-    UniqueID = 0;
-    rc = 0;
-    UniqueID = flash_ReadId(0x9f, 3, Index);
 
-    if (UniqueID != 0) 
-    { 
-        rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
-        if(rc && (search_all == 0))
-            return rc;
-    }
-    UniqueID = 0;
-    rc = 0;
-    UniqueID = flash_ReadId(0x9f, 2, Index);
-    if (UniqueID != 0) 
-    { 
-        rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
-        if(rc && (search_all == 0))
-            return rc;
-    }
+    for(int c=0;c<2;c++)
+    {
+        if(c==1)
+	    SendFFSequence(Index);
+        UniqueID = flash_ReadId(0x9f, 4, Index);
+        if (UniqueID != 0) 
+        { 
+            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+            if(rc && (search_all == 0))
+	    {
+	        if(c==1)
+	          isSendFFsequence=true;
+                return rc;
+	    }
+        }  
+        UniqueID = 0;
+        rc = 0;
+        UniqueID = flash_ReadId(0x9f, 3, Index);
+
+        if (UniqueID != 0) 
+        { 
+            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+            if(rc && (search_all == 0))
+	    {
+	        if(c==1)
+	           isSendFFsequence=true;
+                return rc;
+	    }  
+        }
+        UniqueID = 0;
+        rc = 0;
+        UniqueID = flash_ReadId(0x9f, 2, Index);
+        if(UniqueID != 0) 
+        { 
+            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+            if(rc && (search_all == 0))
+            {
+	        if(c==1)
+	          isSendFFsequence=true;
+                return rc;
+	    }
+        } 
+    
+    } 
+   
+   
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0x15, 2, Index);

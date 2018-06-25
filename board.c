@@ -985,3 +985,9 @@ bool UpdateFirmware(const char* sFolder,int Index)
 	return bResult;
 }
 
+void SendFFSequence(int Index)
+{
+	unsigned char v[4]={0xff,0xff,0xff,0xff};
+        FlashCommand_SendCommand_OutOnlyInstruction(v,4,Index);
+}
+

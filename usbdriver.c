@@ -4,8 +4,8 @@
 #include "Macro.h"
 #include "usbdriver.h"
 
-unsigned int        m_nbDeviceDetected = 0;
-unsigned char       DevIndex = 0;
+unsigned int   m_nbDeviceDetected = 0;
+unsigned char   DevIndex = 0;
 extern volatile bool g_bIsSF600[16];
 extern int g_CurrentSeriase;
 extern char g_board_type[8];
@@ -13,6 +13,7 @@ extern int g_firmversion;
 extern void Sleep(unsigned int ms);
 extern CHIP_INFO Chip_Info;
 extern unsigned int g_uiDevNum;
+extern bool isSendFFsequence;
 
 
 #define SerialFlash_FALSE   -1
@@ -309,10 +310,7 @@ int dediprog_set_spi_voltage(int v,int Index)
 	rq.Length = 0 ;
  
 	if(Is_NewUSBCommand(Index))
-	{ 
-//		if(g_bIsSF600==true && (strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxB) != NULL || strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxD) != NULL))
-//			v |= 0x8000;
-//		printf("v==%x\n",v);
+	{  
 		rq.Value = v ;
 		rq.Index = 0;
 	}
@@ -322,59 +320,17 @@ int dediprog_set_spi_voltage(int v,int Index)
 		rq.Index = 0x04 | g_CurrentSeriase; // ID detect mode
 	} 
 	ret = OutCtrlRequest(&rq, NULL, 0, Index);
-//	printf("ret=%x\r\n",ret);
-		#if 0
-    if(g_bIsSF600==true && v!=0)
-    {
-        unsigned char Vol[36]={
-            0xD0,0x07,0x00,0x00,0x10,0x0E,0x00,0x00,0x10,0x0E,0x00,0x00,// VccL=2700mV, VccP=3600mV, VccBuffer=3600mV
-            0xD0,0x07,0x00,0x00,0x8C,0x0A,0x00,0x00,0x8C,0x0A,0x00,0x00,// VccL=2000mV, VccP=2700mV, VccBuffer=2700mV
-            0xB0,0x04,0x00,0x00,0xD0,0x07,0x00,0x00,0xD0,0x07,0x00,0x00// VccL=1200mV, VccP=2000mV, VccBuffer=2000mV
-            };
-        rq.Index = 0x04 | g_CurrentSeriase; // ID detect mode
-        rq.Length = 12 ;
-        if(v>=1800 && v<4500)
-        {
-            unsigned char vol[12]={
-                ((float)v*0.8),(unsigned int)((float)v*0.8)>>8,(unsigned int)((float)v*0.8)>>16,(unsigned int)((float)v*0.8)>>24,
-                v, v>>8, v>>16, v>>24,
-                v, v>>8, v>>16, v>>24
-                };
-            int i=0;
-            for(i; i<12; i++)
-                vBuffer[i]=vol[i];
-        }
-        else
-        {
-            int loop=(v & 0x03)*12;
-            int i=loop;
-            for(i; i<(loop+12) ;i++)
-                vBuffer[i-loop]=Vol[i];
-        }
-        ret = OutCtrlRequest(&rq, vBuffer, 12, Index);
-    }
-    else
-    {
-        rq.Index = 0x00 ;
-        rq.Length = 0 ;
-        ret = OutCtrlRequest(&rq, NULL, 0, Index);
-    }
-
-	if (ret != rq.Length) {
-		printf("Command Set SPI Voltage 0x%x failed!\n", voltage_selector);
-		return false;
-	}
-#endif
-        
-
 
 
     if(0 != v)  
     {
 	Sleep(200); 
-	unsigned char v[4]={0xff,0xff,0xff,0xff};
-        FlashCommand_SendCommand_OutOnlyInstruction(v,4,Index);
-    }
+	if(isSendFFsequence)
+	{
+	    unsigned char v[4]={0xff,0xff,0xff,0xff};
+            FlashCommand_SendCommand_OutOnlyInstruction(v,4,Index);	
+	} 
+   }
 
 	return ret;
 }
