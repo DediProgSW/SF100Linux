@@ -1,6 +1,7 @@
 #include "Macro.h"
 #include "usbdriver.h"
 #include "board.h"
+#include "FlashCommand.h"
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
 #define min(a,b) (a>b? b:a)
@@ -303,6 +304,7 @@ bool ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index)
         return false;
     }
     memcpy(Data,vBuffer,16);
+    return true;
 }
 
 bool LeaveSF600Standalone(bool Enable,int Index)

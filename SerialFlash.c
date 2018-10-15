@@ -3,6 +3,7 @@
 #include "ChipInfoDb.h"
 #include "FlashCommand.h"
 #include "SerialFlash.h"
+#include "project.h"
 #include <sys/stat.h>
 #include <stdbool.h>
 
@@ -15,7 +16,7 @@ extern volatile bool g_bIsSF600[16];
 extern void Sleep(unsigned int ms);
 extern bool Is_NewUSBCommand(int Index);
 
-unsigned char g_micron_usVCR=0xFFFF;
+unsigned char g_micron_usVCR=0xFF;
 
 unsigned char mcode_WRSR=0x01;
 unsigned char mcode_WRDI=0x04;
@@ -674,9 +675,9 @@ int S70FSxxx_Large_doRDSR1V(bool die1, unsigned char *cSR,int Index)
 	// first control packet
 	vInstruction[0] = 0x65;
 	vInstruction[1] = ((0x800000>>24)|(die1?0:(0x4000000>>24)));
-	vInstruction[2] = 0x800000>>16;
-	vInstruction[3] = 0x800000>>8;
-	vInstruction[4] = 0x800000;
+	vInstruction[2] = (unsigned char)((0x800000>>16) & 0xff);
+	vInstruction[3] = (unsigned char)((0x800000>>8) & 0xff);
+	vInstruction[4] = (unsigned char)((0x800000) & 0xff);
 	vInstruction[5] = 0;
 	vInstruction[6] = 0; 
 
@@ -695,7 +696,7 @@ int S70FSxxx_Large_doRDSR1V(bool die1, unsigned char *cSR,int Index)
 	}
 	rq.Length = 7;//(unsigned long) 1 ;
 
-	if(OutCtrlRequest(&rq, &vInstruction, 7, Index) == SerialFlash_FALSE)
+	if(OutCtrlRequest(&rq, vInstruction, 7, Index) == SerialFlash_FALSE)
 		return SerialFlash_FALSE ;
  
 
@@ -732,9 +733,9 @@ int S70FSxxx_Large_doRDCR2V(bool die1, unsigned char *cSR,int Index)
 	// first control packet
 	vInstruction[0] = 0x65;
 	vInstruction[1] = ((0x800003>>24)|(die1?0:(0x4000000>>24)));
-	vInstruction[2] = 0x800003>>16;
-	vInstruction[3] = 0x800003>>8;
-	vInstruction[4] = 0x800003;
+	vInstruction[2] = (unsigned char)((0x800003>>16) & 0xff);
+	vInstruction[3] = (unsigned char)((0x800003>>8) & 0xff);
+	vInstruction[4] = (unsigned char)((0x800003) & 0xff);
 	vInstruction[5] = 0;
 	vInstruction[6] = 0; 
 
@@ -753,7 +754,7 @@ int S70FSxxx_Large_doRDCR2V(bool die1, unsigned char *cSR,int Index)
 	}
 	rq.Length = 7;//(unsigned long) 1 ;
 
-	if(OutCtrlRequest(&rq, &vInstruction, 7, Index) == SerialFlash_FALSE)
+	if(OutCtrlRequest(&rq, vInstruction, 7, Index) == SerialFlash_FALSE)
 		return SerialFlash_FALSE ;
  
 
@@ -1345,14 +1346,13 @@ bool CN25Qxxx_Large_doWRVCR(unsigned char ucVCR,int Index)
 	vInstruction[0]=0x81;
 	vInstruction[1]=ucVCR&0xFF; 
 	
-	FlashCommand_TransceiveOut(&vInstruction,2,false,Index);
+	FlashCommand_TransceiveOut(vInstruction,2,false,Index);
 	
         SerialFlash_waitForWIP(Index);
 
 	unsigned char ucRDVCR=0xFF;
 	
         int numOfRetry = 5 ;
-        unsigned char re;
          do{ 
             CN25Qxxx_Large_doRDVCR(&ucRDVCR,Index);
             Sleep(100); 
@@ -1423,14 +1423,13 @@ bool CN25Qxxx_Large_doWRENVCR(unsigned char ucENVCR,int Index)
 	vInstruction[0]=0x61;
 	vInstruction[1]=ucENVCR&0xFF; 
 	
-	FlashCommand_TransceiveOut(&vInstruction,2,false,Index);
+	FlashCommand_TransceiveOut(vInstruction,2,false,Index);
 	
         SerialFlash_waitForWIP(Index);
 
 	unsigned char ucRDENVCR=0xFF;
 	
         int numOfRetry = 5 ;
-        unsigned char re;
          do{ 
             CN25Qxxx_Large_doRDENVCR(&ucRDENVCR,Index);
             Sleep(100); 
@@ -1565,14 +1564,14 @@ bool CS25FLxx_LargeEnable4ByteAddrMode(bool Enable4Byte,int Index)
 	   unsigned char v[2];
     	   v[0]=0x17;
  	   v[1]=0x80;
-           FlashCommand_TransceiveOut(&v,2,false,Index);
+           FlashCommand_TransceiveOut(v,2,false,Index);
         }
 	else
 	{
 	   unsigned char v[2];
     	   v[0]=0x17;
  	   v[1]=0x00;
-           FlashCommand_TransceiveOut(&v,2,false,Index);
+           FlashCommand_TransceiveOut(v,2,false,Index);
 	} 
    } 
    else
@@ -2002,7 +2001,7 @@ bool S70FSxxx_Large_chipErase(unsigned int Addr,unsigned int Length,int USBIndex
 	vInstruction[2]=0x00;
 	vInstruction[3]=0x00;
 	vInstruction[4]=0x00;
-    	FlashCommand_SendCommand_OutOnlyInstruction(&vInstruction,5,USBIndex);
+    	FlashCommand_SendCommand_OutOnlyInstruction(vInstruction,5,USBIndex);
  
 	S70FSxxx_Large_waitForWIP(true,USBIndex) ; //check die 1
 
@@ -2017,9 +2016,10 @@ bool S70FSxxx_Large_chipErase(unsigned int Addr,unsigned int Length,int USBIndex
 	vInstruction[2]=0x00;
 	vInstruction[3]=0x00;
 	vInstruction[4]=0x00;
-    	FlashCommand_SendCommand_OutOnlyInstruction(&vInstruction,5,USBIndex);
+    	FlashCommand_SendCommand_OutOnlyInstruction(vInstruction,5,USBIndex);
  
 	S70FSxxx_Large_waitForWIP(false,USBIndex) ; //check die 2
+    return true;
 }
 
 /// chip erase

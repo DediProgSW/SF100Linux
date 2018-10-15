@@ -31,7 +31,7 @@ bool WriteSF600UID(unsigned int dwUID, unsigned char ManuID,int Index);
 bool UpdateSF600Flash_FPGA(const char* sFilePath,int Index);
 bool UpdateSF600Firmware(const char* sFolder,int Index);
 bool UpdateFirmware(const char* sFolder,int Index);
-
+void SendFFSequence(int Index);
 
 
 

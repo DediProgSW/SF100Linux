@@ -3,6 +3,7 @@
 #include <usb.h>
 #include "Macro.h"
 #include "usbdriver.h"
+#include "FlashCommand.h"
 
 unsigned int   m_nbDeviceDetected = 0;
 unsigned char   DevIndex = 0;
@@ -500,7 +501,7 @@ else
              printf("Error: Programmers are not connected.\n");
 		return 0;
 	 }
-         printf("dediprog_handle[%d]=%x\n",g_uiDevNum-1,dediprog_handle[g_uiDevNum-1]);
+         printf("dediprog_handle[%d]=%p\n",g_uiDevNum-1,dediprog_handle[g_uiDevNum-1]);
 	 ret = usb_set_configuration(dediprog_handle[g_uiDevNum-1], 1);
 	
 	 
