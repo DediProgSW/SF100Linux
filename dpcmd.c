@@ -1213,7 +1213,7 @@ void SetVcc(int Index)
 
 int do_loadFile(void)
 { 
-    char* filename;
+    char* filename = NULL;
     if(g_ucOperation & PROGRAM)
         filename=g_parameter_program;
     else if(g_ucOperation & LOADFILE)
