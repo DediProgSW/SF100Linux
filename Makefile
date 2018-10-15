@@ -5,7 +5,7 @@
 
 PROGRAM = dpcmd
 CC      = gcc
-CFLAGS  = -Os -Wall -lpthread -std=c99 -D_BSD_SOURCE
+CFLAGS  = -Os -Wall -Werror -lpthread -std=gnu99 -D_BSD_SOURCE
 
 UNAME_OS := $(shell lsb_release -si)
 
