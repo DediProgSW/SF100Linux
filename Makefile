@@ -9,10 +9,6 @@ CFLAGS  = -Os -Wall -Werror -lpthread -std=gnu99 -D_BSD_SOURCE
 
 UNAME_OS := $(shell lsb_release -si)
 
-#ifneq ($(UNAME_OS),Ubuntu)
-#     CFLAGS+=-D_NON_UBUNTU
-#endif
-
 FEATURE_LIBS += -lusb -lpthread
 PROGRAMMER_OBJS += dpcmd.o usbdriver.o FlashCommand.o SerialFlash.o parse.o board.o project.o IntelHexFile.o MotorolaFile.o
 
