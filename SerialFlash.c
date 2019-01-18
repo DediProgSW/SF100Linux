@@ -2190,18 +2190,23 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
 { 
     size_t i,j,loop,pageNum,BufferLocation=0;
     int ret = 0;
-    if(!SerialFlash_StartofOperation(Index)) 
+    if(!SerialFlash_StartofOperation(Index)) {
+        printf("%s: Failed to start flash operation\n", __FUNCTION__);
 	return false;
+    }
     if(!(strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL &&
  	strstr(Chip_Info.Class,SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL && g_bIsSF600[Index]==true))
 	SerialFlash_Enable4ByteAddrMode(true, Index);
 
-    if(SerialFlash_EnableQuadIO(true, m_boEnReadQuadIO,Index)== SerialFlash_FALSE)
+    if(SerialFlash_EnableQuadIO(true, m_boEnReadQuadIO,Index)== SerialFlash_FALSE) {
+        printf("%s: Failed to enable QuadIO\n", __FUNCTION__);
         return false;
+    }
 
 //    unsigned char v[512];
     AddrRange->length = AddrRange->end - AddrRange->start;
     if (AddrRange->length <= 0) {
+        printf("%s: Address range length is <=0\n", __FUNCTION__);
         return false;
     }  
 //    printf("AddrRange->end=%x, AddrRange->start=%x\r\n",AddrRange->end,AddrRange->start);
@@ -2254,7 +2259,10 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
             for(i = 0; i < pageNum; ++ i)
             {
                 ret = BulkPipeRead(vData + (BufferLocation+i)*512, USB_TIMEOUT,Index);
-                if((ret!=512) || m_isCanceled) return 0 ;
+                if((ret!=512) || m_isCanceled) {
+                    printf("%s: %d: %s: BulkPipeRead failed\n", __FILE__, __LINE__, __FUNCTION__);
+                    return false ;
+                }
                 //memcpy(vData + (BufferLocation+i)*512, v, 512);
             }
             BufferLocation += pageNum;
@@ -2288,17 +2296,22 @@ int SerialFlash_bulkPipeRead(struct CAddressRange *AddrRange, unsigned char *vDa
             ret = BulkPipeRead(vData + i*ret, USB_TIMEOUT,Index);
             if((ret != 512) || m_isCanceled)
             {
+                printf("%s: failed. BulkPipeRead=%d, m_isCanceled=%d\n", __FUNCTION__, ret, m_isCanceled);
                 return false ;
             }
             //memcpy(vData + i*ret, v, ret); 
         }
     }
-    if(SerialFlash_EnableQuadIO(false,m_boEnReadQuadIO,Index) == SerialFlash_FALSE)
+    if(SerialFlash_EnableQuadIO(false,m_boEnReadQuadIO,Index) == SerialFlash_FALSE) {
+        printf("%s: Failed to enable QuadIO\n", __FUNCTION__);
         return false;
+    }
     SerialFlash_Enable4ByteAddrMode(false, Index);
 
-    if(!SerialFlash_EndofOperation(Index)) 
+    if(!SerialFlash_EndofOperation(Index)) {
+        printf("%s: Not End Of Operation\n", __FUNCTION__);
 	return false;
+    }
 
     return true ; 	 
 

@@ -124,7 +124,8 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
     if( Index==-1 )
         Index = DevIndex;
 
-    if( (rq->Function!=URB_FUNCTION_VENDOR_ENDPOINT) && (g_bIsSF600[Index]==true)) return true;
+    if( (rq->Function!=URB_FUNCTION_VENDOR_ENDPOINT) && (g_bIsSF600[Index]==true))
+	    return true;
 
     requesttype = 0x00;
 
@@ -141,8 +142,8 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
       //  printf("no device");
     if(ret != buf_size)
     {
-    #if 0
-        printf("Control Pipe output error!\n");
+    #if 1
+	    printf("Control Pipe output error. Returned %d, expected %d\n", ret, buf_size);
         printf("rq->Direction=%X\n",rq->Direction);
         printf("rq->Function=%X\n",rq->Function);
         printf("rq->Request=%X\n",rq->Request);
@@ -153,7 +154,7 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
         printf("buf[0]=%X\n",buf[0]);
         printf("g_bIsSF600=%d\n",g_bIsSF600);
     #endif
-		//printf("Error=0x%x\r\n",usb_strerror());
+		printf("Error=0x%x\r\n",usb_strerror());
         return -1;
     }
     return ret;
@@ -271,6 +272,10 @@ int BulkPipeRead(unsigned char *pBuff, unsigned int timeOut, int Index)
 
     unsigned long cnRead = 512;
     ret = usb_bulk_read(dediprog_handle[Index], 0x82, (char*)pBuff, cnRead, DEFAULT_TIMEOUT);
+    if(ret<0) {
+        printf("%s: Error: %s (%d)\n", __FUNCTION__, strerror(-ret), ret);
+        printf("Libusb errpr: %s\n", usb_strerror());
+    }
     cnRead = ret;
     return cnRead ;
 }

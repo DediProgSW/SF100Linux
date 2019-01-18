@@ -188,27 +188,29 @@ int WriteBINFile(const char *filename,unsigned char *buf, unsigned long size)
 
 int GetFileFormatFromExt(const char* csPath)
 {
-    size_t length=strlen(csPath);
-    char fmt[5]={0};
-    size_t i=length;
-    size_t j=0;
+    char *ext=0, *fmt=0;
+    int ret=BIN;
+    int i;
 
-    while(csPath[i] != '.')
-    {
-        i--;
-    }
+    ext = strrchr(csPath, '.');
+    if(!ext)
+        return BIN;
 
-    for(j=i;j<length; j++)
+    fmt=strdup(ext);
+    if(!fmt)
+        return ret;
+
+    for(i=0; fmt[i]; i++)
     {
-        fmt[j-i]=toupper(csPath[j]);
+        fmt[i]=toupper(fmt[i]);
     }
 
     if(strcmp(fmt,".HEX")==0)
-        return HEX ;
+        ret = HEX ;
     else if(strcmp(fmt,".S19")==0 || strcmp(fmt,".MOT")==0)
-        return S19 ;
-    else
-        return BIN ;
+        ret = S19 ;
+    free(fmt);
+    return ret;
 }
 
 bool ReadFile(const char* csPath, unsigned char* buffer,unsigned long* FileSize,unsigned char PaddingByte)
@@ -374,7 +376,10 @@ bool threadBlankCheck(int Index)
     Addr.start=0;
     Addr.end=Chip_Info.ChipSizeInByte;  
 
-    SetIOMode(false,Index);
+    if(!SetIOMode(false,Index)) {
+	    printf("%s: failed to set I/O mode to false\n", __FUNCTION__);
+	    return false;
+    }
 
 
     result = SerialFlash_rangeBlankCheck(&Addr,Index) ;
@@ -452,13 +457,11 @@ bool threadReadRangeChip(struct CAddressRange range,int Index)
 
     unsigned char *pBuffer = malloc(AddrRound.length);
 
-    if(pBufferForLastReadData[Index]==NULL)
-        pBufferForLastReadData[Index]=malloc(range.end-range.start);
-    else
+    if(pBufferForLastReadData[Index]=!NULL)
     { 
         free(pBufferForLastReadData[Index]);
-        pBufferForLastReadData[Index]=malloc(range.end-range.start);
     }
+    pBufferForLastReadData[Index]=malloc(range.end-range.start);
     if(pBufferForLastReadData[Index]==NULL)
     {
         printf("allocate memory fail.\n");
@@ -492,13 +495,11 @@ bool threadReadChip(int Index)
 
     SetIOMode(false,Index);
 
-    if(pBufferForLastReadData[Index]==NULL)
-            pBufferForLastReadData[Index]=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
-    else
+    if(pBufferForLastReadData[Index]!=NULL)
     {
         free(pBufferForLastReadData[Index]);
-        pBufferForLastReadData[Index]=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
     }
+    pBufferForLastReadData[Index]=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
     if(pBufferForLastReadData[Index]==NULL)
     {
         printf("allocate memory fail.\n");
@@ -621,12 +622,12 @@ bool threadCompareFileAndChip(int Index)
         result = false;  
     //refresh vcc before verify
     TurnOFFVcc(Index);
-     Sleep(100); 
-     TurnONVcc(Index);
-     Sleep(100); 
+    Sleep(200); 
+    TurnONVcc(Index);
+    Sleep(200); 
 
-     if(IdentifyChipBeforeOperation(Index)==false) 
- 	result = false;
+    if(IdentifyChipBeforeOperation(Index)==false) 
+	    result = false;
 
     if( result )
     { 
@@ -720,7 +721,8 @@ size_t Condense(uintptr_t* out,unsigned char* vc, uintptr_t* addrs, size_t addrS
 extern void SetPageSize(CHIP_INFO* mem, int USBIndex);
 
 bool BlazeUpdate(int Index)
-{ 
+{
+    printf("%s\n", __FUNCTION__);
 //    struct CAddressRange addr_round;//(Chip_Info.MaxErasableSegmentInByte);
 
 //    if(strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxD) != NULL)
@@ -829,12 +831,14 @@ bool BlazeUpdate(int Index)
 
 bool RangeUpdateThruSectorErase(int Index)
 {
+    printf("%s\n", __FUNCTION__);
     return BlazeUpdate(Index);
 }
 
 
 bool RangeUpdateThruChipErase(int Index)
 {
+    printf("%s\n", __FUNCTION__);
 //    printf("RangeUpdateThruChipErase!\n");
     unsigned char* vc=(unsigned char*)malloc(Chip_Info.ChipSizeInByte);
     unsigned int i=0;
@@ -1069,7 +1073,7 @@ void Run(OPERATION_TYPE type,int DevIndex)
 	
 }
 
-void SetIOMode(bool isProg,int Index)
+bool SetIOMode(bool isProg,int Index)
 {
     size_t IOValue=0;
     m_boEnReadQuadIO=0;
@@ -1077,7 +1081,9 @@ void SetIOMode(bool isProg,int Index)
 
     if(g_bIsSF600[Index]==false) return;
 
-    SetIOModeToSF600(IOValue, Index);
+    if(!SetIOModeToSF600(IOValue, Index)) {
+	    printf("%s: %d: %s: Huston, we've got a problem", __FILE__, __LINE__, __FUNCTION__);
+    }
     return;
 //    if(strlen(Chip_Info.ProgramIOMethod)==0)
 //    {
