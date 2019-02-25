@@ -20577,7 +20577,7 @@ RDIDCommand="0x9F"/>
     IDNumber="3"
     RDIDCommand="0x9F"/>
 
-<Chip TypeName="MX66U2G45GXDI54" 
+<Chip TypeName="MX66U2G45GXRI54" 
     Class="MX25Lxxx_Large" 
     UniqueID="0xC2953C" 
     Description="1Gbit, Low Voltage, Serial Flash Memory With 85MHz SPI Bus Interface" 
