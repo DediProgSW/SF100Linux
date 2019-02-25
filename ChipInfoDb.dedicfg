@@ -2,7 +2,7 @@
 <DediProgChipDatabase 
     Description="DediProg Pro Supported memory info" 
     Creator="DediProg Pro" 
-    Ver="3.00" 
+    Ver="4.00" 
     CreateDate="2007-September-25" 
     Locale="2052">
 <Portofolio 
@@ -2804,7 +2804,6 @@
     AddrWidth="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
-
 <Chip TypeName="S25FL512Sxxxxxx1x(Secure)" 
     Class="S25FLxxx_Large" 
     UniqueID="0x010220" 
@@ -2813,7 +2812,27 @@
     ManufactureUrl="www.spansion.com" 
     Voltage="3.3V" 
     Clock="104MHz" 
-    Timeout="480" 
+    Timeout="480"
+    ManufactureID="0x01" 
+    JedecDeviceID="0x010220" 
+    ChipSizeInKByte="65536" 
+    SectorSizeInByte="262144" 
+    PageSizeInByte="512" 
+    VppSupport="0"
+    ProgramIOMethod="SPQD_RQWSW"
+    AddrWidth="4"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>   
+<Chip TypeName="S25FL512Sxxxxxx1x(Secure)" 
+    Class="S25FLxxx_Large" 
+    UniqueID="0x010220" 
+    Description="512 Megabit CMOS 3.0 Volt Flash Memory with 104-MHz SPI Bus" 
+    Manufacturer="Spansion" 
+    ManufactureUrl="www.spansion.com" 
+    Voltage="3.3V" 
+    Clock="104MHz" 
+    Timeout="480"
+
     ManufactureID="0x01" 
     JedecDeviceID="0x010220" 
     ChipSizeInKByte="65536" 
@@ -7986,7 +8005,9 @@
 <Chip TypeName="LE25FU106B" 
     Class="LE25FWxxx" 
     UniqueID="0x621D" 
-    Description="1M-bit (128K x 8) Serial Flash Memory" 
+    Description="1M-bit (128K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -8003,7 +8024,9 @@
 <Chip TypeName="LE25FU206" 
     Class="LE25FWxxx" 
     UniqueID="0x6244" 
-    Description="2M-bit (256K x 8) Serial Flash Memory" 
+    Description="2M-bit (256K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -8038,7 +8061,9 @@
 <Chip TypeName="LE25FW203" 
     Class="LE25FWxxx" 
     UniqueID="0x621600" 
-    Description="2M-bit (256K x 8) Serial Flash Memory" 
+    Description="2M-bit (256K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -8074,7 +8099,9 @@
 <Chip TypeName="LE25FW403A" 
     Class="LE25FWxxx" 
     UniqueID="0x621100" 
-    Description="4M-bit (512K x 8) Serial Flash Memory" 
+    Description="4M-bit (512K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -8092,7 +8119,9 @@
 <Chip TypeName="LE25FW406" 
     Class="LE25FWxxx" 
     UniqueID="0x6207" 
-    Description="4M-bit (512K x 8) Serial Flash Memory" 
+    Description="4M-bit (512K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -8110,7 +8139,9 @@
 <Chip TypeName="LE25FW806" 
     Class="LE25FWxxx" 
     UniqueID="0x6226" 
-    Description="8M-bit (1M x 8) Serial Flash Memory" 
+    Description="8M-bit (1M x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -8128,7 +8159,9 @@
 <Chip TypeName="LE25U40CQH" 
     Class="LE25FWxxx" 
     UniqueID="0x620613" 
-    Description="4M-bit (512K x 8) Serial Flash Memory" 
+    Description="4M-bit (512K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -16090,7 +16123,9 @@ RDIDCommand="0x9F"/>
 	<Chip TypeName="26VF016BA"
     Class="26VFxxC"
     UniqueID="0xBF2641"
-    Description="3.0V 16 Mbit Serial Quad I/O (SQI) Flash Memory"
+    Description="3.0V 16 Mbit Serial Quad I/O (SQI
+ 
+ Flash Memory"
     Manufacturer="Microchip/SST"
     ManufactureUrl="www.pct.com.tw"
     Voltage="3.3V"
@@ -16111,7 +16146,9 @@ RDIDCommand="0x9F"/>
 	<Chip TypeName="LE25U81AFD" 
     Class="ON Semiconductor" 
     UniqueID="0x620614" 
-    Description="8M-bit (1024K x 8) Serial Flash Memory" 
+    Description="8M-bit (1024K x 8
+ 
+ Serial Flash Memory" 
     Manufacturer="SANYO" 
     ManufactureUrl="www.sanyo.com" 
     Voltage="3.3V" 
@@ -17890,7 +17927,9 @@ RDIDCommand="0x9F"/>
     RDIDCommand="0x9F"/>
 
 <!---2015 12 05 release EVY--->
-	<Chip TypeName="MT25TL256B ( for one die)"
+	<Chip TypeName="MT25TL256B 
+ 
+ for one die)"
 	Description="256 Mbit Serial Flash Memory "
 	Manufacturer="Micron(Numonyx)"
 	ManufactureUrl="www.numonyx.com"
@@ -17910,7 +17949,9 @@ RDIDCommand="0x9F"/>
 	BlockSizeInByte="65536"
 	AddrWidth="3"
 	RDIDCommand="0x9F"/>	
-<Chip TypeName="MT25TL256B ( for one die)"
+<Chip TypeName="MT25TL256B 
+ 
+ for one die)"
     Class="M25Pxx" 
     UniqueID="0x20BA18" 
     Description="128 Mbit, Low Voltage, Serial Flash Memory With 108MHz SPI Bus Interface" 
@@ -17932,7 +17973,9 @@ RDIDCommand="0x9F"/>
 
 
 
-<Chip TypeName="MT25TL256H ( for one die)"
+<Chip TypeName="MT25TL256H 
+ 
+ for one die)"
 	Description="256 Mbit Serial Flash Memory "
 	Manufacturer="Micron(Numonyx)"
 	ManufactureUrl="www.numonyx.com"
@@ -17973,7 +18016,9 @@ RDIDCommand="0x9F"/>
     RDIDCommand="0x9F"/> 
 
 
-	<Chip TypeName="MT25TL512B ( for one die)"
+	<Chip TypeName="MT25TL512B 
+ 
+ for one die)"
 	Description="256 Mbit Serial Flash Memory "
 	Manufacturer="Micron(Numonyx)"
 	ManufactureUrl="www.numonyx.com"
@@ -18058,7 +18103,9 @@ RDIDCommand="0x9F"/>
 	AddrWidth="3"
 	RDIDCommand="0x9F"/>
 
-<Chip TypeName="MX66L1G85G( for one die)"
+<Chip TypeName="MX66L1G85G
+ 
+ for one die)"
 Description="3V 1G-BIT FLASH MEMORY"
 Manufacturer="Macronix"
 ManufactureUrl="www.Macronix.com"
@@ -18080,7 +18127,9 @@ AddrWidth="3"
 RDIDCommand="0x9F"/>
 
 
-<Chip TypeName="MX66L51285G( for one die)"
+<Chip TypeName="MX66L51285G
+ 
+ for one die)"
 Description="3V 512M-BIT FLASH MEMORY"
 Manufacturer="Macronix"
 ManufactureUrl="www.Macronix.com"
@@ -20489,5 +20538,64 @@ RDIDCommand="0x9F"/>
     AddrWidth="3"
     IDNumber="3"
     RDIDCommand="0x9F"/>
+<Chip TypeName="AT25SF128A"
+    Class="AT26xxx" 
+    UniqueID="0x1F8901"
+    DeviceID="0x17"
+    Description="128Mbit SPI Serial Flash Memory"
+    Manufacturer="Adesto"
+    ManufactureUrl="www.Adesto.com"
+    Voltage="1.8V"
+    Clock="104MHz"
+    Timeout="250"
+    ManufactureID="0x1F"
+    JedecDeviceID="0x1F8901"
+    ChipSizeInKByte="16384"
+    SectorSizeInByte="65536"
+    PageSizeInByte="256"
+    AddrWidth="3"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+
+<Chip TypeName="MX66U1G45GXDJ54" 
+    Class="MX25Lxxx_Large" 
+    UniqueID="0xC2953B" 
+    Description="1Gbit, Low Voltage, Serial Flash Memory With 85MHz SPI Bus Interface" 
+    Manufacturer="Macronix" 
+    ManufactureUrl="www.macronix.com" 
+    Voltage="1.8V" 
+    Clock="166MHz" 
+    Timeout="2000"
+    ManufactureID="0xC2" 
+    JedecDeviceID="0xC2953B" 
+    ChipSizeInKByte="131072" 
+    SectorSizeInByte="65536" 
+    PageSizeInByte="256" 
+    MXIC_WPmode="true"
+    ProgramIOMethod="SPSD_RSW"
+    AddrWidth="4"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+
+<Chip TypeName="MX66U2G45GXDI54" 
+    Class="MX25Lxxx_Large" 
+    UniqueID="0xC2953C" 
+    Description="1Gbit, Low Voltage, Serial Flash Memory With 85MHz SPI Bus Interface" 
+    Manufacturer="Macronix" 
+    ManufactureUrl="www.macronix.com" 
+    Voltage="1.8V" 
+    Clock="166MHz" 
+    Timeout="2000"
+    ManufactureID="0xC2" 
+    JedecDeviceID="0xC2953C" 
+    ChipSizeInKByte="131072" 
+    SectorSizeInByte="65536" 
+    PageSizeInByte="256" 
+    MXIC_WPmode="true"
+    ProgramIOMethod="SPSD_RSW"
+    AddrWidth="4"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+
 </Portofolio>
 </DediProgChipDatabase>
