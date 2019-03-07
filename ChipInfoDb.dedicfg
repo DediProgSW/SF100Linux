@@ -19514,6 +19514,7 @@ RDIDCommand="0x9F"/>
       IDNumber="3"
       RDIDCommand="0x9F"/>
 
+
   <Chip TypeName="DQ25Q128AL"
     Class="W25Pxx"
     UniqueID="0x546018"
@@ -20596,6 +20597,44 @@ RDIDCommand="0x9F"/>
     AddrWidth="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
+
+<Chip TypeName="AT25QF128A"
+      Class="AT26xxx"
+      UniqueID="0x1F8901"
+      DeviceID="0x17"
+      Description="128Mbit SPI Serial Flash Memory"
+      Manufacturer="Adesto"
+      ManufactureUrl="www.Adesto.com"
+      Voltage="3.3V"
+      Clock="104MHz"
+      Timeout="250"
+      ManufactureID="0x1F"
+      JedecDeviceID="0x1F8901"
+      ChipSizeInKByte="16384"
+      SectorSizeInByte="65536"
+      PageSizeInByte="256"
+      AddrWidth="3"
+      IDNumber="3"
+      RDIDCommand="0x9F"/>
+
+<Chip TypeName="AT25SF128A"
+      Class="AT26xxx"
+      UniqueID="0x1F8901"
+      DeviceID="0x17"
+      Description="128Mbit SPI Serial Flash Memory"
+      Manufacturer="Adesto"
+      ManufactureUrl="www.Adesto.com"
+      Voltage="3.3V"
+      Clock="104MHz"
+      Timeout="250"
+      ManufactureID="0x1F"
+      JedecDeviceID="0x1F8901"
+      ChipSizeInKByte="16384"
+      SectorSizeInByte="65536"
+      PageSizeInByte="256"
+      AddrWidth="3"
+      IDNumber="3"
+      RDIDCommand="0x9F"/>
 
 </Portofolio>
 </DediProgChipDatabase>
