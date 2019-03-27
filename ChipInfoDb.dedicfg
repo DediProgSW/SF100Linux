@@ -2,7 +2,7 @@
 <DediProgChipDatabase 
     Description="DediProg Pro Supported memory info" 
     Creator="DediProg Pro" 
-    Ver="5.00" 
+    Ver="6.00" 
     CreateDate="2007-September-25" 
     Locale="2052">
 <Portofolio 
@@ -15554,6 +15554,49 @@ RDIDCommand="0x9F"/>
     IDNumber="3"
     RDIDCommand="0x9F"/>    
 
+<Chip TypeName="W25Q32JW-DTR" 
+    Class="W25Pxx" 
+    UniqueID="0xEF8016" 
+    Description="32 Mbit, Serial Flash Memory" 
+    Manufacturer="Winbond Electronics Corp" 
+    ManufactureUrl="www.winbond.com" 
+    Voltage="1.8V" 
+    Clock="75MHz" 
+    Timeout="80"
+    JedecDeviceID="0xEF8016" 
+    ManufactureID="0xEF" 
+    DeviceID="0x15" 
+    ChipSizeInKByte="4096" 
+    SectorSizeInByte="4096" 
+    PageSizeInByte="256" 
+    BlockSizeInByte="65536" 
+    AddrWidth="3"
+    ProgramIOMethod="SPSD_RSW"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>   
+
+
+<Chip TypeName="W25Q32JW" 
+    Class="W25Pxx" 
+    UniqueID="0xEF6016" 
+    Description="32 Mbit, Serial Flash Memory" 
+    Manufacturer="Winbond Electronics Corp" 
+    ManufactureUrl="www.winbond.com" 
+    Voltage="1.8V" 
+    Clock="75MHz" 
+    Timeout="80"
+    JedecDeviceID="0xEF6016" 
+    ManufactureID="0xEF" 
+    DeviceID="0x15" 
+    ChipSizeInKByte="4096" 
+    SectorSizeInByte="4096" 
+    PageSizeInByte="256" 
+    BlockSizeInByte="65536" 
+    AddrWidth="3"
+    ProgramIOMethod="SPSD_RSW"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>   
+
 <Chip TypeName="W25Q20EW" 
     Class="W25Pxx" 
     UniqueID="0xEF6012" 
@@ -20539,6 +20582,7 @@ RDIDCommand="0x9F"/>
     AddrWidth="3"
     IDNumber="3"
     RDIDCommand="0x9F"/>
+<!--
 <Chip TypeName="AT25SF128A"
     Class="AT26xxx" 
     UniqueID="0x1F8901"
@@ -20557,7 +20601,7 @@ RDIDCommand="0x9F"/>
     AddrWidth="3"
     IDNumber="3"
     RDIDCommand="0x9F"/>
-
+-->
 <Chip TypeName="MX66U1G45GXDJ54" 
     Class="MX25Lxxx_Large" 
     UniqueID="0xC2953B" 
