@@ -2,7 +2,7 @@
 <DediProgChipDatabase 
     Description="DediProg Pro Supported memory info" 
     Creator="DediProg Pro" 
-    Ver="6.00" 
+    Ver="7.00" 
     CreateDate="2007-September-25" 
     Locale="2052">
 <Portofolio 
@@ -20582,26 +20582,7 @@ RDIDCommand="0x9F"/>
     AddrWidth="3"
     IDNumber="3"
     RDIDCommand="0x9F"/>
-<!--
-<Chip TypeName="AT25SF128A"
-    Class="AT26xxx" 
-    UniqueID="0x1F8901"
-    DeviceID="0x17"
-    Description="128Mbit SPI Serial Flash Memory"
-    Manufacturer="Adesto"
-    ManufactureUrl="www.Adesto.com"
-    Voltage="1.8V"
-    Clock="104MHz"
-    Timeout="250"
-    ManufactureID="0x1F"
-    JedecDeviceID="0x1F8901"
-    ChipSizeInKByte="16384"
-    SectorSizeInByte="65536"
-    PageSizeInByte="256"
-    AddrWidth="3"
-    IDNumber="3"
-    RDIDCommand="0x9F"/>
--->
+ 
 <Chip TypeName="MX66U1G45GXDJ54" 
     Class="MX25Lxxx_Large" 
     UniqueID="0xC2953B" 
@@ -20660,25 +20641,7 @@ RDIDCommand="0x9F"/>
       AddrWidth="3"
       IDNumber="3"
       RDIDCommand="0x9F"/>
-
-<Chip TypeName="AT25SF128A"
-      Class="AT26xxx"
-      UniqueID="0x1F8901"
-      DeviceID="0x17"
-      Description="128Mbit SPI Serial Flash Memory"
-      Manufacturer="Adesto"
-      ManufactureUrl="www.Adesto.com"
-      Voltage="3.3V"
-      Clock="104MHz"
-      Timeout="250"
-      ManufactureID="0x1F"
-      JedecDeviceID="0x1F8901"
-      ChipSizeInKByte="16384"
-      SectorSizeInByte="65536"
-      PageSizeInByte="256"
-      AddrWidth="3"
-      IDNumber="3"
-      RDIDCommand="0x9F"/>
+ 
 
 </Portofolio>
 </DediProgChipDatabase>
