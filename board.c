@@ -1,6 +1,8 @@
 #include "Macro.h"
 #include "usbdriver.h"
 #include "board.h"
+#include "FlashCommand.h"
+
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
 #define min(a,b) (a>b? b:a)
@@ -303,6 +305,8 @@ bool ReadOnBoardFlash(unsigned char* Data,bool ReadUID,int Index)
         return false;
     }
     memcpy(Data,vBuffer,16);
+
+    return true;
 }
 
 bool LeaveSF600Standalone(bool Enable,int Index)
@@ -361,7 +365,9 @@ unsigned int ReadUID(int Index)
     if(g_bIsSF600==true)
     {
         unsigned char vUID[16];
-        ReadOnBoardFlash(vUID,false,Index);
+        if (ReadOnBoardFlash(vUID,false,Index) == false)
+            return false;
+
         dwUID=(unsigned int)vUID[0]<<16 | (unsigned int)vUID[1]<<8 | vUID[2];
         return dwUID;
     }
@@ -464,7 +470,9 @@ unsigned char ReadManufacturerID(int Index)
 	if(g_bIsSF600==true)
 	{
 		unsigned char vUID[16];
-		ReadOnBoardFlash(vUID,false,Index);
+		if (ReadOnBoardFlash(vUID,false,Index) == false)
+			return false;
+
 		return vUID[3];
 	}
 
@@ -729,7 +737,9 @@ bool UpdateSF600Firmware(const char* sFolder,int Index)
 	unsigned char vUID[16];
 	unsigned int dwUID;
 
-	ReadOnBoardFlash(vUID,false,Index);
+	if (ReadOnBoardFlash(vUID,false,Index) == false)
+		return false;
+
 	dwUID=(unsigned int)vUID[0]<<16 | (unsigned int)vUID[1]<<8 | vUID[2];
 	boResult &= UpdateSF600Flash(sFolder,Index);
 	Sleep(200);

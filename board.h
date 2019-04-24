@@ -4,6 +4,7 @@
 #ifndef _BOARD_H
 #define _BOARD_H
 
+void SendFFSequence(int Index);
 void QueryBoard(int Index);
 unsigned char GetFPGAVersion(int Index);
 bool SetIO(unsigned char ioState, int Index);

@@ -3,6 +3,8 @@
 #include "ChipInfoDb.h"
 #include "FlashCommand.h"
 #include "SerialFlash.h"
+#include "project.h"
+
 #include <sys/stat.h>
 #include <stdbool.h>
 
@@ -14,8 +16,6 @@ extern CHIP_INFO Chip_Info;
 extern volatile bool g_bIsSF600[16];
 extern void Sleep(unsigned int ms);
 extern bool Is_NewUSBCommand(int Index);
-
-unsigned char g_micron_usVCR=0xFFFF;
 
 unsigned char mcode_WRSR=0x01;
 unsigned char mcode_WRDI=0x04;
@@ -1523,7 +1523,7 @@ bool CN25Qxxx_Large_doWRVCR(unsigned char ucVCR,int Index)
 	unsigned char ucRDVCR=0xFF;
 	
         int numOfRetry = 5 ;
-        unsigned char re;
+
          do{ 
             CN25Qxxx_Large_doRDVCR(&ucRDVCR,Index);
             Sleep(100); 
@@ -1601,7 +1601,7 @@ bool CN25Qxxx_Large_doWRENVCR(unsigned char ucENVCR,int Index)
 	unsigned char ucRDENVCR=0xFF;
 	
         int numOfRetry = 5 ;
-        unsigned char re;
+
          do{ 
             CN25Qxxx_Large_doRDENVCR(&ucRDENVCR,Index);
             Sleep(100); 
@@ -2191,10 +2191,12 @@ bool S70FSxxx_Large_chipErase(unsigned int Addr,unsigned int Length,int USBIndex
     	FlashCommand_SendCommand_OutOnlyInstruction(&vInstruction,5,USBIndex);
  
 	S70FSxxx_Large_waitForWIP(false,USBIndex) ; //check die 2
+
+	return true;
 }
 
 /// chip erase
-int SerialFlash_chipErase(int Index)
+bool SerialFlash_chipErase(int Index)
 {
     if(!SerialFlash_StartofOperation(Index)) 
 	return false;

@@ -69,7 +69,7 @@ int SerialFlash_batchErase(uintptr_t* vAddrs,size_t AddrSize,int Index);
 
 int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddressRange *AddrRange,int Index);
 
-int SerialFlash_chipErase(int Index);
+bool SerialFlash_chipErase(int Index);
 int SerialFlash_DieErase(int Index);
 
 

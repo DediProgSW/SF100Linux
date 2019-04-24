@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <libgen.h>
 
 #include "Macro.h"
 #include "ChipInfoDb.h"
@@ -606,7 +608,7 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO *Chip_Info, int Ind
 	return found_flag; /*Executed without errors*/
 }/*End main*/
 
-void Dedi_List_AllChip()
+void Dedi_List_AllChip(void)
 {
 	FILE* fp;       /*Declare file pointer variable*/
 	char file_line_buf[linebufsize], *tok, fname[15], *file_buf, test[100];;
@@ -620,7 +622,7 @@ void Dedi_List_AllChip()
 	/*error message & return (1) control to the OS*/
 	if ((fp = fopen(Path,"rt")) == NULL){
 		fprintf(stderr,"Error opening file: %s\n",fname);
-		return 1;
+		return;
 	}
 	sz=fsize(fp);
 	file_buf=(char*)malloc(sz);

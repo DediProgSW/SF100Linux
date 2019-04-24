@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <assert.h>
 #include "Macro.h"
 
 #include "usbdriver.h"
@@ -19,6 +20,8 @@
 #include "dpcmd.h"
 #include "board.h"
 #include "FlashCommand.h"
+#include "ChipInfoDb.h"
+
 #define min(a,b) (a>b? b:a)
  
 #include <signal.h> 
@@ -963,12 +966,6 @@ int OpenUSB(void)
 
 void sin_handler(int sig)
 {
-	struct timeval basetv[3];
-		  
-	 if(sig==SIGINT)
-	{	
-		; 
-	} 
 }
 
 int Handler(void)
@@ -1079,7 +1076,7 @@ bool InitProject(void)
 		        printf("Chip Type %s is applied manually.\r\n",Chip_Info.TypeName);
 		        printf("%s chip size is %zd bytes.\n\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
 		        ProjectInitWithID(Chip_Info,i);
-                        if(Chip_Info.Class=="N25Qxxx_Large")
+                        if (!strcmp(Chip_Info.Class, "N25Qxxx_Large"))
 			    isSendFFsequence=true;
 		    }
 		    else
@@ -1481,7 +1478,9 @@ void do_RawInstructinos_2(int outDLen, char* para, int Index)
 {	 
     unsigned char vOut[512];
     unsigned char vIn[512]={0xFF,0xFF,0xFF,0};
+#ifdef DISABLED
     unsigned char Length=0;
+#endif
     int i=0;
     char* pch;
 
@@ -1492,10 +1491,10 @@ void do_RawInstructinos_2(int outDLen, char* para, int Index)
 		i++;
 		pch = strtok (NULL, " ,;-");
 	    }
-
-	   // if(strlen(g_parameter_raw_return)>0)
-	//	sscanf(g_parameter_raw_return,"%hhu",&Length);
-
+#ifdef DISABLED
+	    if (strlen(g_parameter_raw_return) > 0)
+		sscanf(g_parameter_raw_return, "%hhu", &Length);
+#endif
 	    if(outDLen>0)
 		FlashCommand_SendCommand_OneOutOneIn(vOut,i,vIn,outDLen,Index);
 	    else
@@ -1595,7 +1594,6 @@ bool Program(void)
 
 bool Read(void)
 {
-    int dev_cnt=get_usb_dev_cnt();
     if(g_ucOperation&READ_TO_FILE)
     {
         do_Read(); 
@@ -1644,7 +1642,7 @@ bool CalChecksum(void)
 		    else 
 			printf("\nDevice %d (SF%06d):",i+1,dwUID); 
 
-		    printf("Checksum of the whole chip(address starting from: 0x%zX, 0x%X bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData[i],Chip_Info.ChipSizeInByte));
+		    printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[i], Chip_Info.ChipSizeInByte));
 		}
 		else
 		{	
@@ -1667,7 +1665,7 @@ bool CalChecksum(void)
 		else 
 		    printf("\nDevice %d (SF%06d):",g_uiDevNum,ReadUID(g_uiDevNum-1)); 
 
-  	     	printf("Checksum of the whole chip(address starting from: 0x%zX, 0x%X bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData[g_uiDevNum-1],Chip_Info.ChipSizeInByte));
+  	     	printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[g_uiDevNum-1], Chip_Info.ChipSizeInByte));
 	    }
 	    else
 	    {
@@ -1694,12 +1692,12 @@ bool Wait(const char* strOK,const char* strFail)
     int dev_cnt=get_usb_dev_cnt();
     Sleep(100);   // wait till the new thread starts ....
 
-    gettimeofday (&basetv , NULL);
+    assert(!gettimeofday(&basetv, NULL));
     printf("\n"); 
  
     while( g_is_operation_on_going==true)
     {
-        gettimeofday (&tv , NULL);
+        assert(!gettimeofday(&tv, NULL));
         if(tv.tv_sec-basetv.tv_sec > timeOut)
         { 
             printf("%0.2f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
@@ -1756,7 +1754,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
         UniqueID = flash_ReadId(0x9f, 4, Index);
         if (UniqueID != 0) 
         { 
-            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all);
             if(rc && (search_all == 0))
 	    {
 	        if(c==1)
@@ -1770,7 +1768,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
 
         if (UniqueID != 0) 
         { 
-            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all);
             if(rc && (search_all == 0))
 	    {
 	        if(c==1)
@@ -1783,7 +1781,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
         UniqueID = flash_ReadId(0x9f, 2, Index);
         if(UniqueID != 0) 
         { 
-            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all,Index);
+            rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all);
             if(rc && (search_all == 0))
             {
 	        if(c==1)
@@ -1800,7 +1798,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = flash_ReadId(0x15, 2, Index);
     if (UniqueID != 0) 
     { 
-        rc = Dedi_Search_Chip_Db(0x15, UniqueID, Chip_Info, search_all,Index);
+        rc = Dedi_Search_Chip_Db(0x15, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
     }
@@ -1809,7 +1807,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = flash_ReadId(0xab, 3, Index);
     if (UniqueID != 0) 
     { 
-        rc = Dedi_Search_Chip_Db(0xab, UniqueID, Chip_Info, search_all,Index);
+        rc = Dedi_Search_Chip_Db(0xab, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
     }
@@ -1818,7 +1816,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = flash_ReadId(0xab, 2, Index);
     if (UniqueID != 0) 
     { 
-        rc = Dedi_Search_Chip_Db(0xab, UniqueID, Chip_Info, search_all,Index);
+        rc = Dedi_Search_Chip_Db(0xab, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
     }
@@ -1827,7 +1825,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = flash_ReadId(0x90, 3, Index);
     if (UniqueID != 0) 
     { 
-        rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all,Index);
+        rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
     }
@@ -1836,7 +1834,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = flash_ReadId(0x90, 2, Index);
     if (UniqueID != 0) 
     { 
-        rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all,Index);
+        rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
     }
@@ -1846,7 +1844,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     if (UniqueID != 0) 
     { 
 		UniqueID = UniqueID - 0xFFFF0000;
-        rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all,Index);
+        rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
     }

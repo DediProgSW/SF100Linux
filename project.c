@@ -58,7 +58,6 @@ extern unsigned int g_uiAddr;
 extern size_t g_uiLen;
 extern bool g_bEnableVpp;
 extern unsigned int g_uiDevNum; //evy add
-extern int FlashIdentifier(CHIP_INFO * Chip_Info, int search_all,int Index); 
 
 pthread_mutex_t g_count_mutex;
 #define FIRMWARE_VERSION(x,y,z) ((x<<16) | (y<<8) | z)
@@ -99,12 +98,10 @@ void TurnOFFVcc(int Index)
 
 unsigned int CRC32(unsigned char* v, unsigned long size)
 {
-    unsigned int checksum = 0;
     unsigned int dwCrc32 = 0xFFFFFFFF;
     unsigned long i;
     for(i=0;i<size;i++)
          dwCrc32 = ((dwCrc32) >> 8) ^ crc32_tab[(v[i]) ^ ((dwCrc32) & 0x000000FF)];
-	//checksum += v[i];
 
     dwCrc32 = ~dwCrc32;  
     return dwCrc32;// & 0xFFFF;
@@ -379,7 +376,7 @@ bool threadBlankCheck(int Index)
 
     result = SerialFlash_rangeBlankCheck(&Addr,Index) ;
 
-    m_bOperationResult[Index]=result? 1:RES_BLANK;
+    m_bOperationResult[Index] = result?1:RES_BLANK;
 #if 0
 
 	if( !bAuto[Index] ) //not batch
@@ -417,7 +414,7 @@ bool threadEraseWholeChip(int Index)
 
 //	Log(result ? L"A whole chip erased" : L"Error: Failed to erase a whole chip");
 
-	m_bOperationResult[Index]=result? 1:RES_ERASE; 
+	m_bOperationResult[Index] = result?1:RES_ERASE;
 #if 0
 	if( !bAuto[Index] ) //not batch
 	{ 
