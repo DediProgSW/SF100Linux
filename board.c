@@ -1,5 +1,6 @@
 #include "board.h"
-#include "Macro.h"
+#include "FlashCommand.h"
+#include "project.h"
 #include "usbdriver.h"
 #define SerialFlash_FALSE -1
 #define SerialFlash_TRUE 1
@@ -13,12 +14,36 @@ extern unsigned int g_IO4Select;
 extern unsigned int g_Vcc;
 extern void Sleep(unsigned int ms);
 extern bool Is_NewUSBCommand(int Index);
-//extern int is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
-//extern int is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
+// extern int is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
+// extern int is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
+
+bool ReadOnBoardFlash(unsigned char* Data, bool ReadUID, int Index)
+{
+    CNTRPIPE_RQ rq;
+    unsigned char vBuffer[16];
+
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_IN;
+    rq.Request = 0x05;
+    if (Is_NewUSBCommand(Index)) {
+        rq.Value = ReadUID;
+        rq.Index = 0;
+    } else {
+        rq.Value = 0x00;
+        rq.Index = ReadUID;
+    }
+    rq.Length = 16;
+
+    if (InCtrlRequest(&rq, vBuffer, 16, Index) == SerialFlash_FALSE) {
+        return false;
+    }
+    memcpy(Data, vBuffer, 16);
+    return true;
+}
 
 void QueryBoard(int Index)
 {
-    //	printf("QueryBoard\r\n");
+    //	printf("QueryBoard\n");
     return;
     if (!Is_usbworking(Index)) {
         printf("Do not find SFxx programmer!!\n");
@@ -37,13 +62,13 @@ void QueryBoard(int Index)
     memset(vBuffer, '\0', 16);
 
     if (InCtrlRequest(&rq, vBuffer, 16, Index) == SerialFlash_FALSE) {
-        printf("send fail\r\n");
+        printf("send fail\n");
         return;
     }
 
     memcpy(g_board_type, &vBuffer[0], 8);
 //    memcpy(g_firmversion,&vBuffer[10],8);
-//		printf("g_board_type=%s\r\n",g_board_type);
+//		printf("g_board_type=%s\n",g_board_type);
 //    if(strstr(g_board_type,"SF600") != NULL)
 //        g_bIsSF600=true;
 //    else
@@ -67,7 +92,7 @@ void QueryBoard(int Index)
 
             if(m_info.board_type==L"SF600")
             {
-                ReadOnBoardFlash(false,Index);
+			ReadOnBoardFlash(false,Index);
                m_info.dwUID=(DWORD)m_vUID[0]<<16 | (DWORD)m_vUID[1]<<8 | m_vUID[2];
             }
             else
@@ -158,7 +183,7 @@ bool SetLEDProgBoard(size_t Color, int Index)
         rq.Index = 0;
     } else {
         rq.Value = 0x09;
-        rq.Index = Color >> 8; //LED 0:ON  1:OFF   Bit0:Green  Bit1:Orange  Bit2:Red
+        rq.Index = Color >> 8; // LED 0:ON  1:OFF   Bit0:Green  Bit1:Orange Bit2:Red
     }
     rq.Length = 0;
 
@@ -262,29 +287,6 @@ bool BlinkProgBoard(bool boIsV5, int Index)
     return true;
 }
 
-bool ReadOnBoardFlash(unsigned char* Data, bool ReadUID, int Index)
-{
-    CNTRPIPE_RQ rq;
-    unsigned char vBuffer[16];
-
-    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
-    rq.Direction = VENDOR_DIRECTION_IN;
-    rq.Request = 0x05;
-    if (Is_NewUSBCommand(Index)) {
-        rq.Value = ReadUID;
-        rq.Index = 0;
-    } else {
-        rq.Value = 0x00;
-        rq.Index = ReadUID;
-    }
-    rq.Length = 16;
-
-    if (InCtrlRequest(&rq, vBuffer, 16, Index) == SerialFlash_FALSE) {
-        return false;
-    }
-    memcpy(Data, vBuffer, 16);
-}
-
 bool LeaveSF600Standalone(bool Enable, int Index)
 {
     if (!Is_usbworking(Index)) {
@@ -328,7 +330,8 @@ bool SetSPIClockValue(unsigned short v, int Index)
     return true;
 }
 
-unsigned int ReadUID(int Index)
+unsigned int
+ReadUID(int Index)
 {
     if (!Is_usbworking(Index)) {
         return false;
@@ -337,7 +340,8 @@ unsigned int ReadUID(int Index)
 
     if (g_bIsSF600 == true) {
         unsigned char vUID[16];
-        ReadOnBoardFlash(vUID, false, Index);
+        if (ReadOnBoardFlash(vUID, false, Index) == false)
+            return false;
         dwUID = (unsigned int)vUID[0] << 16 | (unsigned int)vUID[1] << 8 | vUID[2];
         return dwUID;
     }
@@ -376,7 +380,7 @@ bool SetSPIClockDefault(int Index)
     rq.Length = 0;
 
     if (OutCtrlRequest(&rq, &vBuffer, 0, Index) == SerialFlash_FALSE) {
-        printf("Set SPI clock error\r\n");
+        printf("Set SPI clock error\n");
         return false;
     }
 
@@ -435,7 +439,8 @@ unsigned char ReadManufacturerID(int Index)
 
     if (g_bIsSF600 == true) {
         unsigned char vUID[16];
-        ReadOnBoardFlash(vUID, false, Index);
+        if (ReadOnBoardFlash(vUID, false, Index) == false)
+            return false;
         return vUID[3];
     }
 
@@ -682,7 +687,8 @@ bool UpdateSF600Firmware(const char* sFolder, int Index)
     unsigned char vUID[16];
     unsigned int dwUID;
 
-    ReadOnBoardFlash(vUID, false, Index);
+    if (ReadOnBoardFlash(vUID, false, Index) == false)
+        return false;
     dwUID = (unsigned int)vUID[0] << 16 | (unsigned int)vUID[1] << 8 | vUID[2];
     boResult &= UpdateSF600Flash(sFolder, Index);
     Sleep(200);
@@ -716,16 +722,18 @@ bool WriteSF600UID(unsigned int dwUID, unsigned char ManuID, int Index)
     return true;
 }
 
-void EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
+bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 {
     unsigned char vUID[16];
     unsigned int i = 0;
-    ReadOnBoardFlash(vUID, true, Index);
+    if (ReadOnBoardFlash(vUID, true, Index) == false)
+        return false;
     for (i = 0; i < 16; i++)
         vBuffer[i] = vBuffer[i] ^ vUID[i];
 
     for (; i < Size; i++)
         vBuffer[i] = vBuffer[i] ^ vBuffer[i - 16];
+    return true;
 }
 
 bool UpdateSF600Flash(const char* sFilePath, int Index)
@@ -760,7 +768,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
 
     EncrypFirmware(pBuffer, fw_info.FirstSize, Index);
 
-    if (Is_NewUSBCommand(Index)) { //for win8.1
+    if (Is_NewUSBCommand(Index)) { // for win8.1
         rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
         rq.Direction = VENDOR_DIRECTION_OUT;
         rq.Request = 0x1A;
@@ -768,7 +776,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
         rq.Index = 0;
         rq.Length = 6;
 
-        //evy 6.0.4.25 for win 8.1 with new firmware(7.0.2 up)
+        // evy 6.0.4.25 for win 8.1 with new firmware(7.0.2 up)
         unsigned char Package[6];
         Package[0] = pBuffer[0];
         Package[1] = pBuffer[1];
@@ -837,17 +845,18 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
 
     fclose(pFile);
 
-    EncrypFirmware(pBuffer, fw_info.SecondSize, Index);
+    if (EncrypFirmware(pBuffer, fw_info.SecondSize, Index) == false)
+        return false;
 
-    if (Is_NewUSBCommand(Index)) { //for win8.1
+    if (Is_NewUSBCommand(Index)) { // for win8.1
         rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
         rq.Direction = VENDOR_DIRECTION_OUT;
         rq.Request = 0x1B;
-        rq.Value = 0; //static_cast<unsigned short>(vBuffer.size() & 0xffff) ;
-        rq.Index = 0; //static_cast<unsigned short>((vBuffer.size() >> 16) & 0xffff) ;
+        rq.Value = 0; // static_cast<unsigned short>(vBuffer.size() & 0xffff) ;
+        rq.Index = 0; // static_cast<unsigned short>((vBuffer.size() >> 16) & 0xffff) ;
         rq.Length = 4;
 
-        //evy 6.0.4.25 for win 8.1 with new firmware(7.0.2 up)
+        // evy 6.0.4.25 for win 8.1 with new firmware(7.0.2 up)
         unsigned char Package[4];
         Package[0] = (fw_info.SecondSize & 0xff);
         Package[1] = ((fw_info.SecondSize >> 8) & 0xff);
@@ -855,7 +864,7 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
         Package[3] = ((fw_info.SecondSize >> 24) & 0xff);
 
         if (!OutCtrlRequest(&rq, Package, 4, Index)) {
-            printf("Error: 1\r\n");
+            printf("Error: 1\n");
             free(pBuffer);
             return false;
         }
@@ -868,7 +877,7 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
         rq.Length = 0;
 
         if (!OutCtrlRequest(&rq, pBuffer, 0, Index)) {
-            printf("Error: 2\r\n");
+            printf("Error: 2\n");
             free(pBuffer);
             return false;
         }

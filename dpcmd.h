@@ -1,8 +1,10 @@
-
 #pragma once
 
 #ifndef _DPCMD_H
 #define _DPCMD_H
+
+#include <stdbool.h>
+
 enum ErrorCode {
     EXCODE_PASS,
     EXCODE_FAIL_USB,
@@ -17,22 +19,6 @@ enum ErrorCode {
     EXCODE_FAIL_UPDATE_FW,
     EXCODE_FAIL_OTHERS,
 };
-
-typedef enum {
-    BLANKCHECK_WHOLE_CHIP,
-    PROGRAM_CHIP,
-    ERASE_WHOLE_CHIP,
-    READ_WHOLE_CHIP,
-    READ_ANY_BY_PREFERENCE_CONFIGURATION,
-    VERIFY_CONTENT,
-    AUTO,
-
-    Download2Card,
-    //  07.03.2009
-    UPDATE_FIRMWARE,
-    AUTO_UPDATE_FIRMWARE,
-
-} OPERATION_TYPE;
 
 enum { // value dedicated by the spec
     STARTUP_APPLI_SF_1 = 0,
@@ -91,7 +77,6 @@ void GetLogPath(char* path);
 bool Wait(const char* strOK, const char* strFail);
 void ExitProgram(void);
 int FirmwareUpdate();
-void sin_handler(int sig);
 int ctrlCCount;
 long int tvSec;
 long int tvUsec;

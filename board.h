@@ -1,9 +1,12 @@
-
 #pragma once
 
 #ifndef _BOARD_H
 #define _BOARD_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
+void SendFFSequence(int Index);
 void QueryBoard(int Index);
 unsigned char GetFPGAVersion(int Index);
 bool SetIO(unsigned char ioState, int Index);
@@ -25,7 +28,7 @@ bool ProgramSectors(const char* sFilePath, bool bSect1, int Index);
 bool UpdateChkSum(int Index);
 bool WriteUID(unsigned int dwUID, int Index);
 bool WriteManufacturerID(unsigned char ManuID, int Index);
-void EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index);
+bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index);
 bool UpdateSF600Flash(const char* sFilePath, int Index);
 bool WriteSF600UID(unsigned int dwUID, unsigned char ManuID, int Index);
 bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index);

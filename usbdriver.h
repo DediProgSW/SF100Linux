@@ -1,12 +1,12 @@
 #pragma once
 
 #ifndef DEDI_USB_DRIVER
+#define DEDI_USB_DRIVER
 
 #include <stdio.h>
 #include <string.h>
 #include <usb.h>
-
-#define DEDI_USB_DRIVER 1
+#include <stdbool.h>
 
 #define URB_FUNCTION_VENDOR_DEVICE 0x0017
 #define URB_FUNCTION_VENDOR_INTERFACE 0x0018
@@ -72,4 +72,4 @@ long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Ind
 
 int BulkPipeWrite(unsigned char* pBuff, unsigned int size, unsigned int timeOut, int Index);
 
-#endif //DEDI_USB_DRIVER
+#endif // DEDI_USB_DRIVER

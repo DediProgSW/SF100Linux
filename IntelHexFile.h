@@ -123,9 +123,10 @@ of file record, so that the LL field is 0
 #ifndef INTELHEXFILE_H
 #define INTELHEXFILE_H
 
+#include <stdbool.h>
+
 #define LL_MAX_LINE 16
-typedef struct
-{
+typedef struct {
     unsigned char intel_lg_data;
     unsigned short intel_adr;
     unsigned char intel_type;

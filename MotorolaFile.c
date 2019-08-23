@@ -96,10 +96,9 @@
 //If you write code to convert S-Records, you should always assume that a record can be as long as 514 (decimal) characters in length (255 * 2 = 510, plus 4 characters for the type and count fields),
 //plus any terminating character(s). That is, in establishing an input buffer in C, you would declare it to be an array of 515 chars, thus leaving room for the terminating null character.
 #include "MotorolaFile.h"
-#include "Macro.h"
+#include "project.h"
 #include <fcntl.h>
 #include <getopt.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

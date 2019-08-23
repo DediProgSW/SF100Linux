@@ -1,8 +1,9 @@
 #pragma once
 
 #ifndef SERIALFLASHS
-
 #define SERIALFLASHS
+
+#include "Macro.h"
 
 #define SerialFlash_FALSE -1
 #define SerialFlash_TRUE 1
@@ -12,21 +13,21 @@ typedef unsigned long uintptr_t;
 #endif
 //#define size_t  unsigned int
 
-enum //list of all chip-specific instruction, for ST serial flash
+enum // list of all chip-specific instruction, for ST serial flash
 {
     WREN = 0x06, // Write Enable
     WRDI = 0x04, // Write Disable
-    RDIDJ = 0x9F, //RDIDJ      // Read Jedec ID , except 80
+    RDIDJ = 0x9F, // RDIDJ      // Read Jedec ID , except 80
     RDSR = 0x05, // Read Status Register
     WRSR = 0x01, // Write Status Register
     READ = 0x03, // Byte Read
     FREAD = 0x0B, // Fast Read
     PP = 0x02, // Page Program
     SE = 0xD8, // Sector Erase
-    CHIP_ERASE = 0xC7, //CHIP_ERASE        // Bulk (or Chip) Erase
+    CHIP_ERASE = 0xC7, // CHIP_ERASE        // Bulk (or Chip) Erase
     DP = 0xB9, // Deep Power Down
-    RDP = 0xAB, //RES        // Release Deep Power Down
-    RES = 0xAB, //RES        // RDP and read signature
+    RDP = 0xAB, // RES        // Release Deep Power Down
+    RES = 0xAB, // RES        // RDP and read signature
     RDSCUR = 0x2B,
     GBULK = 0x98,
     EN4B = 0xB7,
@@ -68,7 +69,7 @@ int SerialFlash_batchErase(uintptr_t* vAddrs, size_t AddrSize, int Index);
 
 int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddressRange* AddrRange, int Index);
 
-int SerialFlash_chipErase(int Index);
+bool SerialFlash_chipErase(int Index);
 int SerialFlash_DieErase(int Index);
 
 int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeWrite, unsigned char WriteCom, int Index);
@@ -102,4 +103,4 @@ size_t GetPageSize(void);
 bool SerialFlash_StartofOperation(int Index);
 bool SerialFlash_EndofOperation(int Index);
 
-#endif //SERIALFLASHS
+#endif // SERIALFLASHS

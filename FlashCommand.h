@@ -1,8 +1,9 @@
 #pragma once
 
 #ifndef FLASHCOMMANDS
-
 #define FLASHCOMMANDS
+
+#include "Macro.h"
 
 #define FlashCommand_TRUE 1
 #define FlashCommand_FALSE 0
@@ -21,6 +22,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrR
 
 int FlashCommand_SendCommand_SetupPacketForAT45DBBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, int Index);
 
-int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange* AddrRange, unsigned char modeRead, unsigned char ReadCom, int Index);
+int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange* AddrRange, unsigned char modeRead, unsigned char ReadCom,
+    int Index);
 
-#endif //FLASHCOMMANDS
+#endif // FLASHCOMMANDS

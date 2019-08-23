@@ -1,8 +1,9 @@
 #pragma once
+
 #ifndef _PROJECT_H
 #define _PROJECT_H
+
 #include "Macro.h"
-#include "dpcmd.h"
 
 #define RES_PROG 0x10
 #define RES_VERIFY 0x20
@@ -13,16 +14,34 @@
 #define RES_IDCHECK 0x70
 #define RES_EZPORT 0x80
 
+typedef enum {
+    BLANKCHECK_WHOLE_CHIP,
+    PROGRAM_CHIP,
+    ERASE_WHOLE_CHIP,
+    READ_WHOLE_CHIP,
+    READ_ANY_BY_PREFERENCE_CONFIGURATION,
+    VERIFY_CONTENT,
+    AUTO,
+
+    Download2Card,
+    //  07.03.2009
+    UPDATE_FIRMWARE,
+    AUTO_UPDATE_FIRMWARE,
+
+} OPERATION_TYPE;
+
 typedef struct thread_data {
     OPERATION_TYPE type;
     int USBIndex;
 } THREAD_STRUCT;
+
 enum {
     GUI_USERS = 1,
     CONSOLE_USERS = 2,
     DLL_USERS = 3
 };
-bool is_BoardVersionGreaterThan_5_0_0(int Inde);
+
+bool is_BoardVersionGreaterThan_5_0_0(int Index);
 bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index);
 bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
 bool is_SF100nBoardVersionGreaterThan_5_2_0(int Index);

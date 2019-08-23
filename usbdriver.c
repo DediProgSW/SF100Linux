@@ -1,6 +1,6 @@
 #include "usbdriver.h"
-#include "Macro.h"
-#include <stdio.h>
+#include "FlashCommand.h"
+#include "project.h"
 #include <string.h>
 #include <usb.h>
 
@@ -19,9 +19,6 @@ extern bool isSendFFsequence;
 #define SerialFlash_TRUE 1
 
 static usb_dev_handle* dediprog_handle[MAX_Dev_Index];
-
-extern int is_SF100nBoardVersionGreaterThan_5_5_0(int Inde);
-extern int is_SF600nBoardVersionGreaterThan_6_9_0(int Inde);
 
 bool Is_NewUSBCommand(int Index)
 {
@@ -70,8 +67,8 @@ void IsSF600(int Index)
     memcpy(g_board_type, &vBuffer[0], 8);
     sscanf((char*)&vBuffer[8], "V:%d.%d.%d", &fw[0], &fw[1], &fw[2]);
     g_firmversion = ((fw[0] << 16) | (fw[1] << 8) | fw[2]);
-    //	printf("g_firmversion=%x\r\n",g_firmversion);
-    //	printf("g_board_type=%s\r\n",g_board_type);
+    //	printf("g_firmversion=%x\n",g_firmversion);
+    //	printf("g_board_type=%s\n",g_board_type);
     if (strstr(g_board_type, "SF600") != NULL)
         g_bIsSF600[Index] = true;
     else
@@ -81,7 +78,6 @@ void IsSF600(int Index)
 
 int get_usb_dev_cnt(void)
 {
-
     return dev_index;
 }
 
@@ -110,7 +106,6 @@ static int FindUSBDevice(void)
 
 int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, int Index)
 {
-    //    unsigned long  bytesWrite;
     int requesttype;
     int ret = 0;
 
@@ -135,8 +130,9 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
 
     if (dediprog_handle[Index]) {
         ret = usb_control_msg(dediprog_handle[Index], requesttype, rq->Request, rq->Value, rq->Index, (char*)buf, buf_size, DEFAULT_TIMEOUT);
-    } // else
-    //  printf("no device");
+    } else {
+        printf("no device");
+    }
     if (ret != buf_size) {
 #if 0
         printf("Control Pipe output error!\n");
@@ -150,7 +146,7 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
         printf("buf[0]=%X\n",buf[0]);
         printf("g_bIsSF600=%d\n",g_bIsSF600);
 #endif
-        //printf("Error=0x%x\r\n",usb_strerror());
+        printf("Error: %s\n", usb_strerror());
         return -1;
     }
     return ret;
@@ -158,9 +154,6 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
 
 int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, int Index)
 {
-    //boost::mutex::scoped_lock l(mutex);
-
-    //	unsigned long   bytesRead;
     int requesttype;
     int ret = 0;
 
@@ -187,11 +180,12 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
 
     if (dediprog_handle[Index]) {
         ret = usb_control_msg(dediprog_handle[Index], requesttype, rq->Request, rq->Value, rq->Index, (char*)buf, buf_size, DEFAULT_TIMEOUT);
-    } // else
-    //  printf("no device");
+    } else {
+        printf("no device");
+    }
 
     if (ret != buf_size) {
-        //        printf("Control Pipe input error!\n");
+        printf("Control Pipe input error!\n");
         return -1;
     }
 
@@ -202,7 +196,7 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
 // should be called after usb successfully opens pipes.
 int dediprog_start_appli(int Index)
 {
-    //IsSF600(Index);
+    // IsSF600(Index);
     CNTRPIPE_RQ rq;
     int ret;
     unsigned char vInstruction;
@@ -224,7 +218,7 @@ int dediprog_start_appli(int Index)
 
 int dediprog_get_chipid(int Index)
 {
-    //IsSF600(Index);
+    // IsSF600(Index);
     CNTRPIPE_RQ rq;
     int ret;
     unsigned char vInstruction[3];
@@ -261,7 +255,7 @@ int dediprog_get_chipid(int Index)
 
 // return size read
 // if fail , return -1
-//long CUSB::BulkPipeRead(PBYTE pBuff, UINT sz, UINT timeOut) const
+// long CUSB::BulkPipeRead(PBYTE pBuff, UINT sz, UINT timeOut) const
 int BulkPipeRead(unsigned char* pBuff, unsigned int timeOut, int Index)
 {
     int ret;
@@ -274,7 +268,7 @@ int BulkPipeRead(unsigned char* pBuff, unsigned int timeOut, int Index)
     return cnRead;
 }
 
-//long CUSB::BulkPipeWrite(PBYTE pBuff, UINT sz, UINT timeOut) const
+// long CUSB::BulkPipeWrite(PBYTE pBuff, UINT sz, UINT timeOut) const
 int BulkPipeWrite(unsigned char* pBuff, unsigned int size, unsigned int timeOut, int Index)
 {
     int ret;
@@ -370,7 +364,7 @@ int dediprog_set_spi_clk(int khz, int Index)
     return 0;
     int ret;
     int hz_selector;
-    //IsSF600(Index);
+    // IsSF600(Index);
     CNTRPIPE_RQ rq;
 
     switch (khz) {
@@ -478,7 +472,7 @@ int usb_driver_init(void)
             printf("Error: Programmers are not connected.\n");
             return 0;
         }
-        printf("dediprog_handle[%d]=%x\n", g_uiDevNum - 1, dediprog_handle[g_uiDevNum - 1]);
+        printf("dediprog_handle[%d]=%p\n", g_uiDevNum - 1, dediprog_handle[g_uiDevNum - 1]);
         ret = usb_set_configuration(dediprog_handle[g_uiDevNum - 1], 1);
 
         if (ret) {
@@ -512,7 +506,7 @@ int usb_driver_release(void)
     return 0;
 }
 
-#if 0 //Simon: unit test code
+#if 0 // Simon: unit test code
 int usb_driver_test(void)
 {
 	struct usb_bus *bus;
@@ -551,7 +545,7 @@ bool Is_usbworking(int Index)
     usleep(1000); // unknow reson
     return ((dediprog_handle[Index] != NULL) ? true : false);
 }
-//long long flash_ReadId(boost::tuple<unsigned int /*RDID code*/, unsigned int/*inByteCount*/, unsigned int/*outByteCount*/> command,int Index)
+// long long flash_ReadId(boost::tuple<unsigned int /*RDID code*/, unsigned int/*inByteCount*/, unsigned int/*outByteCount*/> command,int Index)
 long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Index)
 {
     // read status
@@ -583,7 +577,7 @@ long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Ind
     rq.Length = 1;
 
     if (OutCtrlRequest(&rq, vInstruction, (unsigned long)1, Index) == SerialFlash_FALSE)
-        return rc; //OutCtrlRequest() return error
+        return rc; // OutCtrlRequest() return error
 
     // second control packet : fetch data
     memset(vInstruction, 0, sizeof(vInstruction));
@@ -605,6 +599,6 @@ long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Ind
     for (i = 0; i < out_data_size; i++) {
         rc = (rc << 8) + vInstruction[i];
     }
-    //printf("\n(Simon)Flish ID 0x%x (0x%x, %d)\n",rc, read_id_code, out_data_size);
+    // printf("\n(Simon)Flash ID 0x%x (0x%x, %d)\n",rc, read_id_code, out_data_size);
     return rc;
 }

@@ -1,28 +1,27 @@
 #include "IntelHexFile.h"
-#include "Macro.h"
+#include "project.h"
 #include <fcntl.h>
 #include <getopt.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 extern unsigned char* pBufferforLoadedFile;
 extern unsigned long g_ulFileSize;
 /*
-* the choice for the total length (16) of a line, but the specification
-* can support an another value
-*/
+ * the choice for the total length (16) of a line, but the specification
+ * can support an another value
+ */
 bool BinToHexFile(const char* filePath, unsigned char* vBuffer, unsigned long FileSize)
 {
     // +anderson_variable 06/10/11 ///////////////////////////////////////
     //    unsigned char    unch = 0x12;
-    //int        j=0;
-    //int        str1_cnt=0;
-    //int        str2_cnt=0;
+    // int        j=0;
+    // int        str1_cnt=0;
+    // int        str2_cnt=0;
 
-    //CString str;
-    //CString    str1 = L"";
-    //CString    str2 = L"";
-    //CString str_tmp = L"";
+    // CString str;
+    // CString    str1 = L"";
+    // CString    str2 = L"";
+    // CString str_tmp = L"";
     // -anderson_variable 06/10/11 ///////////////////////////////////////
     FILE* FileOut; /* input files */
     FileOut = fopen(filePath, "wt");
@@ -39,9 +38,9 @@ bool BinToHexFile(const char* filePath, unsigned char* vBuffer, unsigned long Fi
     int iULBA = (unsigned int)((FileSize >> 16) & 0xFFFF);
     unsigned int idx = 0;
 
-    do //for(unsigned int idx = 0; idx < iULBA; ++idx)
+    do // for(unsigned int idx = 0; idx < iULBA; ++idx)
     {
-        //Extended Linear Address Record (32-bit format only)
+        // Extended Linear Address Record (32-bit format only)
         memset(buf, 0, sizeof(buf));
         fprintf(FileOut, ":02000004%04X%02X\n", idx, (unsigned char)(0x100 - 0x06 - (idx & 0xFF) - ((idx >> 8) & 0xFF)));
 
@@ -139,16 +138,16 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
     unsigned char* Memory_Block = (unsigned char*)malloc(MEMORY_SIZE);
 
     /* To begin, assume the lowest address is at the end of the memory.
-    subsequent addresses will lower this number. At the end of the input
-    file, this value will be the lowest address. */
+  subsequent addresses will lower this number. At the end of the input
+  file, this value will be the lowest address. */
     Lowest_Address = MEMORY_SIZE - 1;
     Highest_Address = 0;
 
     bool boEndofFile = false;
 
     /* To begin, assume the lowest address is at the end of the memory.
-    subsequent addresses will lower this number. At the end of the input
-    file, this value will be the lowest address. */
+  subsequent addresses will lower this number. At the end of the input
+  file, this value will be the lowest address. */
     Segment = 0;
     Upper_Address = 0;
     Lowest_Address = MEMORY_SIZE - 1;
@@ -166,15 +165,15 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
 
         if (':' != Line[0] && boEndofFile == false) {
             free(Memory_Block);
-            return false; //0x0a != Line[0] && NULL != Line[0]) return false;
+            return false; // 0x0a != Line[0] && NULL != Line[0]) return false;
         }
 
         if (Line[i] == '\n')
             Line[i] = '\0';
 
         /* Scan the first two bytes and nb of bytes.
-        The two bytes are read in First_Word since it's use depend on the
-        record type: if it's an extended address record or a data record.
+           The two bytes are read in First_Word since it's use depend on the
+           record type: if it's an extended address record or a data record.
         */
         sscanf(Line, ":%2x%4x%2x%s", &Nb_Bytes, &First_Word, &hType, Data_Str);
 
@@ -192,8 +191,8 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
                 Phys_Addr = (Segment << 4) + Address;
             else
                 /* LINEAR_ADDRESS or NO_ADDRESS_TYPE_SELECTED
-                Upper_Address = 0 as specified in the Intel spec. until an extended address
-                record is read. */
+                   Upper_Address = 0 as specified in the Intel spec. until an extended address
+                   record is read. */
                 Phys_Addr = ((Upper_Address << 16) & ADDRESS_MASK) + Address;
 
             /* Check that the physical address stays in the buffer's range. */
@@ -247,7 +246,7 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             /* Extended segment address record */
         case 2:
             /* First_Word contains the offset. It's supposed to be 0000 so
-            we ignore it. */
+        we ignore it. */
 
             /* First extended segment address record ? */
             if (Seg_Lin_Select == NO_ADDRESS_TYPE_SELECTED)
@@ -271,13 +270,13 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             /* Start segment address record */
         case 3:
             /* Nothing to be done since it's for specifying the starting address for
-            execution of the binary code */
+        execution of the binary code */
             break;
 
             /* Extended linear address record */
         case 4:
             /* First_Word contains the offset. It's supposed to be 0000 so
-            we ignore it. */
+        we ignore it. */
 
             /* First extended linear address record ? */
             if (Seg_Lin_Select == NO_ADDRESS_TYPE_SELECTED)
@@ -291,8 +290,7 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
                 Phys_Addr = Upper_Address << 4;
 
                 /* Verify Checksum value. */
-                Checksum = (Checksum + (Upper_Address >> 8) + (Upper_Address & 0xFF) + temp2)
-                    & 0xFF;
+                Checksum = (Checksum + (Upper_Address >> 8) + (Upper_Address & 0xFF) + temp2) & 0xFF;
 
                 //                if ((Checksum != 0) && Enable_Checksum_Error)
                 //                    Status_Checksum_Error = true;
@@ -302,7 +300,7 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             /* Start linear address record */
         case 5:
             /* Nothing to be done since it's for specifying the starting address for
-            execution of the binary code */
+               execution of the binary code */
             break;
         default:
             break; // 20040617+ Added to remove GNU compiler warning about label at end of compound statement
@@ -326,11 +324,11 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             wCKS += Memory_Block[i];
         }
 
-        //fprintf(stdout,"8-bit Checksum = %02X\n",wCKS & 0xff);
+        // fprintf(stdout,"8-bit Checksum = %02X\n",wCKS & 0xff);
         if (Cks_Addr_set) {
             wCKS = Cks_Value - (wCKS - Memory_Block[Cks_Addr]);
             Memory_Block[Cks_Addr] = (unsigned char)(wCKS & 0xff);
-            //fprintf(stdout,"Addr %08X set to %02X\n",Cks_Addr, wCKS & 0xff);
+            // fprintf(stdout,"Addr %08X set to %02X\n",Cks_Addr, wCKS & 0xff);
         }
         break;
 
@@ -341,13 +339,13 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             wCKS += w;
         }
 
-        //fprintf(stdout,"16-bit Checksum = %04X\n",wCKS);
+        // fprintf(stdout,"16-bit Checksum = %04X\n",wCKS);
         if (Cks_Addr_set) {
             w = Memory_Block[Cks_Addr + 1] | ((unsigned short)Memory_Block[Cks_Addr] << 8);
             wCKS = Cks_Value - (wCKS - w);
             Memory_Block[Cks_Addr] = (unsigned char)(wCKS >> 8);
             Memory_Block[Cks_Addr + 1] = (unsigned char)(wCKS & 0xff);
-            //fprintf(stdout,"Addr %08X set to %04X\n",Cks_Addr, wCKS);
+            // fprintf(stdout,"Addr %08X set to %04X\n",Cks_Addr, wCKS);
         }
         break;
 
@@ -358,13 +356,13 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             wCKS += w;
         }
 
-        //fprintf(stdout,"16-bit Checksum = %04X\n",wCKS);
+        // fprintf(stdout,"16-bit Checksum = %04X\n",wCKS);
         if (Cks_Addr_set) {
             w = Memory_Block[Cks_Addr] | ((unsigned short)Memory_Block[Cks_Addr + 1] << 8);
             wCKS = Cks_Value - (wCKS - w);
             Memory_Block[Cks_Addr + 1] = (unsigned char)(wCKS >> 8);
             Memory_Block[Cks_Addr] = (unsigned char)(wCKS & 0xff);
-            //fprintf(stdout,"Addr %08X set to %04X\n",Cks_Addr, wCKS);
+            // fprintf(stdout,"Addr %08X set to %04X\n",Cks_Addr, wCKS);
         }
 
     default:;
@@ -372,13 +370,13 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
 
     /* This starting address is for the binary file,
 
-    ex.: if the first record is :nn010000ddddd...
-    the data supposed to be stored at 0100 will start at 0000 in the binary file.
+       ex.: if the first record is :nn010000ddddd...
+       the data supposed to be stored at 0100 will start at 0000 in the binary file.
 
-    Specifying this starting address will put FF bytes in the binary file so that
-    the data supposed to be stored at 0100 will start at the same address in the
-    binary file.
-    */
+       Specifying this starting address will put FF bytes in the binary file so that
+       the data supposed to be stored at 0100 will start at the same address in the
+       binary file.
+     */
 
     if (Starting_Address_Setted) {
         Lowest_Address = Starting_Address;
@@ -386,11 +384,11 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
 
     if (pBufferforLoadedFile != NULL)
         free(pBufferforLoadedFile);
-    //    pBufferforLoadedFile=(unsigned char*)malloc(Highest_Address -Lowest_Address+ 1);
+    //    pBufferforLoadedFile=(unsigned char*)malloc(Highest_Address - Lowest_Address + 1);
     pBufferforLoadedFile = (unsigned char*)malloc(Highest_Address + 1);
 
     if (Lowest_Address < Highest_Address) {
-        //        memcpy(pBufferforLoadedFile,Memory_Block + Lowest_Address, Highest_Address -Lowest_Address+ 1 ) ;
+        //        memcpy(pBufferforLoadedFile,Memory_Block + Lowest_Address, Highest_Address - Lowest_Address + 1 ) ;
         //        g_ulFileSize=(Highest_Address -Lowest_Address+ 1); ;
         memcpy(pBufferforLoadedFile, Memory_Block, Highest_Address + 1);
         g_ulFileSize = (Highest_Address + 1);
