@@ -543,7 +543,10 @@ int main(int argc, char* argv[])
             break;
         case 'l':
             g_uiLen = 0;
-            sscanf(optarg, "%zx", &g_uiLen);
+            if (strstr(optarg, "0x"))
+                sscanf(optarg, "%zx", &g_uiLen);
+            else
+                sscanf(optarg, "%zu", &g_uiLen);
             break;
         case 'v':
             g_ucOperation |= VERIFY;
@@ -813,7 +816,7 @@ void cli_classic_usage(bool IsShowExample)
            "                                            0x1000),\n"
            "                                            - works with --prog/read/sum/auto only\n"
            "                                            - defaults to 0, if omitted.\n"
-           "    -l [ --length ] arg                     hexadecimal length to read/program in bytes,\n"
+           "    -l [ --length ] arg                     decimal/hexadecimal length to read/program in bytes,\n"
            "                                            - works with --prog/read/sum/auto only\n"
            "                                            - defaults to whole file if omitted\n"
            "    -v [ --verify ]                         verify checksum file and chip\n"
@@ -1078,9 +1081,7 @@ void SetSPIClock(int Index)
 void SetVcc(int Index)
 {
     //    sscanf(g_parameter_vcc,"%d",&g_Vcc);
-    if (g_Vcc <= 3800 && g_Vcc >= 1800 && g_bIsSF600[Index] == true)
-        ;
-    else
+    if (!(g_Vcc <= 3800 && g_Vcc >= 1800 && g_bIsSF600[Index] == true))
         g_Vcc = (0x10 | (g_Vcc & 0x03));
 }
 

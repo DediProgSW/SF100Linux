@@ -11,7 +11,6 @@
 #ifdef _NON_UBUNTU
 typedef unsigned long uintptr_t;
 #endif
-//#define size_t  unsigned int
 
 enum // list of all chip-specific instruction, for ST serial flash
 {

@@ -46,8 +46,7 @@ void usb_db_init(void)
 
 void IsSF600(int Index)
 {
-    if (Index == -1)
-        Index = DevIndex;
+    if (Index == -1) Index = DevIndex;
 
     CNTRPIPE_RQ rq;
     unsigned char vBuffer[16];
@@ -109,11 +108,9 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
     int requesttype;
     int ret = 0;
 
-    if (Index == -1)
-        Index = DevIndex;
+    if (Index == -1) Index = DevIndex;
 
-    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && (g_bIsSF600[Index] == true))
-        return true;
+    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && (g_bIsSF600[Index] == true)) return true;
 
     requesttype = 0x00;
 
@@ -498,8 +495,7 @@ int usb_driver_init(void)
 int usb_driver_release(void)
 {
     for (int i = 0; i < dev_index; i++) {
-        if (dediprog_handle[i] == NULL)
-            return 0;
+        if (dediprog_handle[i] == NULL) return 0;
         usb_release_interface(dediprog_handle[i], 0);
         usb_close(dediprog_handle[i]);
     }

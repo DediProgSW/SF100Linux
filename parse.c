@@ -91,7 +91,6 @@ int Dedi_Search_Chip_Db(long RDIDCommand,
             Chip_Info->RDIDCommand = 0;
             Chip_Info->MaxErasableSegmentInByte = 0;
             Chip_Info->DualID = false;
-            ;
             Chip_Info->VppSupport = 0;
             Chip_Info->MXIC_WPmode = false;
             Chip_Info->Timeout = 0;
@@ -359,7 +358,6 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
                 Chip_Info->RDIDCommand = 0;
                 Chip_Info->MaxErasableSegmentInByte = 0;
                 Chip_Info->DualID = false;
-                ;
                 Chip_Info->VppSupport = 0;
                 Chip_Info->MXIC_WPmode = false;
                 Chip_Info->Timeout = 0;

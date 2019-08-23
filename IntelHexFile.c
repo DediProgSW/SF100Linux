@@ -168,8 +168,7 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
             return false; // 0x0a != Line[0] && NULL != Line[0]) return false;
         }
 
-        if (Line[i] == '\n')
-            Line[i] = '\0';
+        if (Line[i] == '\n') Line[i] = '\0';
 
         /* Scan the first two bytes and nb of bytes.
            The two bytes are read in First_Word since it's use depend on the
@@ -392,7 +391,6 @@ bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* 
         //        g_ulFileSize=(Highest_Address -Lowest_Address+ 1); ;
         memcpy(pBufferforLoadedFile, Memory_Block, Highest_Address + 1);
         g_ulFileSize = (Highest_Address + 1);
-        ;
     }
 
     free(Memory_Block);
