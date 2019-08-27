@@ -10,7 +10,6 @@ extern volatile bool g_bIsSF600[16];
 extern int g_CurrentSeriase;
 extern char g_board_type[8];
 extern int g_firmversion;
-extern void Sleep(unsigned int ms);
 extern CHIP_INFO Chip_Info;
 extern unsigned int g_uiDevNum;
 extern bool isSendFFsequence;

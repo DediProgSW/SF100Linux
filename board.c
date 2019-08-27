@@ -12,7 +12,6 @@ extern int g_firmversion;
 extern unsigned int g_IO1Select;
 extern unsigned int g_IO4Select;
 extern unsigned int g_Vcc;
-extern void Sleep(unsigned int ms);
 extern bool Is_NewUSBCommand(int Index);
 // extern int is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
 // extern int is_SF600nBoardVersionGreaterThan_6_9_0(int Index);

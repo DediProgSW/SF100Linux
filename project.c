@@ -110,11 +110,6 @@ static unsigned int crc32_tab[] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-void Sleep(unsigned int mSec)
-{
-    usleep(mSec * 1000);
-}
-
 void TurnONVpp(int Index)
 {
     if (g_bEnableVpp == true)

@@ -40,7 +40,6 @@ unsigned int g_IO4Select = 1;
 bool g_bEnableVpp = false;
 int g_StartupMode = STARTUP_APPLI_SF_1;
 bool g_bStatus = true;
-extern void Sleep(unsigned int ms);
 
 CHIP_INFO Chip_Info;
 char* l_opt_arg;
@@ -1502,10 +1501,11 @@ bool Wait(const char* strOK, const char* strFail)
     printf("\n");
 
     while (g_is_operation_on_going == true) {
+        Sleep(100);
         gettimeofday(&tv, NULL);
         if (tv.tv_sec - basetv.tv_sec > timeOut) {
             timersub(&tv, &basetv, &diff);
-            printf("%0.2f\t s elapsed\r", diff.tv_sec + 0.000001 * diff.tv_usec);
+            printf("\r%0.2fs elapsed", diff.tv_sec + 0.000001 * diff.tv_usec);
             printf("%s", msg_err_timeout_abortion);
             g_is_operation_on_going = false;
             g_bStatus = false;
@@ -1514,7 +1514,7 @@ bool Wait(const char* strOK, const char* strFail)
 
         if (g_bDisplayTimer == true) {
             timersub(&tv, &basetv, &diff);
-            printf("%0.6f\t s elapsed\r", diff.tv_sec + 0.000001 * diff.tv_usec);
+            printf("\r%0.1fs elapsed", diff.tv_sec + 0.000001 * diff.tv_usec);
         }
     }
     printf("\n");
