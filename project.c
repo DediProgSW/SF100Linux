@@ -258,6 +258,11 @@ bool IdentifyChipBeforeOperation(int Index)
         strstr(Chip_Info.Class, SUPPORT_SILICONBLUE_iCE65) != NULL)
         return true;
 
+    if (Chip_Info.UniqueID == 0xEF4020) { // WinBond W25Q512JVFQ
+        g_Vcc = vcc2_5V;
+        TurnONVcc(Index);
+    }
+
     Found=FlashIdentifier(&binfo,0,Index);
 
 //	printf("\n binfo.UniqueID = 0x%lx, Chip_Info.UniqueID = 0x%lx\n", binfo.UniqueID,Chip_Info.UniqueID);
