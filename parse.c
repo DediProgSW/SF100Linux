@@ -620,7 +620,7 @@ void Dedi_List_AllChip()
 	/*error message & return (1) control to the OS*/
 	if ((fp = fopen(Path,"rt")) == NULL){
 		fprintf(stderr,"Error opening file: %s\n",fname);
-		return 1;
+		return;
 	}
 	sz=fsize(fp);
 	file_buf=(char*)malloc(sz);
