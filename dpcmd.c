@@ -1501,7 +1501,7 @@ bool Wait(const char* strOK, const char* strFail)
     printf("\n");
 
     while (g_is_operation_on_going == true) {
-        Sleep(100);
+        for(volatile unsigned int dly = 100000; dly; dly--) __asm("nop");
         gettimeofday(&tv, NULL);
         if (tv.tv_sec - basetv.tv_sec > timeOut) {
             timersub(&tv, &basetv, &diff);
