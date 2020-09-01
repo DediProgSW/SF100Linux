@@ -22,7 +22,7 @@ unsigned long g_ulFileSize=0;
 unsigned int g_uiFileChecksum=0;
 unsigned char g_BatchIndex=2;
 unsigned int CompleteCnt=0; 
-bool m_bOperationResult[16]; 
+int m_bOperationResult[16];
 bool bAuto[16]={false}; 
 extern unsigned int g_ucFill;
 extern int m_boEnReadQuadIO;

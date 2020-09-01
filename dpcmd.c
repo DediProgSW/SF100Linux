@@ -1702,7 +1702,7 @@ bool Wait(const char* strOK,const char* strFail)
             timersub(&tv, &basetv, &diff);
             printf("%0.2f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
             printf("%s",msg_err_timeout_abortion); 
-	    g_is_operation_on_going=false;
+            g_is_operation_on_going=false;
             g_bStatus=false;
             return false;
         }
@@ -1710,7 +1710,8 @@ bool Wait(const char* strOK,const char* strFail)
        if(g_bDisplayTimer==true)
        {
             timersub(&tv, &basetv, &diff);
-            printf("%0.6f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            fprintf(stderr, "%0.1f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            Sleep(500);
       }
     }  
   	printf("\n");
