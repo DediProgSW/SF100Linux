@@ -674,13 +674,13 @@ bool threadCompareFileAndChip(int Index)
  	result = false;
 
     if( result )
-    { 
+    {  
  
         ReadChip(DownloadAddrRange,Index);
 	
-        size_t offset = min(DownloadAddrRange.length,g_ulFileSize);
+        size_t offset = min(DownloadAddrRange.length,g_ulFileSize); 
         unsigned int crcFile = CRC32(pBufferforLoadedFile,offset);
-        unsigned int crcChip = CRC32(pBufferForLastReadData[Index],offset);
+        unsigned int crcChip = CRC32(pBufferForLastReadData[Index],offset); 
 //        unsigned int i=0;
         #if 0
         for(i=0; i<10; i++)
