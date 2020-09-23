@@ -14,7 +14,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
- #include <sys/types.h>
+#include <sys/types.h>
 
 #include "dpcmd.h"
 #include "board.h"
@@ -92,6 +92,9 @@ volatile bool g_is_operation_on_going=false;
 bool g_is_operation_successful[16]={false};
 bool g_bDisplayTimer=true;
 bool isSendFFsequence=false;
+/* only print timing progress info if this many seconds ellapsed
+ * before the last time we did */
+static float g_tv_display_delta_s = 0.5;
 
 
 //char* const short_options = "?Ldber:p:u:sf:I:R:a:l:vx:T:S:N:B:D:F:V:t:g:c:POik:";
@@ -128,7 +131,7 @@ static const char*    msg_info_firmwareupdateOK    = "\nUpdate firmware OK";
 static const char*    msg_info_firmwareupdatefail   = "\nError: Update firmware Failed";
 
 
-char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:";
+char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:E:";
 
 struct option long_options[] = {
      { "help",                  0,   NULL,    '?'     },
@@ -166,6 +169,7 @@ struct option long_options[] = {
      { "set-io1",               1,   NULL,    '1'     },
      { "set-io4",               1,   NULL,    '4'     },
      { "update-fw",               1,   NULL,    'U'     },
+     { "display-delta",         1,   NULL,    'E'     },
      {      0,                  0,     0,     0},
 };
 
@@ -669,6 +673,17 @@ int main(int argc, char *argv[])
 				iExitCode=FirmwareUpdate();
 				goto Exit;
 				break;
+			case 'E':
+				g_tv_display_delta_s = atof(optarg);
+				if (g_tv_display_delta_s <= 0) {
+					fprintf(stderr, "E: invalid number"
+						" of seconds for display delta"
+						" (%f); expect larger than"
+						" zero\n",
+						g_tv_display_delta_s);
+					return 1;
+				}		
+				break;
 			default:
 				break;
 		}
@@ -952,6 +967,8 @@ void cli_classic_usage(bool IsShowExample)
 			"    --set-io4 arg (=1)                      specify Level of IO4(SF100) or GPIO2(SF600/SF600Plus):\n"
 			"                                                0, Low\n"
 			"                                                1, High(Default)\n"
+	       "    -e|--display-delta SECONDS (=0.5)       wait this many seconds\n"
+	       "                                            before refreshing the screen\n"
 	       "\n\n\n");
 }
 
@@ -1692,9 +1709,15 @@ bool Wait(const char* strOK,const char* strFail)
     size_t timeOut =  g_uiTimeout;
     struct timeval tv,basetv,diff;
     int dev_cnt=get_usb_dev_cnt();
+    /* last time we displayed time info */
+    static struct timeval tv_display_last = { 0, 0 };
+
     Sleep(100);   // wait till the new thread starts ....
 
     gettimeofday (&basetv , NULL);
+    /* first time we run this, initialize to the first time stamp */
+    if (tv_display_last.tv_sec == 0 && tv_display_last.tv_usec == 0)
+        memcpy(&tv_display_last, &basetv, sizeof(tv_display_last));
     printf("\n");
 
     while( g_is_operation_on_going==true)
@@ -1712,8 +1735,19 @@ bool Wait(const char* strOK,const char* strFail)
 
        if(g_bDisplayTimer==true)
        {
-            timersub(&tv, &basetv, &diff);
-            printf("%0.6f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            float diff_s, diff_last_s;
+            timersub(&tv, &tv_display_last, &diff);
+            diff_s = (float)diff.tv_sec + 0.000001 * diff.tv_usec;
+            if (diff_s > g_tv_display_delta_s)
+            {
+		    /* it's been more than X seconds since the last
+		     * time we displayed, so let's display currently
+		     * ellapsed time since we started */
+                timersub(&tv, &basetv, &diff);
+                printf("%0.6f\t s elapsed\r", diff.tv_sec + 0.000001 * diff.tv_usec);
+		fflush(stdout);
+		memcpy(&tv_display_last, &tv, sizeof(tv_display_last));
+            }
       }
     }
   	printf("\n");
