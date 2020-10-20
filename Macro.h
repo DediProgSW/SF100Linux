@@ -2,9 +2,12 @@
 
 #ifndef _MACRO_H
 #define _MACRO_H
+
+#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <unistd.h>
+
 // new defined macros
 //programmer info RQ
 #define PROGINFO_REQUEST                0x08
@@ -27,8 +30,7 @@
 //#define READ_EEPROM                     0x05
 //#define WRITE_EEPROM                    0x06
 // values of Request Field of a setup packet
-typedef struct FirmwareInfo
-{
+typedef struct FirmwareInfo {
 	char Programmer[20];
 	char Version[10];
 	char FPGAVersion[10];
@@ -40,8 +42,7 @@ typedef struct FirmwareInfo
 	unsigned int  SecondSize;
 }FW_INFO;
 
-typedef enum
-{
+typedef enum {
     TRANSCEIVE                      = 0x01,
 
     DTC_READ                        = 0x20,
@@ -87,6 +88,7 @@ typedef struct ChipInfo {
     size_t Timeout;
     size_t VoltageInMv;
 }CHIP_INFO;
+
 //third field of RQ
 #define CTRL_TIMEOUT                    3000                ///< time out for control pipe or for firmwire
 
@@ -265,7 +267,6 @@ typedef struct ChipInfo {
 	#define SUPPORT_FUDAN_FM25Fxx  "FM25Fxx"
 #endif
 
-
 // for usb
 #define USB_TIMEOUT                     800000                ///< time out value for usb EP2
 
@@ -304,16 +305,13 @@ typedef struct ChipInfo {
 #define LIST_TYPE BIT12
 #define LOADFILE BIT13
 
-//#define size_t unsigned int
-struct CAddressRange
-{
+struct CAddressRange {
     size_t start;
     size_t end;
     size_t length;
 };
 
-struct memory_id
-{
+struct memory_id {
         char TypeName[20];
         size_t UniqueID;
         char Class[20];
@@ -346,23 +344,19 @@ struct memory_id
         size_t Timeout;
 };
 
-
-enum
-{
+enum {
 	SITE_NORMAL=0,
 	SITE_BUSY,
 	SITE_ERROR,
 	SITE_OK,
 };
 
-enum
-{
+enum {
     Seriase_45 = 0x08,
     Seriase_25 = 0x00,
 };
 
-typedef enum
-{
+typedef enum {
     vccPOWEROFF = 0x00,
 
     vcc3_5V     = 0x10,

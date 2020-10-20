@@ -1,13 +1,17 @@
 #pragma once
 
 #ifndef SERIALFLASHS
-
 #define SERIALFLASHS
+
+#include "Macro.h"
 
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
 
 #include <stdint.h>
+#ifdef _NON_UBUNTU
+typedef unsigned long uintptr_t;
+#endif
 
     enum    //list of all chip-specific instruction, for ST serial flash
     {
@@ -29,7 +33,6 @@
 	    EN4B = 0xB7,
 	    EXIT4B = 0xE9,
     };
-
 
 int SerialFlash_doWRSR(unsigned char cSR,int Index);
 
@@ -66,9 +69,8 @@ int SerialFlash_batchErase(uintptr_t* vAddrs,size_t AddrSize,int Index);
 
 int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddressRange *AddrRange,int Index);
 
-int SerialFlash_chipErase(int Index);
+bool SerialFlash_chipErase(int Index);
 int SerialFlash_DieErase(int Index);
-
 
 int SerialFlash_bulkPipeProgram(struct CAddressRange *AddrRange, unsigned char *vData, unsigned char modeWrite, unsigned char WriteCom, int Index);
 
@@ -100,6 +102,5 @@ size_t GetChipSize(void);
 size_t GetPageSize(void);
 bool SerialFlash_StartofOperation(int Index);
 bool SerialFlash_EndofOperation(int Index);
-
 
 #endif //SERIALFLASHS

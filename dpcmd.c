@@ -1,28 +1,20 @@
-#if 1
-#include <stdio.h>
+#include "dpcmd.h"
+#include "ChipInfoDb.h"
+#include "FlashCommand.h"
+#include "SerialFlash.h"
+#include "board.h"
+#include "project.h"
+#include "usbdriver.h"
 #include <fcntl.h>
 #include <getopt.h>
-#include "Macro.h"
-
-#include "usbdriver.h"
-#include "ChipInfoDb.h"
-#include "SerialFlash.h"
-#include "project.h"
-#include <sys/stat.h>
 #include <pthread.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
- #include <sys/types.h>
-
-#include "dpcmd.h"
-#include "board.h"
-#include "FlashCommand.h"
-#include "parse.h"
-#define min(a,b) (a>b? b:a)
-
 #include <signal.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+
+#define min(a,b) (a>b? b:a)
 
 extern unsigned char* pBufferForLastReadData[16];
 extern unsigned char* pBufferforLoadedFile;
@@ -48,8 +40,6 @@ unsigned int g_IO4Select=1;
 bool g_bEnableVpp=false;
 int g_StartupMode=STARTUP_APPLI_SF_1;
 bool g_bStatus=true;
-extern void Sleep(unsigned int ms);
-
 
 CHIP_INFO Chip_Info;
 char *l_opt_arg;
@@ -93,6 +83,9 @@ volatile bool g_is_operation_on_going=false;
 bool g_is_operation_successful[16]={false};
 bool g_bDisplayTimer=true;
 bool isSendFFsequence=false;
+/* only print timing progress info if this many seconds ellapsed
+ * before the last time we did */
+static float g_tv_display_delta_s = 0.5;
 
 
 //char* const short_options = "?Ldber:p:u:sf:I:R:a:l:vx:T:S:N:B:D:F:V:t:g:c:POik:";
@@ -129,7 +122,7 @@ static const char*    msg_info_firmwareupdateOK    = "\nUpdate firmware OK";
 static const char*    msg_info_firmwareupdatefail   = "\nError: Update firmware Failed";
 
 
-char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:";
+char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:E:";
 
 struct option long_options[] = {
      { "help",                  0,   NULL,    '?'     },
@@ -167,6 +160,7 @@ struct option long_options[] = {
      { "set-io1",               1,   NULL,    '1'     },
      { "set-io4",               1,   NULL,    '4'     },
      { "update-fw",               1,   NULL,    'U'     },
+     { "display-delta",         1,   NULL,    'E'     },
      {      0,                  0,     0,     0},
 };
 
@@ -326,13 +320,11 @@ int Sequence()
     // *** the calling order in the following block must be kept as is ***
     bool boResult=true;
     boResult &= BlankCheck();
-    if(boResult==false)
-    {
+    if (boResult == false) {
 	if(!(g_ucOperation&ERASE))
             return EXCODE_FAIL_BLANK;
     }
-    if((!((g_ucOperation&BLANK)&&(boResult==true))||(!(g_ucOperation&BLANK))))
-    {
+    if ((!((g_ucOperation & BLANK) && (boResult == true)) || (!(g_ucOperation & BLANK)))) {
         boResult = Erase();
         if(boResult==false)
             return EXCODE_FAIL_ERASE;
@@ -350,29 +342,22 @@ int Sequence()
     if(boResult==false)
         return EXCODE_FAIL_BATCH;
 
-
     boResult &= CalChecksum();
-     if(boResult==true)
-    {
-        if(g_ucOperation & CSUM)
-        {
-            if(g_uiLen==0)
-	    {
+    if (boResult == true) {
+        if (g_ucOperation & CSUM) {
+            if (g_uiLen == 0) {
 	    	if(g_uiDevNum==0)
                     return CRC32(pBufferForLastReadData[0], Chip_Info.ChipSizeInByte);
 		else
 		    return CRC32(pBufferForLastReadData[g_uiDevNum-1], Chip_Info.ChipSizeInByte);
-            }
-	    else
-	    {
+            } else {
 	    	if(g_uiDevNum==0)
                     return CRC32(pBufferForLastReadData[0], g_uiLen);
 		else
                     return CRC32(pBufferForLastReadData[g_uiDevNum-1], g_uiLen);
 	    }
         }
-    }
-    else
+    } else
         return EXCODE_FAIL_CHKSUM;
 
     boResult &= Verify();
@@ -381,7 +366,6 @@ int Sequence()
 
     return EXCODE_PASS;
 }
-
 
 void print_message_function( void *ptr )
 {
@@ -393,11 +377,10 @@ void print_message_function( void *ptr )
 void GetLogPath(char* pBuf)
 {
 	memset(pBuf,0,512);
-    if (readlink ("/proc/self/exe", pBuf, 512) != -1)
-    {
+    if (readlink("/proc/self/exe", pBuf, 512) != -1) {
     	if(strlen(pBuf)<(511-sizeof("/log.txt")))
 	    	strcat(pBuf,"/log.txt");
-//		printf("%s\r\n",pBuf);
+        //		printf("%s\n",pBuf);
     }
 }
 
@@ -437,14 +420,11 @@ void WriteLog(int ErrorCode, bool Init)
 	timeinfo = localtime (&rawtime);
 
 	strftime (buffer,80,"%Y-%b-%d %T",timeinfo);
-	if(Init)
-	{
+    if (Init) {
 	    FileOut = fopen(g_LogPath,"wt") ;
 		if(FileOut != NULL)
 			fprintf(FileOut, "%s%s%s",buffer," USB communication =",Result[ErrorCode]);
-	}
-	else
-	{
+    } else {
 		FileOut = fopen(g_LogPath,"a+t") ;
 		if(FileOut != NULL)
 			fprintf(FileOut, "%s%s",buffer,Result[ErrorCode]);
@@ -456,28 +436,22 @@ void WriteLog(int ErrorCode, bool Init)
 
 int GetConfigVer()
 {
-	char path[512],fname[256];
 	char file_line_buf[512];
 	char test[80];
 	char *pch,*tok;
 	bool bFound=0;
 	int Ver=0;
 	FILE* fp;       /*Declare file pointer variable*/
-	getExecPath(path);
-	if ((fp = fopen(path,"rt")) == NULL)
-	{
-		fprintf(stderr,"Error opening file: %s\n",fname);
-		return 1;
-	}
 
-	while(fgets(file_line_buf, 512, fp) != NULL)
-	{
+    if ((fp = openChipInfoDb()) == NULL)
+		return 1;
+
+    while (fgets(file_line_buf, 512, fp) != NULL) {
 		if(strstr(file_line_buf,"DediProgChipDatabase") && bFound==0)
 			bFound=1;
 
 		pch=strstr(file_line_buf, "Ver");
-		if(bFound==1 && pch != NULL)
-		{
+        if (bFound == 1 && pch != NULL) {
 			memset(test, '\0', 80);
 			strcpy(test,pch+strlen("Ver"));
 			tok = strtok(test,"\"= \t");
@@ -487,10 +461,7 @@ int GetConfigVer()
 	}
 	fclose(fp);
 	return Ver;
-
 }
-
-extern void func(int);
 
 int main(int argc, char *argv[])
 {
@@ -503,19 +474,15 @@ int main(int argc, char *argv[])
 	bool bDetect=false;
 	bool bDevice=false;
 
-	//signal(SIGINT, sin_handler);
-
-	printf("\nDpCmd Linux 1.11.2.%02d Engine Version:\nLast Built on May 25 2018\n\n",GetConfigVer()); //1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.11.2.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
 	g_ucOperation=0;
 	GetLogPath(g_LogPath);
 
-	if(argc==1)
-	{
+    if (argc == 1) {
 		cli_classic_usage(false);
 		return 0;
 	}
-
 
 	if(OpenUSB()==0)
 		iExitCode=EXCODE_FAIL_USB;
@@ -523,12 +490,8 @@ int main(int argc, char *argv[])
 	LeaveStandaloneMode(0);
 	QueryBoard(0);
 
-
-
-	while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1)
-	{
-		switch (c)
-		{
+    while ((c = getopt_long(argc, argv, short_options, long_options, NULL)) != -1) {
+        switch (c) {
 			case '?':
 				cli_classic_usage(true);
 				CloseProject();
@@ -585,7 +548,10 @@ int main(int argc, char *argv[])
 				break;
 			case 'l':
 				g_uiLen=0;
+            if (strstr(optarg, "0x"))
 				sscanf(optarg,"%zx",&g_uiLen);
+            else
+                sscanf(optarg, "%zu", &g_uiLen);
 				break;
 			case 'v':
 				g_ucOperation |= VERIFY;
@@ -648,7 +614,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'O':  //Log file
 				strcpy(g_LogPath,optarg);
-//					printf("%s\r\n",g_LogPath);
+            //					printf("%s\n",g_LogPath);
 				break;
 			case 'i':
 				g_bDisplayTimer=false;
@@ -670,72 +636,66 @@ int main(int argc, char *argv[])
 				iExitCode=FirmwareUpdate();
 				goto Exit;
 				break;
+			case 'E':
+				g_tv_display_delta_s = atof(optarg);
+				if (g_tv_display_delta_s <= 0) {
+					fprintf(stderr, "E: invalid number"
+						" of seconds for display delta"
+						" (%f); expect larger than"
+						" zero\n",
+						g_tv_display_delta_s);
+					return 1;
+				}		
+				break;
 			default:
 				break;
 		}
     }
 
-
 	int dev_cnt=get_usb_dev_cnt();
-	if(bDetect==true)
-	{
-		if(bDevice==false)
-		{
-			for(int i=0;i<dev_cnt;i++)
-			{
-//				//printf("%s\r\n",g_LogPath);
+    if (bDetect == true) {
+        if (bDevice == false) {
+            for (int i = 0; i < dev_cnt; i++) {
+                //				//printf("%s\n",g_LogPath);
 
 			    int dwUID=ReadUID(i);
-			    if((dwUID/600000)>0)
-			    {
-				printf("\nDevice %d (SF%06d):\tdetecting chip\r\n",i+1,dwUID);
-			    }
-		   	    else
-			    {
-				printf("\nDevice %d (DP%06d):\tdetecting chip\r\n",i+1,dwUID);
+                if ((dwUID / 600000) > 0) {
+                    printf("\nDevice %d (SF%06d):\tdetecting chip\n", i + 1, dwUID);
+                } else {
+                    printf("\nDevice %d (DP%06d):\tdetecting chip\n", i + 1, dwUID);
  			    }
 			    WriteLog(iExitCode, true);
 			    Chip_Info=GetFirstDetectionMatch(i);
-			    if(Chip_Info.UniqueID !=0 )
-			    {
-				printf("By reading the chip ID, the chip applies to [ %s ]\r\n", Chip_Info.TypeName);
-				printf("%s chip size is %zd bytes.\r\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
-			    }
-			    else
-			    {
+                if (Chip_Info.UniqueID != 0) {
+                    printf("By reading the chip ID, the chip applies to [ %s ]\n", Chip_Info.TypeName);
+                    printf("%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+                } else {
                                 printf("%s",msg_err_identifychip);
 				iExitCode=EXCODE_FAIL_IDENTIFY;
 			    }
 		        }
-	 	}
-		else if(g_uiDevNum!=0)
-		{
+        } else if (g_uiDevNum != 0) {
 			WriteLog(iExitCode, true);
-			 printf("%d,\tdetecting chip\r\n",g_uiDevNum);
+            printf("%d,\tdetecting chip\n", g_uiDevNum);
 			Chip_Info=GetFirstDetectionMatch(g_uiDevNum-1);
-			if(Chip_Info.UniqueID !=0 )
-			{
-				printf("  \tBy reading the chip ID, the chip applies to [ %s ]\r\n", Chip_Info.TypeName);
-				printf("  \t%s chip size is %zd bytes.\r\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
-			}
-			else
-			{
+            if (Chip_Info.UniqueID != 0) {
+                printf("  \tBy reading the chip ID, the chip applies to [ %s ]\n", Chip_Info.TypeName);
+                printf("  \t%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+            } else {
 				printf("%s",msg_err_identifychip);
 				iExitCode=EXCODE_FAIL_IDENTIFY;
 			}
-		}
-		else
-		{
+        } else {
 		    printf("The number of programmer is not defined!\n");
 		    iExitCode=EXCODE_FAIL_IDENTIFY;
 		}
 		goto Exit;
-	}
-	else
+    } else
 		WriteLog(iExitCode, true);
 
-	if(iExitCode != EXCODE_PASS) goto Exit;
-	iExitCode=Handler();
+    if (iExitCode != EXCODE_PASS)
+        goto Exit;
+    iExitCode=Handler();
 
 Exit:
  	printf("\n\n");
@@ -747,8 +707,7 @@ Exit:
 
 void ExitProgram(void)
 {
-    for(int i=0;i<get_usb_dev_cnt();i++)
-    {
+    for (int i = 0; i < get_usb_dev_cnt(); i++) {
 	if(pBufferForLastReadData[i] != NULL)
             free(pBufferForLastReadData[i]);
     }
@@ -767,17 +726,15 @@ int FirmwareUpdate()
 	int fw[3];
 
     pFile = fopen( g_parameter_fw , "rb" );
-    if (pFile==NULL)
-    {
+    if (pFile == NULL) {
         printf("Can not open %s \n",g_parameter_fw);
         return EXCODE_FAIL_UPDATE_FW;
     }
 
     // obtain file size:
     filesize = fseek (pFile , 0 , SEEK_END);
-	if(filesize< sizeof(FW_INFO))
-	{
-		printf("File %s too small.\r\n", g_parameter_fw);
+    if (filesize < sizeof(FW_INFO)) {
+        printf("File %s too small.\n", g_parameter_fw);
 		return -1;
 	}
 	fseek (pFile , 0 , SEEK_SET);
@@ -785,29 +742,26 @@ int FirmwareUpdate()
 
     // copy the file into the buffer:
     result = fread ((unsigned char*)&Data,1,sizeof(FW_INFO),pFile);
-	if(result != sizeof(FW_INFO))
-	{
-		printf("File %s read problem.\r\n",g_parameter_fw);
+    if (result != sizeof(FW_INFO)) {
+        printf("File %s read problem.\n", g_parameter_fw);
 		return -1;
 	}
     fclose (pFile);
 
-	if(Data.dwSignature != 0x44504657)
-	{
-		printf("This file is not DediProg firmware format.\r\n");
+    if (Data.dwSignature != 0x44504657) {
+        printf("This file is not DediProg firmware format.\n");
 		return EXCODE_FAIL_UPDATE_FW;
 	}
 	sscanf(&Data.Version[0],"%d.%d.%d",&fw[0],&fw[1],&fw[2]);
 	fwVer=((fw[0]<<16) | (fw[1]<<8) | fw[2]);
 
-	printf("Current Firmware is %x, New Firmware Version is %x\r\n",g_firmversion,fwVer);
+    printf("Current Firmware is %x, New Firmware Version is %x\n", g_firmversion, fwVer);
 
 	if(strstr(g_board_type,Data.Programmer)==NULL)
-		printf("Error: This firmware for %s!\r\n",Data.Programmer);
+        printf("Error: This firmware for %s!\n", Data.Programmer);
 
-	if((strstr(g_board_type,Data.Programmer)==NULL) ||((fwVer&0xff0000) != (g_firmversion & 0xff0000)))
-	{
-		printf("Error: This firmware can not be updated on this programmer!\r\n");
+    if ((strstr(g_board_type, Data.Programmer) == NULL) || ((fwVer & 0xff0000) != (g_firmversion & 0xff0000))) {
+        printf("Error: This firmware can not be updated on this programmer!\n");
 		return EXCODE_FAIL_UPDATE_FW;
 	}
 
@@ -877,7 +831,7 @@ void cli_classic_usage(bool IsShowExample)
 	       "                                            0x1000),\n"
 	       "                                            - works with --prog/read/sum/auto only\n"
 	       "                                            - defaults to 0, if omitted.\n"
-	       "    -l [ --length ] arg                     hexadecimal length to read/program in bytes,\n"
+           "    -l [ --length ] arg                     decimal/hexadecimal length to read/program in bytes,\n"
 	       "                                            - works with --prog/read/sum/auto only\n"
 	       "                                            - defaults to whole file if omitted\n"
 	       "    -v [ --verify ]                         verify checksum file and chip\n"
@@ -953,6 +907,8 @@ void cli_classic_usage(bool IsShowExample)
 			"    --set-io4 arg (=1)                      specify Level of IO4(SF100) or GPIO2(SF600/SF600Plus):\n"
 			"                                                0, Low\n"
 			"                                                1, High(Default)\n"
+	       "    -e|--display-delta SECONDS (=0.5)       wait this many seconds\n"
+	       "                                            before refreshing the screen\n"
 	       "\n\n\n");
 }
 
@@ -972,9 +928,7 @@ void sin_handler(int sig)
 
 int Handler(void)
 {
-
-    if(Is_usbworking(0)==true)
-    {
+    if (Is_usbworking(0) == true) {
     #if 0
         if(m_vm.count("fix-device"))
         {
@@ -985,64 +939,45 @@ int Handler(void)
         AssignedDevice();
     #endif
 
-        if((g_ucOperation & BLINK)==BLINK)
-        {
+        if ((g_ucOperation & BLINK) == BLINK) {
             BlinkProgrammer();
             return EXCODE_PASS;
         }
 
-        if((g_ucOperation & DEVICE_ID)==DEVICE_ID)
-        {
+        if ((g_ucOperation & DEVICE_ID) == DEVICE_ID) {
             ListSFSerialID();
             return EXCODE_PASS;
         }
 
-
-
-
-    }
-    else
-    {
-        printf("Error: Programmers are not connected.\r\n");
+    } else {
+        printf("Error: Programmers are not connected.\n");
         return EXCODE_FAIL_OTHERS;
     }
 
-    if(!InitProject()) return EXCODE_FAIL_OTHERS;
+    if (!InitProject())
+        return EXCODE_FAIL_OTHERS;
     //my_timer t;                           // opertion timer
 
-    if(ListTypes()) return EXCODE_PASS;
+    if (ListTypes())
+        return EXCODE_PASS;
 
-
-
-    if(strlen(g_parameter_type)>0)
-    {
+    if (strlen(g_parameter_type) > 0) {
 		int dev_cnt=get_usb_dev_cnt();
-    	       if(g_uiDevNum==0)
-   	 	{
- 			for(int i=0;i<dev_cnt;i++)
-			{
-
+        if (g_uiDevNum == 0) {
+            for (int i = 0; i < dev_cnt; i++) {
 	        	RawInstructions(i);
 			}
-    	        }
-		else if(g_uiDevNum<=dev_cnt)
-   		{
+        } else if (g_uiDevNum <= dev_cnt) {
  			RawInstructions(g_uiDevNum-1);
 
-  		}
- 		else
-		{
-         		printf("Error: Did not find the programmer.\r\n");
+        } else {
+            printf("Error: Did not find the programmer.\n");
 			return EXCODE_FAIL_OTHERS;
 		}
         return Sequence();
-    }
-    else if(DetectChip())
-    {
-
+    } else if (DetectChip()) {
         return Sequence();
-    }
-    else
+    } else
         return EXCODE_FAIL_IDENTIFY;
 
     return EXCODE_FAIL_OTHERS;
@@ -1051,79 +986,58 @@ int Handler(void)
 bool InitProject(void)
 {
     int dev_cnt=get_usb_dev_cnt();
-    if(Is_usbworking(0))
-    {
-        int targets[4] =
-        {
+    if (Is_usbworking(0)) {
+        int targets[4] = {
             STARTUP_APPLI_CARD,
             STARTUP_APPLI_SF_1,
             STARTUP_APPLI_SF_2,
             STARTUP_APPLI_SF_SKT,
         };
 
-	if(g_uiDevNum==0)
-   	{
-
-	    for(int i=0;i<dev_cnt;i++)
-	    {
+        if (g_uiDevNum == 0) {
+            for (int i = 0; i < dev_cnt; i++) {
 	        g_StartupMode=targets[g_ucTarget];
 		SetTargetFlash((unsigned char)targets[g_ucTarget], i);
 		SetSPIClock(i);
 		SetVcc(i);
 
-		if(strlen(g_parameter_type)>0)
-		{
-		    if(Dedi_Search_Chip_Db_ByTypeName(g_parameter_type,&Chip_Info,i))
-		    {
-		        printf("Chip Type %s is applied manually.\r\n",Chip_Info.TypeName);
+                if (strlen(g_parameter_type) > 0) {
+                    if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &Chip_Info)) {
+                        printf("Chip Type %s is applied manually.\n", Chip_Info.TypeName);
 		        printf("%s chip size is %zd bytes.\n\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
 		        ProjectInitWithID(Chip_Info,i);
-                        if(!strncmp(Chip_Info.Class,"N25Qxxx_Large", sizeof("N25Qxxx_Large")))
+                        if (!strcmp(Chip_Info.Class, "N25Qxxx_Large"))
 			    isSendFFsequence=true;
-		    }
-		    else
-		    {
-		        printf("Chip Type Unknow is applied manually.\r\n");
+                    } else {
+                        printf("Chip Type Unknow is applied manually.\n");
 		        return false;
 		    }
 
-		}
-		else
-		{
+                } else {
 		    ProjectInit(i);
 		}
  	    }
-	}
-	else if(g_uiDevNum<=dev_cnt)
-   	{
+        } else if (g_uiDevNum <= dev_cnt) {
 		g_StartupMode=targets[g_ucTarget];
 		SetTargetFlash((unsigned char)targets[g_ucTarget], g_uiDevNum-1);
 		SetSPIClock(g_uiDevNum-1);
 		SetVcc(g_uiDevNum-1);
 
-		if(strlen(g_parameter_type)>0)
-		{
-		    if(Dedi_Search_Chip_Db_ByTypeName(g_parameter_type,&Chip_Info,g_uiDevNum-1))
-		    {
-		        printf("Chip Type %s is applied manually.\r\n",Chip_Info.TypeName);
+		if(strlen(g_parameter_type)>0){
+                if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &Chip_Info)) {
+                    printf("Chip Type %s is applied manually.\n", Chip_Info.TypeName);
 		        printf("%s chip size is %zd bytes.\n\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
 		        ProjectInitWithID(Chip_Info,g_uiDevNum-1);
-		    }
-		    else
-		    {
-		        printf("Chip Type Unknow is applied manually.\r\n");
+		    } else {
+                    printf("Chip Type Unknow is applied manually.\n");
 		        return false;
 		    }
 
-		}
-		else
-		{
+            } else {
 		    ProjectInit(g_uiDevNum-1);
 		}
-	}
-	else
-       	    printf("Error: Did not find the programmer.\r\n");
-
+        } else
+            printf("Error: Did not find the programmer.\n");
 
 		return true;
     }
@@ -1132,8 +1046,7 @@ bool InitProject(void)
 
 void CloseProject(void)
 {
-    for(int i=0;i<get_usb_dev_cnt();i++)
-    {
+    for (int i = 0; i < get_usb_dev_cnt(); i++) {
         EnterStandaloneMode(i);
     }
     usb_driver_release();
@@ -1143,17 +1056,13 @@ bool DetectChip(void)
 {
     int dev_cnt=get_usb_dev_cnt();
     Chip_Info=GetFirstDetectionMatch(0);
-    if(g_uiDevNum==0)
-    {
- 	for(int i=0;i<dev_cnt;i++)
-	{
-		if(!Is_usbworking(i))
-    		{
+    if (g_uiDevNum == 0) {
+        for (int i = 0; i < dev_cnt; i++) {
+            if (!Is_usbworking(i)) {
       		    printf("%s",msg_err_communication);
       		    return false;
     		}
-    		if(0 == Chip_Info.UniqueID)
-    		{
+            if (0 == Chip_Info.UniqueID) {
 	            printf("%s",msg_err_identifychip);
 	            return false;
 		}
@@ -1161,20 +1070,14 @@ bool DetectChip(void)
  	        printf("%s parameters to be applied by default\n",Chip_Info.TypeName);
 	        printf("%s chip size is %zd bytes.\n\n",Chip_Info.TypeName,Chip_Info.ChipSizeInByte);
 
-
 	        RawInstructions(i);
 	}
-    }
-    else if(g_uiDevNum<=dev_cnt)
-    {
-
-	if(!Is_usbworking(g_uiDevNum-1))
-    	{
+    } else if (g_uiDevNum <= dev_cnt) {
+        if (!Is_usbworking(g_uiDevNum - 1)) {
       	    printf("%s",msg_err_communication);
       	    return false;
     	}
-    	if(0 == Chip_Info.UniqueID)
-    	{
+        if (0 == Chip_Info.UniqueID) {
 	    printf("%s",msg_err_identifychip);
 	    return false;
 	}
@@ -1184,16 +1087,15 @@ bool DetectChip(void)
 
 	RawInstructions(g_uiDevNum-1);
 
-    }
-    else
-        printf("Error: Did not find the programmer.\r\n");
+    } else
+        printf("Error: Did not find the programmer.\n");
 
   return true;
-
 }
 
 /* Simon: add later */
-void SetVpp(int Index) {
+void SetVpp(int Index)
+{
 }
 
 void SetSPIClock(int Index)
@@ -1205,23 +1107,19 @@ void SetSPIClock(int Index)
 void SetVcc(int Index)
 {
 //    sscanf(g_parameter_vcc,"%d",&g_Vcc);
-	if(g_Vcc<=3800 && g_Vcc>=1800 && g_bIsSF600[Index]==true)
-		;
-	else
+    if (!(g_Vcc <= 3800 && g_Vcc >= 1800 && g_bIsSF600[Index] == true))
 	    g_Vcc= (0x10 | (g_Vcc&0x03));
 }
 
 int do_loadFile(void)
-{ 
+{
     char* filename = NULL;
     if(g_ucOperation & PROGRAM)
         filename=g_parameter_program;
     else if(g_ucOperation & LOADFILE)
         filename=g_parameter_loadfile;
-    else if(g_ucOperation & BATCH)
-    {
-    	switch(g_BatchIndex)
-    	{
+    else if (g_ucOperation & BATCH) {
+        switch (g_BatchIndex) {
     	    case 1:
 		filename=g_parameter_batch;
 		break;
@@ -1230,8 +1128,7 @@ int do_loadFile(void)
 		filename=g_parameter_auto;
 		break;
     	}
-    }
-    else if(g_ucOperation & FSUM)
+    } else if (g_ucOperation & FSUM)
         filename=g_parameter_fsum;
     printf("%s",msg_info_loading);
     printf("(%s)",filename);
@@ -1240,41 +1137,36 @@ int do_loadFile(void)
 
 bool ListTypes(void)
 {
-    if((g_ucOperation&LIST_TYPE)!=LIST_TYPE) return false;
-	Dedi_List_AllChip();
-
-    return true;
+    if ((g_ucOperation & LIST_TYPE) != LIST_TYPE)
+        return false;
+    return Dedi_List_AllChip();
 }
 
 void BlinkProgrammer(void)
 {
     bool IsV5=is_BoardVersionGreaterThan_5_0_0(0);
-    if(IsV5==false) return;
+    if (IsV5 == false)
+        return;
     int dev_cnt=get_usb_dev_cnt();
 
-    if(g_uiBlink==0)
-    {
-	for(int i=0;i<dev_cnt;i++)
-	{
-            printf("Blink LED on USB device %d \r\n",i);
+    if (g_uiBlink == 0) {
+        for (int i = 0; i < dev_cnt; i++) {
+            printf("Blink LED on USB device %d \n", i);
             BlinkProgBoard(IsV5,i);
             Sleep(500);
             BlinkProgBoard(IsV5,i);
             Sleep(500);
             BlinkProgBoard(IsV5,i);
          }
-    }
-    else if(g_uiBlink<=dev_cnt)
-    {
-        printf("Blink LED on USB device %d \r\n",g_uiBlink);
+    } else if (g_uiBlink <= dev_cnt) {
+        printf("Blink LED on USB device %d \n", g_uiBlink);
         BlinkProgBoard(IsV5,g_uiBlink-1);
         Sleep(500);
         BlinkProgBoard(IsV5,g_uiBlink-1);
         Sleep(500);
         BlinkProgBoard(IsV5,g_uiBlink-1);
-    }
-    else
-        printf("Error: Did not find the programmer.\r\n");
+    } else
+        printf("Error: Did not find the programmer.\n");
 }
 
 void ListSFSerialID(void)
@@ -1283,31 +1175,25 @@ void ListSFSerialID(void)
     dev_cnt = get_usb_dev_cnt();
 
     unsigned int dwUID=0;
-    if(g_uiDeviceID<1)
-    {
-	 for(unsigned int i=0;i<dev_cnt;i++)
-         {
+    if (g_uiDeviceID < 1) {
+        for (unsigned int i = 0; i < dev_cnt; i++) {
           	dwUID=ReadUID(i);
 		if((dwUID / 600000)==0)
-          	    printf("%d,\tDP%06d\r\n",i+1,dwUID);
+                printf("%d,\tDP%06d\n", i + 1, dwUID);
 		else
-		    printf("%d,\tSF%06d\r\n",i+1,dwUID);
+                printf("%d,\tSF%06d\n", i + 1, dwUID);
          }
-    }
-    else
-    {
+    } else {
 	if(g_uiDeviceID>dev_cnt)
-            printf("The number of programmer is not defined!\r\n");
-    	else
-            {
+            printf("The number of programmer is not defined!\n");
+        else {
           	dwUID=ReadUID(g_uiDeviceID-1);
 		if((dwUID / 600000)==0)
-          	    printf("%d,\tDP%06d\r\n",g_uiDeviceID,dwUID);
+                printf("%d,\tDP%06d\n", g_uiDeviceID, dwUID);
 		else
-          	printf("%d,\tSF%06d\r\n",g_uiDeviceID,dwUID);
+                printf("%d,\tSF%06d\n", g_uiDeviceID, dwUID);
 	    }
     }
-
 }
 
 void do_BlankCheck(void)
@@ -1323,20 +1209,19 @@ void do_Erase(void)
     printf("%s \n",msg_info_erasing);
     Run(ERASE_WHOLE_CHIP,g_uiDevNum);
 
-
     Wait( msg_info_eraseOK, msg_info_erasefail) ;
 }
 
 void do_Program(void)
 {
-    if(!do_loadFile()) return;
+    if (!do_loadFile())
+        return;
     SaveProgContextChanges();
 
     printf("%s\n",msg_info_programming);
     Run(PROGRAM_CHIP,g_uiDevNum);
 
-    if( Wait( msg_info_progOK, msg_info_progfail ))
-    {
+    if (Wait(msg_info_progOK, msg_info_progfail)) {
        printf("\nChecksum(whole file): %08X",g_uiFileChecksum);
        printf("\nChecksum(Written part of file): %08X\n",CRC32(pBufferforLoadedFile, min(DownloadAddrRange.end-DownloadAddrRange.start,g_ulFileSize)));
     }
@@ -1357,28 +1242,20 @@ void do_DisplayOrSave(void)
 {
     int dev_cnt=get_usb_dev_cnt();
 
-    if(g_uiDevNum==0)
-    {
-	    for(int icnt=0;icnt<dev_cnt;icnt++)
-	    {
-
-		if(strcmp(g_parameter_read, "STDOUT")==0)
-		{
+    if (g_uiDevNum == 0) {
+        for (int icnt = 0; icnt < dev_cnt; icnt++) {
+            if (strcmp(g_parameter_read, "STDOUT") == 0) {
 		    int i,Len=UploadAddrRange.end-UploadAddrRange.start;
 		    printf("\n");
 		    printf("Hex value display (starting from 0x%02X, 0x%02zX bytes in total): \n",g_uiAddr,g_uiLen);
-		    for(i=0; i<Len; i++)
-		    {
-		        if((i%16==0) && i != 0)
-		        {
+                for (i = 0; i < Len; i++) {
+                    if ((i % 16 == 0) && i != 0) {
 				printf("\n");
 		        }
 			printf("%02X  ",*(pBufferForLastReadData[icnt]+i));
 		    }
 		    printf("\n\n");
-		}
-		else
-		{
+            } else {
 		    UploadAddrRange.length=UploadAddrRange.end-UploadAddrRange.start;
 		    char str[64];
 		    sprintf(str, "%d_", icnt+1);
@@ -1388,39 +1265,28 @@ void do_DisplayOrSave(void)
 		        printf("\nSuccessfully saved into file:%s \n",str);
 		    else
 		        printf("\nFailed to save into file: %s\n",str);
-
-
 		}
 	    }
-    }
-    else if(g_uiDevNum!=0)
-    {
-	if(strcmp(g_parameter_read, "STDOUT")==0)
-        {
+    } else if (g_uiDevNum != 0) {
+        if (strcmp(g_parameter_read, "STDOUT") == 0) {
             int i,Len=UploadAddrRange.end-UploadAddrRange.start;
             printf("\n");
             printf("Hex value display (starting from 0x%02X, 0x%02zX bytes in total): \n",g_uiAddr,g_uiLen);
-            for(i=0; i<Len; i++)
-            {
+            for (i = 0; i < Len; i++) {
                 if((i%16==0) && i != 0)
                 printf("\n");
                 printf("%02X  ",*(pBufferForLastReadData[g_uiDevNum-1]+i));
             }
             printf("\n\n");
-        }
-        else
-        {
+        } else {
             UploadAddrRange.length=UploadAddrRange.end-UploadAddrRange.start;
             if(WriteFile((const char*)g_parameter_read, pBufferForLastReadData[g_uiDevNum-1], UploadAddrRange.length)==1)
                 printf("\nSuccessfully saved into file:%s \n",g_parameter_read);
             else
                 printf("\nFailed to save into file: %s\n",g_parameter_read);
         }
-    }
-    else
+    } else
 	printf("The number of programmer is not defined!\n");
-
-
 }
 
 void SaveProgContextChanges(void)
@@ -1441,14 +1307,14 @@ void SaveProgContextChanges(void)
 
 void do_Auto(void)
 {
-    if(do_loadFile()==0) return;
+    if (do_loadFile() == 0)
+        return;
     SaveProgContextChanges();
 
     printf("%s",msg_info_auto);
     Run(AUTO,g_uiDevNum);
 
-    if( Wait(msg_info_autoOK,msg_info_autofail) )
-    {
+    if (Wait(msg_info_autoOK, msg_info_autofail)) {
         printf("\nChecksum(whole file): %08X",g_uiFileChecksum);
         printf("\nChecksum(Written part of file): %08X\n",CRC32(pBufferforLoadedFile, DownloadAddrRange.end-DownloadAddrRange.start));
     }
@@ -1473,41 +1339,38 @@ void do_ReadSR(int Index)
         printf("SR unavailable\n");
     else
         printf("SR=0x%02X\n",cSR);
-
 }
 
 void do_RawInstructinos_2(int outDLen, char* para, int Index)
 {
-    unsigned char vOut[512];
-    unsigned char vIn[512]={0xFF,0xFF,0xFF,0};
-    int i=0;
-    char* pch;
+	unsigned char vOut[512];
+	unsigned char vIn[512]={0xFF,0xFF,0xFF,0};
+	int i=0;
+	char* pch;
 
- 	pch = strtok (para, " ,;-");
-	    while( pch!= NULL)
-	    {
+	pch = strtok (para, " ,;-");
+	while (pch != NULL) {
 		sscanf(pch,"%02hhx",&vOut[i]);
 		i++;
 		pch = strtok (NULL, " ,;-");
-	    }
+	}
 
 	   // if(strlen(g_parameter_raw_return)>0)
 	//	sscanf(g_parameter_raw_return,"%hhu",&Length);
 
-	    if(outDLen>0)
+	if(outDLen>0)
 		FlashCommand_SendCommand_OneOutOneIn(vOut,i,vIn,outDLen,Index);
-	    else
+	else
 		FlashCommand_SendCommand_OutOnlyInstruction(vOut,i,Index);
 
-	    if(outDLen>0)
-	    {
+    if (outDLen > 0) {
 		printf("issuing raw instruction \"%s\" returns %d bytes as required:\n",g_parameter_raw,outDLen);
 		for(i=0; i<outDLen; i++)
 		    printf("%02X ",vIn[i]);
 		printf("\n");
-	    }
+	}
 
-        do_ReadSR(Index);
+	do_ReadSR(Index);
 }
 
 void do_RawInstructions(int Index)
@@ -1524,47 +1387,37 @@ void do_RawInstructions(int Index)
     strcpy(parameter,g_parameter_raw);
     TurnONVcc(Index);
     pch[i] = strtok (parameter,"|");
-    while(pch[i]!=NULL)
-    {   i++;
+    while (pch[i] != NULL) {
+        i++;
     	pch[i] = strtok (NULL,"|");
-
     }
 
-   if(strlen(g_parameter_raw_return)>0)
-   {
+    if (strlen(g_parameter_raw_return) > 0) {
 	    sscanf(g_parameter_raw_return,"%hhu",&Length);
 	    strcpy(retrunParameter,g_parameter_raw_return);
 
 	    pchR = strtok (retrunParameter,"|");
-	    while(pchR!=NULL)
-	    {
+        while (pchR != NULL) {
 		sscanf(pchR,"%02hhx",&pchReturn[iReturn]);
 		iReturn++;
 	    	pchR = strtok (NULL,"|");
 	    }
-	    if(iReturn!=i)
-	    {
+        if (iReturn != i) {
 		printf("\nError: value of --raw-require-return failed. No return value!\n\n");
 		memset(pchReturn,0,30);
 	    }
     }
 
-    for(int j=0;j<i;j++)
-    {
+    for (int j = 0; j < i; j++) {
 	do_RawInstructinos_2(pchReturn[j], pch[j],Index);
     }
-
-
-
 }
 
 void RawInstructions(int Index)
 {
-    if(strlen(g_parameter_raw)>0)
-    {
+    if (strlen(g_parameter_raw) > 0) {
 	printf("\nDevice %d:\n",Index+1);
         do_RawInstructions(Index);
-
     }
 }
 
@@ -1593,11 +1446,9 @@ bool Program(void)
 
 bool Read(void)
 {
-    if(g_ucOperation&READ_TO_FILE)
-    {
+    if (g_ucOperation & READ_TO_FILE) {
         do_Read();
         do_DisplayOrSave();
-
     }
     return g_bStatus;
 }
@@ -1611,40 +1462,31 @@ bool Auto(void)
 
 bool Verify(void)
 {
-
     if(g_ucOperation & VERIFY)
         do_Verify();
     return g_bStatus;
 }
 
-
 bool CalChecksum(void)
 {
     int dev_cnt = get_usb_dev_cnt();
-    if(g_ucOperation & FSUM)
-    {
+    if (g_ucOperation & FSUM) {
         do_loadFile();
         printf("\nChecksum(file): 0x%08X\n",g_uiFileChecksum);
     }
-    if(g_ucOperation & CSUM)
-    {
+    if (g_ucOperation & CSUM) {
         do_Read();
-	if(g_uiDevNum==0)
-	{
-    	    for(int i=0;i<dev_cnt;i++)
-	    {
+        if (g_uiDevNum == 0) {
+            for (int i = 0; i < dev_cnt; i++) {
 		int dwUID=ReadUID(i);
- 		if( g_uiAddr==0 && g_uiLen ==0)
-       		{
+                if (g_uiAddr == 0 && g_uiLen == 0) {
 		    if((dwUID / 600000)==0)
 			printf("\nDevice %d (DP%06d):",i+1,dwUID);
 		    else
 			printf("\nDevice %d (SF%06d):",i+1,dwUID);
 
-		    printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData[i],Chip_Info.ChipSizeInByte));
-		}
-		else
-		{
+                    printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[i], Chip_Info.ChipSizeInByte));
+                } else {
 		    if((dwUID / 600000)==0)
 			printf("\nDevice %d (DP%06d):",i+1,ReadUID(i));
 		    else
@@ -1653,31 +1495,24 @@ bool CalChecksum(void)
 		    printf("Checksum(address starting from: 0x%X, 0x%zX bytes in total): %08X\n",g_uiAddr,g_uiLen,CRC32(pBufferForLastReadData[i], min(g_uiLen,Chip_Info.ChipSizeInByte)));
 		}
 	    }
-	}
-	else if(g_uiDevNum!=0)
-	{
+        } else if (g_uiDevNum != 0) {
 	    int dwUID=ReadUID(g_uiDevNum-1);
- 	    if( g_uiAddr==0 && g_uiLen ==0)
-       	    {
+            if (g_uiAddr == 0 && g_uiLen == 0) {
 		if((dwUID / 600000)==0)
 		    printf("\nDevice %d (DP%06d):",g_uiDevNum,ReadUID(g_uiDevNum-1));
 		else
 		    printf("\nDevice %d (SF%06d):",g_uiDevNum,ReadUID(g_uiDevNum-1));
 
-  	     	printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n",g_uiAddr,Chip_Info.ChipSizeInByte,CRC32(pBufferForLastReadData[g_uiDevNum-1],Chip_Info.ChipSizeInByte));
-	    }
-	    else
-	    {
+                printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[g_uiDevNum - 1], Chip_Info.ChipSizeInByte));
+            } else {
 		if((dwUID / 600000)==0)
 		    printf("\nDevice %d (DP%06d):",g_uiDevNum,ReadUID(g_uiDevNum-1));
 		else
 		    printf("\nDevice %d (SF%06d):",g_uiDevNum,ReadUID(g_uiDevNum-1));
 		printf("Checksum(address starting from: 0x%X, 0x%zX bytes in total): %08X\n",g_uiAddr,g_uiLen,CRC32(pBufferForLastReadData[g_uiDevNum-1], min(g_uiLen,Chip_Info.ChipSizeInByte)));
 	    }
-	}
-	else
+        } else
 	    printf("The number of programmer is not defined!\n");
-
     }
 
     return g_bStatus;
@@ -1685,40 +1520,35 @@ bool CalChecksum(void)
 
 bool Wait(const char* strOK,const char* strFail)
 {
-
     size_t timeOut =  g_uiTimeout;
     struct timeval tv,basetv,diff;
     int dev_cnt=get_usb_dev_cnt();
+    gettimeofday(&basetv, NULL);
     Sleep(100);   // wait till the new thread starts ....
-
-    gettimeofday (&basetv , NULL);
     printf("\n");
 
-    while( g_is_operation_on_going==true)
-    {
+    while (g_is_operation_on_going == true) {
+        for(volatile unsigned int dly = 100000; dly; dly--) __asm("nop");
         gettimeofday (&tv , NULL);
-        if(tv.tv_sec-basetv.tv_sec > timeOut)
-        {
+        if (tv.tv_sec - basetv.tv_sec > timeOut) {
             timersub(&tv, &basetv, &diff);
-            printf("%0.2f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+            printf("\r%0.2fs elapsed", diff.tv_sec + 0.000001 * diff.tv_usec);
             printf("%s",msg_err_timeout_abortion);
             g_is_operation_on_going=false;
             g_bStatus=false;
             return false;
         }
 
-       if(g_bDisplayTimer==true)
-       {
-            timersub(&tv, &basetv, &diff);
-            fprintf(stderr, "%0.1f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
+        if (g_bDisplayTimer == true) {
+                timersub(&tv, &basetv, &diff);
+            printf("\r%0.1fs elapsed", diff.tv_sec + 0.000001 * diff.tv_usec);
             Sleep(500);
       }
     }
   	printf("\n");
     if(g_uiDevNum==0)//mutiple
     {
-	for(int i=0;i<dev_cnt;i++)
-	{
+        for (int i = 0; i < dev_cnt; i++) {
 	    int dwUID=ReadUID(i);
 	    if((dwUID / 600000)==0)
 	  	printf("\nDevice %d (DP%06d):",i+1,dwUID);
@@ -1727,9 +1557,7 @@ bool Wait(const char* strOK,const char* strFail)
 	    printf("%s\n",g_is_operation_successful[i]? strOK : strFail);
 	    g_bStatus=g_is_operation_successful[i];
 	}
-     }
-     else if(g_uiDevNum<=dev_cnt)
-    {
+    } else if (g_uiDevNum <= dev_cnt) {
 	    int dwUID=ReadUID(g_uiDevNum-1);
 	    if((dwUID / 600000)==0)
 	  	printf("\nDevice %d (DP%06d):",g_uiDevNum,dwUID);
@@ -1747,18 +1575,15 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     long UniqueID = 0;
     int rc = 0;
 
-    for(int c=0;c<2;c++)
-    {
+    for (int c = 0; c < 2; c++) {
         if(c==1)
 	    SendFFSequence(Index);
         UniqueID = flash_ReadId(0x9f, 4, Index);
-        if (UniqueID != 0)
-        {
+        if (UniqueID != 0){
             rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all);
-            if(rc && (search_all == 0))
-            {
-                if(c==1)
-                    isSendFFsequence=true;
+            if(rc && (search_all == 0)){
+	        if(c==1)
+	          isSendFFsequence=true;
                 return rc;
             }
         }
@@ -1766,38 +1591,31 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
         rc = 0;
         UniqueID = flash_ReadId(0x9f, 3, Index);
 
-        if (UniqueID != 0)
-        {
+        if (UniqueID != 0){
             rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all);
-            if(rc && (search_all == 0))
-            {
-                if(c==1)
-                    isSendFFsequence=true;
+            if(rc && (search_all == 0)){
+	        if(c==1)
+	           isSendFFsequence=true;
                 return rc;
             }
         }
         UniqueID = 0;
         rc = 0;
         UniqueID = flash_ReadId(0x9f, 2, Index);
-        if(UniqueID != 0)
-        {
+        if(UniqueID != 0){
             rc = Dedi_Search_Chip_Db(0x9f, UniqueID, Chip_Info, search_all);
-            if(rc && (search_all == 0))
-            {
-                if(c==1)
-                    isSendFFsequence=true;
+            if(rc && (search_all == 0)){
+	        if(c==1)
+	          isSendFFsequence=true;
                 return rc;
             }
         }
-
     }
-
 
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0x15, 2, Index);
-    if (UniqueID != 0)
-    {
+    if (UniqueID != 0){
         rc = Dedi_Search_Chip_Db(0x15, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
@@ -1805,8 +1623,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0xab, 3, Index);
-    if (UniqueID != 0)
-    {
+    if (UniqueID != 0){
         rc = Dedi_Search_Chip_Db(0xab, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
@@ -1814,8 +1631,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0xab, 2, Index);
-    if (UniqueID != 0)
-    {
+    if (UniqueID != 0){
         rc = Dedi_Search_Chip_Db(0xab, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
@@ -1823,8 +1639,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0x90, 3, Index);
-    if (UniqueID != 0)
-    {
+    if (UniqueID != 0){
         rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
@@ -1832,8 +1647,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0x90, 2, Index);
-    if (UniqueID != 0)
-    {
+    if (UniqueID != 0){
         rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
             return rc;
@@ -1841,8 +1655,7 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     UniqueID = 0;
     rc = 0;
     UniqueID = flash_ReadId(0x90, 5, Index); // for 25LF020
-    if (UniqueID != 0)
-    {
+    if (UniqueID != 0){
 		UniqueID = UniqueID - 0xFFFF0000;
         rc = Dedi_Search_Chip_Db(0x90, UniqueID, Chip_Info, search_all);
         if(rc && (search_all == 0))
@@ -1850,5 +1663,3 @@ int FlashIdentifier(CHIP_INFO*Chip_Info, int search_all,int Index)
     }
     return rc;
 }
-
-#endif

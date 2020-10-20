@@ -1,12 +1,12 @@
 #pragma once
 
 #ifndef FLASHCOMMANDS
+#define FLASHCOMMANDS
 
-#define FLASHCOMMANDS  
+#include "Macro.h"
 
 #define FlashCommand_TRUE   1
 #define FlashCommand_FALSE  0
-
 
 int FlashCommand_TransceiveOut(unsigned char *v, int len,int has_result_in,int Index);
 

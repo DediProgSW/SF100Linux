@@ -1,12 +1,12 @@
 #pragma once
 
 #ifndef DEDI_USB_DRIVER
+#define DEDI_USB_DRIVER
 
 #include <stdio.h>
 #include <string.h>
 #include <usb.h>
-
-#define DEDI_USB_DRIVER                             1
+#include <stdbool.h>
 
 #define URB_FUNCTION_VENDOR_DEVICE                  0x0017
 #define URB_FUNCTION_VENDOR_INTERFACE               0x0018
@@ -44,9 +44,7 @@ typedef struct {
     unsigned long Length;
 } CNTRPIPE_RQ, *PCNTRPIPE_RQ;
 
-
 usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
-
 
 /* Set/clear LEDs on dediprog */
 #define PASS_ON		(0 << 0)
@@ -70,11 +68,8 @@ int BulkPipeRead(unsigned char *pBuff, unsigned int timeOut, int Index);
 int dediprog_set_spi_voltage(int millivolt, int Index);
 int dediprog_set_vpp_voltage(int volt,int Index);
 
-
 long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size ,int Index);
-
 
 int BulkPipeWrite(unsigned char *pBuff, unsigned int size,unsigned int timeOut, int Index);
 
 #endif //DEDI_USB_DRIVER
-
