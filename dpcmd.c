@@ -695,7 +695,7 @@ int main(int argc, char *argv[])
 
     if (iExitCode != EXCODE_PASS)
         goto Exit;
-	iExitCode=Handler();
+    iExitCode=Handler();
 
 Exit:
  	printf("\n\n");
@@ -1542,6 +1542,7 @@ bool Wait(const char* strOK,const char* strFail)
         if (g_bDisplayTimer == true) {
                 timersub(&tv, &basetv, &diff);
             printf("\r%0.1fs elapsed", diff.tv_sec + 0.000001 * diff.tv_usec);
+            Sleep(500);
       }
     }
   	printf("\n");
