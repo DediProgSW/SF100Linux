@@ -195,7 +195,15 @@ int GetFileFormatFromExt(const char* csPath)
 
     while(csPath[i] != '.')
     {
+        if (i==0) {
+            return BIN;
+        }
+
         i--;
+    }
+
+    if (length-i > 5) {
+        return BIN;
     }
 
     for(j=i;j<length; j++)
