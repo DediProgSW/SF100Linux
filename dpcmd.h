@@ -1,10 +1,11 @@
-
 #pragma once
 
 #ifndef _DPCMD_H
 #define _DPCMD_H
-enum ErrorCode
-{
+
+#include <stdbool.h>
+
+enum ErrorCode {
 	EXCODE_PASS,
 	EXCODE_FAIL_USB,
 	EXCODE_FAIL_ERASE,
@@ -19,25 +20,7 @@ enum ErrorCode
 	EXCODE_FAIL_OTHERS,
 };
 
-typedef enum
-{
-        BLANKCHECK_WHOLE_CHIP,
-        PROGRAM_CHIP,
-        ERASE_WHOLE_CHIP,
-        READ_WHOLE_CHIP,
-        READ_ANY_BY_PREFERENCE_CONFIGURATION,
-        VERIFY_CONTENT,
-        AUTO,
-
-        Download2Card,
-        //  07.03.2009
-        UPDATE_FIRMWARE,
-        AUTO_UPDATE_FIRMWARE,
-
-} OPERATION_TYPE;
-
- enum
-{   // value dedicated by the spec
+enum { // value dedicated by the spec
     STARTUP_APPLI_SF_1 = 0,
     STARTUP_APPLI_CARD = 1,
     STARTUP_APPLI_SF_2 = 2,
@@ -47,8 +30,7 @@ typedef enum
     STARTUP_PREVIOUS = 0xFF
 } ;
 
-enum
-{
+enum {
     clk_24M = 0x00,
     clk_8M = 0x01,
     clk_12M = 0x02,
