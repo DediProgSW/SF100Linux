@@ -76,7 +76,7 @@ void PrepareProgramParameters(int Index);
 bool ValidateProgramParameters(int Index);
 bool IdentifyChipBeforeOperation(int Index);
 
-inline int Sleep(unsigned int mSec)
+static inline int Sleep(unsigned int mSec)
 {
     return usleep(mSec * 1000);
 }

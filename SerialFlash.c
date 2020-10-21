@@ -2019,7 +2019,7 @@ int SerialFlash_DieErase(int Index)
 {
     if (SerialFlash_protectBlock(false, Index) == SerialFlash_FALSE)
         return false;
-	SerialFlash_Enable4ByteAddrMode(true, Index);
+    SerialFlash_Enable4ByteAddrMode(true, Index);
     //	printf("Die erase!\n");
 
 	// send request
