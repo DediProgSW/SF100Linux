@@ -5,7 +5,7 @@
 
 PROGRAM = dpcmd
 CC      = gcc
-CFLAGS  = -O2 -Wall -lpthread -std=gnu99
+CFLAGS  = -O2 -Wall -lpthread -std=gnu99 -fcommon
 PREFIX ?= /usr/local
 
 UNAME_OS := $(shell which lsb_release 2>/dev/null && lsb_release -si)
