@@ -78,8 +78,5 @@ bool Wait(const char* strOK,const char* strFail);
 void ExitProgram(void);
 int FirmwareUpdate();
 void sin_handler(int sig);
-int ctrlCCount;
-long int tvSec;
-long int tvUsec;
 
 #endif

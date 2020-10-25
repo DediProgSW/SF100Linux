@@ -17,7 +17,10 @@ extern bool isSendFFsequence;
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
 
+static int dev_index;
+static usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
 static usb_dev_handle *dediprog_handle[MAX_Dev_Index];
+
 
 bool Is_NewUSBCommand(int Index)
 {

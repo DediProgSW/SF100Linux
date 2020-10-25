@@ -44,8 +44,6 @@ typedef struct {
     unsigned long Length;
 } CNTRPIPE_RQ, *PCNTRPIPE_RQ;
 
-usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
-
 /* Set/clear LEDs on dediprog */
 #define PASS_ON		(0 << 0)
 #define PASS_OFF	(1 << 0)
@@ -54,7 +52,6 @@ usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
 #define ERROR_ON	(0 << 2)
 #define ERROR_OFF	(1 << 2)
 
-int dev_index;
 int usb_driver_init(void); 
 int get_usb_dev_cnt(void);
 int usb_driver_release(void);
