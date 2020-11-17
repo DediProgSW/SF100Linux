@@ -69,6 +69,11 @@ char* g_parameter_vcc="NO";
 char* g_parameter_blink="0";
 char* g_parameter_fw="\0";
 char g_LogPath[512]={0};
+/* to address by BUS:DEV; we'll parse the instructions from either the
+ * environment or command line options and
+ * usbdriver.c:FindUSBDevices() will acknowledge these settings */
+extern unsigned g_usb_devnum;
+extern unsigned g_usb_busnum;
 
 unsigned long g_ucOperation;
 struct memory_id g_ChipID;
@@ -121,7 +126,6 @@ static const char*    msg_info_firmwareupdate   = "\nUpdating firmware, please w
 static const char*    msg_info_firmwareupdateOK    = "\nUpdate firmware OK";
 static const char*    msg_info_firmwareupdatefail   = "\nError: Update firmware Failed";
 
-
 char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:E:";
 
 struct option long_options[] = {
@@ -161,6 +165,8 @@ struct option long_options[] = {
      { "set-io4",               1,   NULL,    '4'     },
      { "update-fw",               1,   NULL,    'U'     },
      { "display-delta",         1,   NULL,    'E'     },
+     { "devnum",                1,   NULL,    'G'     },
+     { "busnum",                1,   NULL,    'H'     },
      {      0,                  0,     0,     0},
 };
 
@@ -473,6 +479,8 @@ int main(int argc, char *argv[])
 	int iExitCode=EXCODE_PASS;
 	bool bDetect=false;
 	bool bDevice=false;
+	unsigned long r;
+	char *env;
 
     printf("\nDpCmd Linux 1.11.2.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
@@ -483,6 +491,42 @@ int main(int argc, char *argv[])
 		cli_classic_usage(false);
 		return 0;
 	}
+
+	/*
+	 * Obtain the (optional) bus number and device number to
+	 * filter by from the environment.
+	 *
+	 * Why? Because the OpenUSB() initialization happens *before*
+	 * the command line options are parsed (where we'd take
+	 * --busnum and --devnum) and we want to enable a path to
+	 * disallow the tool from touching any device which is not the
+	 * one we want to.
+	 *
+	 * In the long term, rearranging the code would allow getting
+	 * rid of this hack.
+	 */
+	env = getenv("DPCMD_USB_DEVNUM");
+	if (env) {
+		r = strtoul(env, NULL, 10);
+		if (r == ULONG_MAX || r >= 256) {
+			fprintf(stderr, "E: invalid USB device number in"
+				" DPCMD_USB_DEVNUM; expected 1-255\n");
+			return 1;
+		}
+		g_usb_devnum = (unsigned char) r;
+	}
+
+	env = getenv("DPCMD_USB_BUSNUM");
+	if (env) {
+		r = strtoul(env, NULL, 10);
+		if (r == ULONG_MAX || r >= 256) {
+			fprintf(stderr, "E: invalid USB bus number in"
+				" DPCMD_USB_BUSNUM\n");
+			return 1;
+		}
+		g_usb_busnum = (unsigned char) r;
+	}
+
 
 	if(OpenUSB()==0)
 		iExitCode=EXCODE_FAIL_USB;
@@ -646,6 +690,24 @@ int main(int argc, char *argv[])
 						g_tv_display_delta_s);
 					return 1;
 				}		
+				break;
+                        case 'G':
+				r = strtoul(optarg, NULL, 10);
+				if (r == ULONG_MAX || r >= 256) {
+					fprintf(stderr, "E: invalid device"
+						" number; expected 1-255\n");
+					return 1;
+				}
+				g_usb_devnum = (unsigned char) r;
+				break;
+                        case 'H':
+				r = strtoul(optarg, NULL, 10);
+				if (r == ULONG_MAX) {
+					fprintf(stderr, "E: invalid bus"
+						" number\n");
+					return 1;
+				}
+				g_usb_busnum = (unsigned) r;
 				break;
 			default:
 				break;
@@ -909,6 +971,14 @@ void cli_classic_usage(bool IsShowExample)
 			"                                                1, High(Default)\n"
 	       "    -e|--display-delta SECONDS (=0.5)       wait this many seconds\n"
 	       "                                            before refreshing the screen\n"
+	       "\n"
+	       "Environment variables:\n"
+	       " - DPCMD_USB_BUSNUM  Number of USB bus where device is\n"
+	       " - DPCMD_USB_DEVNUM  Number of device in USB bus\n"
+	       "\n"
+	       "Specify DPCMD_USB_BUSNUM and DPCMD_USB_DEVNUM to ensure\n"
+	       "the tool touches only said device. Numbers can be found\n"
+	       "with tools such as lsusb and others.\n"
 	       "\n\n\n");
 }
 

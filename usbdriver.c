@@ -21,6 +21,13 @@ static int dev_index;
 static usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
 static usb_dev_handle *dediprog_handle[MAX_Dev_Index];
 
+/*
+ * Filter based on a bus:device combo, to make sure we *only* touch
+ * that device
+ */
+unsigned g_usb_devnum = -1;
+unsigned g_usb_busnum = -1;
+
 
 bool Is_NewUSBCommand(int Index)
 {
@@ -93,13 +100,29 @@ static int FindUSBDevice(void)
    
     for (bus = usb_get_busses(); bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
-            if ((dev->descriptor.idVendor == vid) && (dev->descriptor.idProduct == pid)) {
-               usb_device_entry[dev_index].usb_device_handler = *dev;
-               usb_device_entry[dev_index].valid = 1; 
-		    dev_index++;  
-            }
-       }
-     }  
+		if (dev->descriptor.idVendor != vid || dev->descriptor.idProduct != pid)
+			continue;
+		if (g_usb_busnum != -1 && dev->bus->location != g_usb_busnum) {
+			fprintf(stderr, "W: device #%d %d:%d skipped,"
+				" not at bus %d\n",
+				dev_index, dev->bus->location, dev->devnum,
+				g_usb_busnum);
+			continue;
+		}
+		if (g_usb_devnum != -1 && dev->devnum != g_usb_devnum) {
+			fprintf(stderr, "W: device #%d %d:%d skipped,"
+				" not device number %d\n",
+				dev_index, dev->bus->location, dev->devnum,
+				g_usb_devnum);
+			continue;
+		}
+		fprintf(stderr, "I: device #%d %d:%d selected\n",
+			dev_index, dev->bus->location, dev->devnum);
+		usb_device_entry[dev_index].usb_device_handler = *dev;
+		usb_device_entry[dev_index].valid = 1;
+		dev_index++;
+	}
+    }
    
     printf(" \n"); 
     return dev_index;
