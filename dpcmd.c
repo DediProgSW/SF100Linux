@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/time.h>

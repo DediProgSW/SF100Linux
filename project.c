@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 #include <pthread.h>

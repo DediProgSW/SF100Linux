@@ -4,6 +4,7 @@
 #include "project.h"
 #include "usbdriver.h"
 #include <sys/stat.h>
+#include <stdlib.h>
 
 extern int m_isCanceled;
 extern int m_bProtectAfterWritenErase;
