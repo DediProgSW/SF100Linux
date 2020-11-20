@@ -4,13 +4,10 @@
 #define SERIALFLASHS
 
 #include "Macro.h"
+#include <inttypes.h>
 
 #define SerialFlash_FALSE   -1
 #define SerialFlash_TRUE    1
-
-#ifdef _NON_UBUNTU
-typedef unsigned long uintptr_t;
-#endif
 
     enum    //list of all chip-specific instruction, for ST serial flash
     {

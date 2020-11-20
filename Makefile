@@ -8,11 +8,7 @@ CC      = gcc
 CFLAGS  = -O2 -Wall -lpthread -std=gnu99
 PREFIX ?= /usr/local
 
-UNAME_OS := $(shell which lsb_release 2>/dev/null && lsb_release -si)
 
-ifneq ($(UNAME_OS),Ubuntu)
-     CFLAGS+=-D_NON_UBUNTU
-endif
 
 FEATURE_LIBS += -lusb -lpthread
 PROGRAMMER_OBJS += dpcmd.o usbdriver.o FlashCommand.o SerialFlash.o parse.o board.o project.o IntelHexFile.o MotorolaFile.o
