@@ -16,13 +16,30 @@ LDFLAGS ?=
 LDFLAGS += -lpthread
 LDFLAGS += $(shell $(PKG_CONFIG) --libs libusb-1.0)
 
-PROGRAMMER_OBJS += dpcmd.o usbdriver.o FlashCommand.o SerialFlash.o parse.o board.o project.o IntelHexFile.o MotorolaFile.o
+DEPDIR := .deps
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
-$(PROGRAM): $(PROGRAMMER_OBJS) *.h Makefile
-	$(CC) $(CFLAGS) -o $(PROGRAM) $(PROGRAMMER_OBJS) $(LDFLAGS)
+SRCS = dpcmd.c usbdriver.c FlashCommand.c SerialFlash.c parse.c board.c project.c IntelHexFile.c MotorolaFile.c
+
+PROGRAMMER_OBJS := $(SRCS:%.c=%.o)
+
+$(PROGRAM): $(PROGRAMMER_OBJS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
+
+%.o : %.c
+%.o : %.c $(DEPDIR)/%.d | $(DEPDIR)
+	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+$(DEPDIR): ; @mkdir -p $@
+
+DEPFILES := $(SRCS:%.c=$(DEPDIR)/%.d)
+$(DEPFILES):
+
+include $(wildcard $(DEPFILES))
 
 clean:
-	@rm -vf $(PROGRAM) $(PROGRAM).exe *.o *.d
+	rm -vf $(PROGRAM) $(PROGRAM).exe *.o
+	rm -rvf $(DEPDIR)
 
 install: $(PROGRAM)
 	@[ $(shell id -u) -eq 0 ] || (echo "Error: install needs root privileges" && false)
