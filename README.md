@@ -3,7 +3,7 @@ Linux software for Dediprog SF100 and SF600 SPI flash programmers
 
 ## Building
 To compile the project, first install required dependencies:
-  - libusb 0.1 (libusb-compat)
+  - libusb-1.0
 
 Change to the directory where the sources are located and build using make:
 ```bash
