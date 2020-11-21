@@ -32,15 +32,15 @@ SRCS = dpcmd.c usbdriver.c FlashCommand.c SerialFlash.c parse.c board.c project.
 PROGRAMMER_OBJS := $(SRCS:%.c=%.o)
 
 all: $(PROGRAM)
-	printf "All done.\n"
+	@printf "All done.\n"
 
 $(PROGRAM): $(PROGRAMMER_OBJS)
-	printf "  LD  $@\n"
+	@printf "  LD  $@\n"
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o : %.c
 %.o : %.c $(DEPDIR)/%.d | $(DEPDIR)
-	printf "  CC  $@\n"
+	@printf "  CC  $@\n"
 	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(DEPDIR): ; @mkdir -p $@
