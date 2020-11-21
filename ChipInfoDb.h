@@ -5,15 +5,15 @@
 
 #include "Macro.h"
 
-#define NUMBER_OF_SUPPORTING_CHIPS  3
+#define NUMBER_OF_SUPPORTING_CHIPS 3
 
 struct m_code_api {
-	int (*m_code_api_doRDSR)(unsigned char *cSR, int Index);
-	int (*m_code_api_doWRSR)(unsigned char cSR,int Index);
-	int (*m_code_api_doChipErase)(int Index);
-	int (*m_code_api_doProgram)(void);
-	int (*m_code_api_doRead)(char *name);
-	int (*m_code_api_doSegmentErase)(void);
+    int (*m_code_api_doRDSR)(unsigned char* cSR, int Index);
+    int (*m_code_api_doWRSR)(unsigned char cSR, int Index);
+    int (*m_code_api_doChipErase)(int Index);
+    int (*m_code_api_doProgram)(void);
+    int (*m_code_api_doRead)(char* name);
+    int (*m_code_api_doSegmentErase)(void);
 };
 
 bool Dedi_List_AllChip(void);

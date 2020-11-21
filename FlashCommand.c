@@ -1,7 +1,7 @@
 
 ///     CFlashCommand Implementations
-#include "Macro.h"
 #include "FlashCommand.h"
+#include "Macro.h"
 #include "project.h"
 #include "usbdriver.h"
 #define SerialFlash_FALSE -1

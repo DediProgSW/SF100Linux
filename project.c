@@ -1,15 +1,15 @@
+#include "project.h"
 #include "IntelHexFile.h"
 #include "MotorolaFile.h"
 #include "SerialFlash.h"
 #include "board.h"
 #include "dpcmd.h"
-#include "project.h"
 #include "usbdriver.h"
 #include <ctype.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <pthread.h>
 #define min(a, b) (a > b ? b : a)
@@ -421,18 +421,18 @@ bool threadBlankCheck(int Index)
 
 bool threadEraseWholeChip(int Index)
 {
-    	bool result = false;
+    bool result = false;
 
-    	//	power::CAutoVccPower autopowerVcc(m_usb, m_context.power.vcc,Index);
-    	//	power::CAutoVppPower autopowerVpp(m_usb, SupportedVpp(),Index);
-    	if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL || strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
-        	result = SerialFlash_DieErase(Index);
-    	else
-		result = SerialFlash_chipErase(Index);
+    //	power::CAutoVccPower autopowerVcc(m_usb, m_context.power.vcc,Index);
+    //	power::CAutoVppPower autopowerVpp(m_usb, SupportedVpp(),Index);
+    if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL || strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL)
+        result = SerialFlash_DieErase(Index);
+    else
+        result = SerialFlash_chipErase(Index);
 
-    	// Log(result ? L"A whole chip erased" : L"Error: Failed to erase a whole chip");
+        // Log(result ? L"A whole chip erased" : L"Error: Failed to erase a whole chip");
 
-	// m_bOperationResult[Index] = result ? 1 : RES_ERASE;
+        // m_bOperationResult[Index] = result ? 1 : RES_ERASE;
 #if 0
 	if( !bAuto[Index] ) //not batch
 	{ 
@@ -815,7 +815,8 @@ bool RangeUpdateThruChipErase(int Index)
     DownloadAddrRange.length = DownloadAddrRange.end - DownloadAddrRange.start;
     SetIOMode(false, Index);
 
-    if (!threadReadChip(Index)) return false;
+    if (!threadReadChip(Index))
+        return false;
 
     memcpy(vc, pBufferForLastReadData, Chip_Info.ChipSizeInByte);
 
@@ -826,7 +827,8 @@ bool RangeUpdateThruChipErase(int Index)
         }
     }
     if (boIsBlank == false) {
-        if (threadEraseWholeChip(Index) == false) return false;
+        if (threadEraseWholeChip(Index) == false)
+            return false;
 
         if (strstr(Chip_Info.Class, SUPPORT_MACRONIX_MX25Lxxx) != NULL || strstr(Chip_Info.Class, SUPPORT_ATMEL_45DBxxxD) != NULL) {
             TurnOFFVcc(Index);
@@ -867,14 +869,16 @@ bool threadPredefinedBatchSequences(int Index)
 {
     bool result = true;
 
-    if (g_ulFileSize == 0) result = false;
+    if (g_ulFileSize == 0)
+        result = false;
 
     //    size_t option=2;
     //    bool bVerifyAfterCompletion;
     //  07.11.2009
     //    bool bIdentifyBeforeOperation;
 
-    if (result && (!ValidateProgramParameters(Index))) result = false;
+    if (result && (!ValidateProgramParameters(Index)))
+        result = false;
 #if 0
     if(strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx)!= NULL
 		||strstr(Chip_Info.Class,SUPPORT_MACRONIX_MX25Lxxx_Large) != NULL
@@ -1023,7 +1027,8 @@ void SetIOMode(bool isProg, int Index)
     m_boEnReadQuadIO = 0;
     m_boEnWriteQuadIO = 0;
 
-    if (g_bIsSF600[Index] == false) return;
+    if (g_bIsSF600[Index] == false)
+        return;
 
     SetIOModeToSF600(IOValue, Index);
     return;
@@ -1173,7 +1178,8 @@ CHIP_INFO GetFirstDetectionMatch(int Index)
         Loop = 1;
 
     for (i = 0; i < Loop; i++) {
-        if (Found == 1) break;
+        if (Found == 1)
+            break;
         if (Loop == 1)
             g_Vcc = vcc3_5V;
         else
