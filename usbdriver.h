@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <usb.h>
+#include <libusb.h>
 #include <stdbool.h>
 
 #define URB_FUNCTION_VENDOR_DEVICE                  0x0017
@@ -31,7 +31,7 @@
 bool Is_usbworking(int Index);
 
 typedef struct usb_device_entry {
-    struct usb_device usb_device_handler;
+    libusb_device *usb_device;
     int valid;
 }usb_device_entry_t;
 

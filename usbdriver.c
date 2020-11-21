@@ -2,7 +2,7 @@
 #include "FlashCommand.h"
 #include "project.h"
 #include <string.h>
-#include <usb.h>
+#include <libusb.h>
 
 unsigned int   m_nbDeviceDetected = 0;
 unsigned char   DevIndex = 0;
@@ -19,8 +19,9 @@ extern bool isSendFFsequence;
 
 static int dev_index;
 static usb_device_entry_t   usb_device_entry[MAX_Dev_Index];
-static usb_dev_handle *dediprog_handle[MAX_Dev_Index];
+static libusb_device_handle *dediprog_handle[MAX_Dev_Index];
 
+static libusb_context *ctx = NULL;
 
 bool Is_NewUSBCommand(int Index)
 {
@@ -32,9 +33,17 @@ extern unsigned char GetFPGAVersion(int Index);
 
 void usb_dev_init(void)
 {
-	usb_init();
-	usb_find_busses();
-	usb_find_devices();
+	int r;
+	r = libusb_init(&ctx);
+	if (r < 0) {
+		printf("initialization failed!");
+		return;
+	}
+#if LIBUSB_API_VERSION < 0x01000106
+        libusb_set_debug(ctx, LIBUSB_LOG_LEVEL_INFO);
+#else
+        libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_INFO);
+#endif
 }
 
 void usb_db_init(void)
@@ -85,22 +94,27 @@ int get_usb_dev_cnt(void)
 /* Might be useful for other USB devices as well. static for now. */
 static int FindUSBDevice(void)
 {
-    struct usb_bus *bus;
-    struct usb_device *dev; 
     unsigned int vid = 0x0483;
     unsigned int pid = 0xdada;
     usb_db_init(); 
    
-    for (bus = usb_get_busses(); bus; bus = bus->next) {
-        for (dev = bus->devices; dev; dev = dev->next) {
-            if ((dev->descriptor.idVendor == vid) && (dev->descriptor.idProduct == pid)) {
-               usb_device_entry[dev_index].usb_device_handler = *dev;
-               usb_device_entry[dev_index].valid = 1; 
-		    dev_index++;  
-            }
-       }
-     }  
-   
+    ssize_t count;
+    libusb_device **devs;
+    count = libusb_get_device_list(ctx, &devs);
+    for (size_t idx = 0; idx < count; ++idx) {
+        libusb_device *device = devs[idx];
+        struct libusb_device_descriptor desc = {0};
+        int rc = libusb_get_device_descriptor(device, &desc);
+        if (rc < 0) {
+            printf("Error getting device descriptor\n");
+            break;
+        }
+	if (desc.idVendor == vid && desc.idProduct == pid) {
+            usb_device_entry[dev_index].usb_device = device;
+            usb_device_entry[dev_index].valid = 1;
+            dev_index++;
+        }
+    }
     printf(" \n"); 
     return dev_index;
 }
@@ -128,7 +142,7 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
         requesttype |= 0x43;
 
     if (dediprog_handle[Index] ) {
-        ret = usb_control_msg(dediprog_handle[Index], requesttype, rq->Request, rq->Value, rq->Index, (char*)buf, buf_size, DEFAULT_TIMEOUT);
+        ret = libusb_control_transfer(dediprog_handle[Index], requesttype, rq->Request, rq->Value, rq->Index, buf, buf_size, DEFAULT_TIMEOUT);
     } else {
         printf("no device");
     }
@@ -145,7 +159,7 @@ int OutCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size 
         printf("buf[0]=%X\n",buf[0]);
         printf("g_bIsSF600=%d\n",g_bIsSF600);
     #endif
-        printf("Error: %s\n", usb_strerror());
+        printf("Error: %s\n", libusb_strerror(ret));
         return -1;
     }
     return ret;
@@ -178,7 +192,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
         requesttype |= 0x43;
 
     if (dediprog_handle[Index] ) {
-        ret = usb_control_msg(dediprog_handle[Index], requesttype, rq->Request, rq->Value, rq->Index, (char*)buf, buf_size, DEFAULT_TIMEOUT);
+        ret = libusb_control_transfer(dediprog_handle[Index], requesttype, rq->Request, rq->Value, rq->Index, buf, buf_size, DEFAULT_TIMEOUT);
     } else {
         printf("no device");
     }
@@ -257,12 +271,12 @@ int dediprog_get_chipid(int Index)
 //long CUSB::BulkPipeRead(PBYTE pBuff, UINT sz, UINT timeOut) const
 int BulkPipeRead(unsigned char *pBuff, unsigned int timeOut, int Index)
 {
-    int ret;
+    int ret, actual_length;
     if (Index == -1)
         Index = DevIndex;
 
     unsigned long cnRead = 512;
-    ret = usb_bulk_read(dediprog_handle[Index], 0x82, (char*)pBuff, cnRead, DEFAULT_TIMEOUT);
+    ret = libusb_bulk_transfer(dediprog_handle[Index], 2 | LIBUSB_ENDPOINT_IN, pBuff,cnRead, &actual_length, DEFAULT_TIMEOUT);
     cnRead = ret;
     return cnRead ;
 }
@@ -270,9 +284,9 @@ int BulkPipeRead(unsigned char *pBuff, unsigned int timeOut, int Index)
 //long CUSB::BulkPipeWrite(PBYTE pBuff, UINT sz, UINT timeOut) const
 int BulkPipeWrite(unsigned char *pBuff, unsigned int size,unsigned int timeOut, int Index)
 {
-    int ret;
+    int ret, actual_length;
     int nWrite = 512 ;
-    char pData[512];
+    unsigned char pData[512];
 
     memset(pData, 0xFF, 512);   // fill buffer with 0xFF
 
@@ -281,7 +295,7 @@ int BulkPipeWrite(unsigned char *pBuff, unsigned int size,unsigned int timeOut, 
     if (Index == -1)
         Index = DevIndex;
 
-    ret = usb_bulk_write(dediprog_handle[Index], (g_bIsSF600[Index]==true)? 0x01:0x02,pData, nWrite, DEFAULT_TIMEOUT);
+    ret = libusb_bulk_transfer(dediprog_handle[Index], (g_bIsSF600[Index]==true)? 0x01:0x02,pData, nWrite, &actual_length, DEFAULT_TIMEOUT);
     nWrite = ret;
     return nWrite;
 }
@@ -437,18 +451,18 @@ int usb_driver_init(void)
 		return 0;
 	}
 	 
-	dediprog_handle[i] = usb_open(&usb_device_entry[i].usb_device_handler);
+	ret = libusb_open(usb_device_entry[i].usb_device, &dediprog_handle[i]);
             if (dediprog_handle[i] == NULL) {
              printf("Error: Programmers are not connected.\n");
 		return 0;
 	 } 
-	 ret = usb_set_configuration(dediprog_handle[i], 1); 
+	 ret = libusb_set_configuration(dediprog_handle[i], 1);
  
             if (ret) {
 		printf("Error: Programmers USB set configuration: 0x%x.\n",ret);
 		return 0;
 	}
-	ret = usb_claim_interface(dediprog_handle[i], 0);
+	ret = libusb_claim_interface(dediprog_handle[i], 0);
             if (ret) {
 		printf("Error: Programmers USB claim interface: 0x%x.\n",ret);
 		return 0;
@@ -466,19 +480,19 @@ int usb_driver_init(void)
 		return 0;
 	}
 	 
-	dediprog_handle[g_uiDevNum-1] = usb_open(&usb_device_entry[g_uiDevNum-1].usb_device_handler);
+	ret = libusb_open(usb_device_entry[g_uiDevNum-1].usb_device, &dediprog_handle[g_uiDevNum-1]);
         if (dediprog_handle[g_uiDevNum - 1] == NULL) {
              printf("Error: Programmers are not connected.\n");
 		return 0;
 	 }
         printf("dediprog_handle[%d]=%p\n", g_uiDevNum - 1, dediprog_handle[g_uiDevNum - 1]);
-	 ret = usb_set_configuration(dediprog_handle[g_uiDevNum-1], 1);
+	 ret = libusb_set_configuration(dediprog_handle[g_uiDevNum-1], 1);
 	
         if (ret) {
 		printf("Error: Programmers USB set configuration: 0x%x.\n",ret);
 		return 0;
 	}
-	ret = usb_claim_interface(dediprog_handle[g_uiDevNum-1], 0);
+	ret = libusb_claim_interface(dediprog_handle[g_uiDevNum-1], 0);
         if (ret) {
 		printf("Error: Programmers USB claim interface: 0x%x.\n",ret);
 		return 0;
@@ -496,10 +510,10 @@ int usb_driver_init(void)
 
 int usb_driver_release(void)
 {
-    for (int i = 0; i < dev_index; i++) {
+	for (int i = 0; i < dev_index; i++) {
 		if(dediprog_handle[i]==NULL) return 0;
-    		usb_release_interface(dediprog_handle[i], 0);
-    		usb_close (dediprog_handle[i]);
+		libusb_release_interface(dediprog_handle[i], 0);
+		libusb_close (dediprog_handle[i]);
 	}
     	return 0;
 }
@@ -523,8 +537,8 @@ int usb_driver_test(void)
     device_cnt = FindUSBDevice();
 //    printf("\ndevice_cnt =%d\n", device_cnt);
     dediprog_handle = usb_open(&usb_device_entry[device_cnt-1].usb_device_handler);
-    ret = usb_set_configuration(dediprog_handle, 1);
-    ret = usb_claim_interface(dediprog_handle, 0);
+    ret = libusb_set_configuration(dediprog_handle, 1);
+    ret = libusb_claim_interface(dediprog_handle, 0);
     dediprog_start_appli(0);
 
 	dediprog_set_spi_voltage(3300);

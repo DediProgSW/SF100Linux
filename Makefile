@@ -5,16 +5,21 @@
 
 PROGRAM = dpcmd
 CC      = gcc
-CFLAGS  = -O2 -Wall -lpthread -std=gnu99
 PREFIX ?= /usr/local
 
+PKG_CONFIG ?= pkg-config
 
+CFLAGS ?= -O2 -Wall -std=gnu99
+CFLAGS += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
 
-FEATURE_LIBS += -lusb -lpthread
+LDFLAGS ?=
+LDFLAGS += -lpthread
+LDFLAGS += $(shell $(PKG_CONFIG) --libs libusb-1.0)
+
 PROGRAMMER_OBJS += dpcmd.o usbdriver.o FlashCommand.o SerialFlash.o parse.o board.o project.o IntelHexFile.o MotorolaFile.o
 
 $(PROGRAM): $(PROGRAMMER_OBJS) *.h Makefile
-	$(CC) $(CFLAGS) -o $(PROGRAM) $(PROGRAMMER_OBJS) $(FEATURE_LIBS)
+	$(CC) $(CFLAGS) -o $(PROGRAM) $(PROGRAMMER_OBJS) $(LDFLAGS)
 
 clean:
 	@rm -vf $(PROGRAM) $(PROGRAM).exe *.o *.d
