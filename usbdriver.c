@@ -21,7 +21,14 @@ static int dev_index;
 static usb_device_entry_t usb_device_entry[MAX_Dev_Index];
 static libusb_device_handle* dediprog_handle[MAX_Dev_Index];
 
+
 static libusb_context* ctx = NULL;
+/*
+ * Filter based on a bus:device combo, to make sure we *only* touch
+ * that device
+ */
+unsigned g_usb_devnum = -1;
+unsigned g_usb_busnum = -1;
 
 bool Is_NewUSBCommand(int Index)
 {
@@ -97,6 +104,7 @@ static int FindUSBDevice(void)
 {
     unsigned int vid = 0x0483;
     unsigned int pid = 0xdada;
+
     usb_db_init();
 
     ssize_t count;
@@ -117,6 +125,7 @@ static int FindUSBDevice(void)
         }
     }
     printf(" \n");
+
     return dev_index;
 }
 
