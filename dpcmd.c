@@ -93,17 +93,18 @@ bool g_bDisplayTimer = true;
 bool isSendFFsequence = false;
 /* only print timing progress info if this many seconds ellapsed
  * before the last time we did */
-static float g_tv_display_delta_s = 0.5;
+//static float g_tv_display_delta_s = 0.5;
 
 //char* const short_options = "?Ldber:p:u:sf:I:R:a:l:vx:T:S:N:B:D:F:V:t:g:c:POik:";
-
-static const char* msg_err_communication = "Error: USB communication error or configuration file missing.\n";
-//static const char*    msg_err_openfile      = "Error: Failed to open file.\n";
-static const char* msg_err_identifychip = "Error: chip not identified.\n";
-static const char* msg_err_timeout_abortion = "\nError: Abort abnormally due to timeout.\n*** You might need to un-plug the USB device to recover the state. ***\n";
+//static const char*    msg_info_unknownoption= "\nError: illegal option.";
 //static const char*    msg_err_lengthoverflow_abortion= "\nError: Length parameter exceeding file size, operation aborted\n";
 //static const char*    msg_err_addroverflow_abortion  = "\nError: Exceeding chip size, operation aborted\n";
 //static const char*    msg_warning_optionignore_al  = "\nWarning: either --addr or --length cannot be used with --auto, will be ignored\n";
+//static const char*    msg_err_openfile      = "Error: Failed to open file.\n";
+
+static const char* msg_err_communication = "Error: USB communication error or configuration file missing.\n";
+static const char* msg_err_identifychip = "Error: chip not identified.\n";
+static const char* msg_err_timeout_abortion = "\nError: Abort abnormally due to timeout.\n*** You might need to un-plug the USB device to recover the state. ***\n";
 static const char* msg_info_loading = "\nLoading file, please wait ...";
 static const char* msg_info_checking = "\nChecking, please wait ...";
 static const char* msg_info_erasing = "\nErasing, please wait ...";
@@ -111,8 +112,6 @@ static const char* msg_info_programming = "\nProgramming, please wait ...";
 static const char* msg_info_reading = "\nReading, please wait ...";
 static const char* msg_info_auto = "\nAuto Sequences, please wait ...";
 static const char* msg_info_verifying = "\nVerifying, please wait ...";
-//static const char*    msg_info_unknownoption= "\nError: illegal option.";
-
 static const char* msg_info_chipblank = "\nThe chip is blank";
 static const char* msg_info_chipnotblank = "\nThe chip is NOT blank";
 static const char* msg_info_eraseOK = "\nErase OK";
@@ -128,7 +127,6 @@ static const char* msg_info_verifyfail = "\nError: Verify Failed";
 static const char* msg_info_firmwareupdate = "\nUpdating firmware, please wait...";
 static const char* msg_info_firmwareupdateOK = "\nUpdate firmware OK";
 static const char* msg_info_firmwareupdatefail = "\nError: Update firmware Failed";
-
 
 char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:E:";
 
@@ -169,7 +167,7 @@ struct option long_options[] = {
     { "set-io1", 1, NULL, '1' },
     { "set-io4", 1, NULL, '4' },
     { "update-fw", 1, NULL, 'U' },
-    { "display-delta", 1, NULL, 'E' },
+//    { "display-delta", 1, NULL, 'E' },
     { "devnum", 1,   NULL,    'G'     },
     { "busnum", 1,   NULL,    'H'     },
     { 0, 0, 0, 0 },
@@ -489,7 +487,7 @@ int main(int argc, char* argv[])
     unsigned long r;
 	  char *env;
 
-    printf("\nDpCmd Linux 1.11.2.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.11.3.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -499,44 +497,44 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-	/*
-	 * Obtain the (optional) bus number and device number to
-	 * filter by from the environment.
-	 *
-	 * Why? Because the OpenUSB() initialization happens *before*
-	 * the command line options are parsed (where we'd take
-	 * --busnum and --devnum) and we want to enable a path to
-	 * disallow the tool from touching any device which is not the
-	 * one we want to.
-	 *
-	 * In the long term, rearranging the code would allow getting
-	 * rid of this hack.
-	 */
-	env = getenv("DPCMD_USB_DEVNUM");
-	if (env) {
-		r = strtoul(env, NULL, 10);
-		if (r == ULONG_MAX || r >= 256) {
-			fprintf(stderr, "E: invalid USB device number in"
-				" DPCMD_USB_DEVNUM; expected 1-255\n");
-			return 1;
-		}
-		g_usb_devnum = (unsigned char) r;
-	}
+    /*
+     * Obtain the (optional) bus number and device number to
+     * filter by from the environment.
+     *
+     * Why? Because the OpenUSB() initialization happens *before*
+     * the command line options are parsed (where we'd take
+     * --busnum and --devnum) and we want to enable a path to
+     * disallow the tool from touching any device which is not the
+     * one we want to.
+     *
+     * In the long term, rearranging the code would allow getting
+     * rid of this hack.
+     */
+    env = getenv("DPCMD_USB_DEVNUM");
+    if (env) {
+        r = strtoul(env, NULL, 10);
+        if (r == ULONG_MAX || r >= 256) {
+            fprintf(stderr, "E: invalid USB device number in"
+                " DPCMD_USB_DEVNUM; expected 1-255\n");
+            return 1;
+        }
+        g_usb_devnum = (unsigned char) r;
+    }
 
-	env = getenv("DPCMD_USB_BUSNUM");
-	if (env) {
-		r = strtoul(env, NULL, 10);
-		if (r == ULONG_MAX || r >= 256) {
-			fprintf(stderr, "E: invalid USB bus number in"
-				" DPCMD_USB_BUSNUM\n");
-			return 1;
-		}
-		g_usb_busnum = (unsigned char) r;
-	}
+    env = getenv("DPCMD_USB_BUSNUM");
+    if (env) {
+        r = strtoul(env, NULL, 10);
+        if (r == ULONG_MAX || r >= 256) {
+            fprintf(stderr, "E: invalid USB bus number in"
+                " DPCMD_USB_BUSNUM\n");
+            return 1;
+        }
+        g_usb_busnum = (unsigned char) r;
+    }
 
 
-	if(OpenUSB()==0)
-		iExitCode=EXCODE_FAIL_USB;
+    if(OpenUSB() == 0)
+        iExitCode=EXCODE_FAIL_USB;
 
     LeaveStandaloneMode(0);
     QueryBoard(0);
@@ -687,6 +685,7 @@ int main(int argc, char* argv[])
             iExitCode = FirmwareUpdate();
             goto Exit;
             break;
+#if 0
         case 'E':
             g_tv_display_delta_s = atof(optarg);
             if (g_tv_display_delta_s <= 0) {
@@ -698,24 +697,25 @@ int main(int argc, char* argv[])
                 return 1;
             }
             break;
+#endif
         case 'G':
-				    r = strtoul(optarg, NULL, 10);
-				    if (r == ULONG_MAX || r >= 256) {
-					      fprintf(stderr, "E: invalid device"
-						    " number; expected 1-255\n");
-					      return 1;
-				    }
-				    g_usb_devnum = (unsigned char) r;
-				    break;
+            r = strtoul(optarg, NULL, 10);
+            if (r == ULONG_MAX || r >= 256) {
+                fprintf(stderr, "E: invalid device"
+                    " number; expected 1-255\n");
+                return 1;
+            }
+            g_usb_devnum = (unsigned char) r;
+            break;
         case 'H':
-				    r = strtoul(optarg, NULL, 10);
-				    if (r == ULONG_MAX) {
-					    fprintf(stderr, "E: invalid bus"
-						    " number\n");
-					    return 1;
-				    }
-				    g_usb_busnum = (unsigned) r;
-				    break;
+            r = strtoul(optarg, NULL, 10);
+            if (r == ULONG_MAX) {
+                fprintf(stderr, "E: invalid bus"
+                    " number\n");
+                return 1;
+            }
+            g_usb_busnum = (unsigned) r;
+            break;
         default:
             break;
         }
@@ -978,16 +978,14 @@ void cli_classic_usage(bool IsShowExample)
            "    --set-io4 arg (=1)                      specify Level of IO4(SF100) or GPIO2(SF600/SF600Plus):\n"
            "                                                0, Low\n"
            "                                                1, High(Default)\n"
-           "    -e|--display-delta SECONDS (=0.5)       wait this many seconds\n"
+           "    -E [ --display-delta ] arg (=0.5)       wait this many seconds\n"
            "                                            before refreshing the screen\n"
            "\n"
-	         "    Environment variables:\n"
-  	       " - DPCMD_USB_BUSNUM  Number of USB bus where device is\n"
-	         " - DPCMD_USB_DEVNUM  Number of device in USB bus\n"
-	         "\n"
-	         "Specify DPCMD_USB_BUSNUM and DPCMD_USB_DEVNUM to ensure\n"
-	         "the tool touches only said device. Numbers can be found\n"
-	         "with tools such as lsusb and others.\n"
+           "Environment variables:\n"
+	   "  Specify DPCMD_USB_BUSNUM and DPCMD_USB_DEVNUM to ensure the tool touches only said device. Numbers can be found with tools such as lsusb and others.\n"
+           "    - DPCMD_USB_BUSNUM                      Number of USB bus where device is\n"
+	   "    - DPCMD_USB_DEVNUM                      Number of device in USB bus\n"
+
            "\n\n\n");
 
 }
@@ -1621,7 +1619,7 @@ bool Wait(const char* strOK, const char* strFail)
         if (g_bDisplayTimer == true) {
             timersub(&tv, &basetv, &diff);
             printf("\r%0.1fs elapsed", diff.tv_sec + 0.000001 * diff.tv_usec);
-            Sleep(500);
+            Sleep(10);
         }
     }
     printf("\n");
