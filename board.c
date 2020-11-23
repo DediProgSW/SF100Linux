@@ -2,6 +2,7 @@
 #include "FlashCommand.h"
 #include "project.h"
 #include "usbdriver.h"
+#include <stdlib.h>
 #define SerialFlash_FALSE -1
 #define SerialFlash_TRUE 1
 #define min(a, b) (a > b ? b : a)

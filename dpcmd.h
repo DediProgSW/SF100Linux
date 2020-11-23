@@ -6,18 +6,18 @@
 #include <stdbool.h>
 
 enum ErrorCode {
-	EXCODE_PASS,
-	EXCODE_FAIL_USB,
-	EXCODE_FAIL_ERASE,
-	EXCODE_FAIL_PROG,
-	EXCODE_FAIL_VERIFY,
-	EXCODE_FAIL_READ,
-	EXCODE_FAIL_BLANK,		// 5
-	EXCODE_FAIL_BATCH,
-	EXCODE_FAIL_CHKSUM,
-	EXCODE_FAIL_IDENTIFY,
-	EXCODE_FAIL_UPDATE_FW,
-	EXCODE_FAIL_OTHERS,
+    EXCODE_PASS,
+    EXCODE_FAIL_USB,
+    EXCODE_FAIL_ERASE,
+    EXCODE_FAIL_PROG,
+    EXCODE_FAIL_VERIFY,
+    EXCODE_FAIL_READ,
+    EXCODE_FAIL_BLANK, // 5
+    EXCODE_FAIL_BATCH,
+    EXCODE_FAIL_CHKSUM,
+    EXCODE_FAIL_IDENTIFY,
+    EXCODE_FAIL_UPDATE_FW,
+    EXCODE_FAIL_OTHERS,
 };
 
 enum { // value dedicated by the spec
@@ -28,7 +28,7 @@ enum { // value dedicated by the spec
 
     STARTUP_SPECIFY_LATER = 0xFE,
     STARTUP_PREVIOUS = 0xFF
-} ;
+};
 
 enum {
     clk_24M = 0x00,
@@ -39,12 +39,12 @@ enum {
     clk_1500K = 0x05,
     clk_750K = 0x06,
     clk_375K = 0x07,
-} ;
+};
 
 int Sequence();
 void cli_classic_usage(bool IsShowExample);
 bool InitProject(void);
-void CloseProject(void); 
+void CloseProject(void);
 bool DetectChip(void);
 void SetVpp(int Index);
 void SetSPIClock(int Index);
@@ -74,7 +74,7 @@ bool CalChecksum(void);
 int Handler();
 bool ListTypes(void);
 void GetLogPath(char* path);
-bool Wait(const char* strOK,const char* strFail);
+bool Wait(const char* strOK, const char* strFail);
 void ExitProgram(void);
 int FirmwareUpdate();
 void sin_handler(int sig);

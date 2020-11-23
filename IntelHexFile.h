@@ -130,16 +130,16 @@ typedef struct {
     unsigned char intel_lg_data;
     unsigned short intel_adr;
     unsigned char intel_type;
-    unsigned char intel_data [LL_MAX_LINE];
+    unsigned char intel_data[LL_MAX_LINE];
     unsigned char intel_lrc;
 } t_one_line;
 
 #define INTEL_DATA_TYPE 0
 
 //save binary data in vBuffer to file in Intel Hex format
-bool BinToHexFile(const char* filePath, unsigned char* vBuffer, unsigned long FileSize) ;
+bool BinToHexFile(const char* filePath, unsigned char* vBuffer, unsigned long FileSize);
 
 // read binary data from Intel Hex file
-bool HexFileToBin(const char* filePath, unsigned char* vOutData,unsigned long* FileSize,unsigned char PaddingByte) ;
+bool HexFileToBin(const char* filePath, unsigned char* vOutData, unsigned long* FileSize, unsigned char PaddingByte);
 
 #endif // end of header file

@@ -177,10 +177,12 @@ bool S19FileToBin(const char* filePath, unsigned char* vData, unsigned long* Fil
         /* Remove carriage return/line feed at the end of line. */
         i = strlen(Line) - 1;
 
-        if (Line[i] == '\n') Line[i] = '\0';
+        if (Line[i] == '\n')
+            Line[i] = '\0';
 
         // check if this file is an S-file
-        if ('S' != Line[0] && Line[0] != '\0') return false;
+        if ('S' != Line[0] && Line[0] != '\0')
+            return false;
 
         /* Scan starting address and nb of bytes. */
         /* Look at the record sType after the 'S' */
@@ -326,7 +328,6 @@ bool S19FileToBin(const char* filePath, unsigned char* vData, unsigned long* Fil
 
     default:
         break;
-
     }
 
     if (Starting_Address_Setted) {
@@ -400,7 +401,7 @@ bool BinToS19File(const char* filePath, unsigned char* vData, unsigned long File
         chksum += (addr >> 16) & 0xff;
         chksum += (addr >> 24) & 0xff;
 
-        fprintf(FileOut, "S3");	/* record header preamble */
+        fprintf(FileOut, "S3"); /* record header preamble */
         fprintf(FileOut, "%02X%08X", total + 5, addr);
 
         memset(s19buf, 0, sizeof(s19buf));
