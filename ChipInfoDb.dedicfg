@@ -25253,7 +25253,31 @@ RDIDCommand="0x9F"/>
       AddrWidth="3"
       IDNumber="3"
       RDIDCommand="0x9F"/>
-
+  <Chip TypeName="W25R256JV" 
+      ICType="SPI_NOR"
+      Manufacturer="Winbond"
+      ManufactureUrl="http://www.winbond.com/"
+      AddrWidth="4"
+      BlockSizeInByte="65536"
+      ChipSizeInKByte="32768"
+      IDCmdNumber="1"
+      IDNumber="3"
+      PageSizeInByte="256"
+      ProgramIOMethod="SPSD_RSW"
+      RDIDCommand="0x9F"
+      ReadDummyLen="4"
+      SectorSizeInByte="4096"
+      SupportedProduct="0x0F"
+      Timeout="480"
+      Voltage="3.3V"
+      VppSupport="0"
+      Class="W25Pxx_Large"
+      Clock="104Mhz"
+      Description="3V 256M-Bit Serial Flash Memory"
+      DeviceID="0x18"
+      JedecDeviceID="0xEF4019"
+      ManufactureID="0xEF"
+      UniqueID="0xEF4019"/>
 
 </Portofolio>
 </DediProgChipDatabase>
