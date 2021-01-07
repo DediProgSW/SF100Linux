@@ -20,7 +20,13 @@ bool Dedi_List_AllChip(void);
 int ChipInfoDbFindItem(CHIP_INFO ChipInfoDb[], int NumberOfItems, long JedecDeviceIDToFind);
 void ChipInfoDump(long JedecDeviceIDToFind);
 long ChipInfoDumpChipSizeInKByte(long Jedec);
+#if 0
 int Dedi_Search_Chip_Db(long RDIDCommand, long UniqueID, CHIP_INFO* Chip_Info, int search_all);
+
+#else
+
+int Dedi_Search_Chip_Db(char* TypeName, long RDIDCommand, long UniqueID, CHIP_INFO* Chip_Info, int search_all);
+#endif
 int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info);
 FILE* openChipInfoDb(void);
 

@@ -26,6 +26,7 @@ extern unsigned int g_ucFill;
 extern int m_boEnReadQuadIO;
 extern int m_boEnWriteQuadIO;
 extern volatile bool g_bIsSF600[16];
+extern volatile bool g_bIsSF700[16];
 extern char g_board_type[8];
 extern int g_firmversion;
 extern char* g_parameter_vcc;
@@ -40,7 +41,7 @@ extern unsigned char mcode_Program;
 extern unsigned char mcode_ProgramCode_4Adr;
 extern unsigned char mcode_Read;
 extern unsigned char mcode_ReadCode;
-extern CHIP_INFO Chip_Info;
+extern CHIP_INFO Chip_Info; 
 extern int g_StartupMode;
 extern int g_CurrentSeriase;
 extern struct CAddressRange DownloadAddrRange;
@@ -53,8 +54,13 @@ extern unsigned int g_Vpp;
 extern unsigned int g_uiAddr;
 extern size_t g_uiLen;
 extern bool g_bEnableVpp;
-extern unsigned int g_uiDevNum; // evy add
+extern unsigned int g_uiDevNum; 
+extern char strTypeName[1024];
+#if 0
 extern int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index);
+#else
+extern int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index);
+#endif
 
 pthread_mutex_t g_count_mutex;
 #define FIRMWARE_VERSION(x, y, z) ((x << 16) | (y << 8) | z)
@@ -277,6 +283,7 @@ bool LoadFile(char* filename)
 
 bool IdentifyChipBeforeOperation(int Index)
 {
+    //printf("\n===>project.c ---- bool IdentifyChipBeforeOperation(%d)\n",Index);
     bool result = false;
     CHIP_INFO binfo;
     binfo.UniqueID = 0;
@@ -285,9 +292,7 @@ bool IdentifyChipBeforeOperation(int Index)
     if (strstr(Chip_Info.Class, SUPPORT_FREESCALE_MCF) != NULL || strstr(Chip_Info.Class, SUPPORT_SILICONBLUE_iCE65) != NULL)
         return true;
 
-    Found = FlashIdentifier(&binfo, 0, Index);
-
-    //	printf("\n binfo.UniqueID = 0x%lx, Chip_Info.UniqueID = 0x%lx\n", binfo.UniqueID,Chip_Info.UniqueID);
+    Found = FlashIdentifier(&binfo, 0, Index); 
 
     if (Found && (binfo.UniqueID == Chip_Info.UniqueID || binfo.UniqueID == Chip_Info.JedecDeviceID))
         result = true;
@@ -357,6 +362,7 @@ bool ProgramChip(int Index)
 
 bool ReadChip(const struct CAddressRange range, int Index)
 {
+    //printf("\n===>project.c ---- ReadChip()\n");
     bool result = true;
     unsigned char* vc;
     size_t addrStart = range.start;
@@ -365,21 +371,25 @@ bool ReadChip(const struct CAddressRange range, int Index)
     addr.start = range.start & (~(0x200 - 1));
     addr.end = (range.end + (0x200 - 1)) & (~(0x200 - 1));
     addr.length = addr.end - addr.start;
-    vc = (unsigned char*)malloc(addr.length);
-    result = SerialFlash_rangeRead(&addr, vc, Index);
 
+    vc = (unsigned char*)malloc(addr.length);
+
+    result = SerialFlash_rangeRead(&addr, vc, Index);
+ 	 
     if (result) {
         if (pBufferForLastReadData[Index] != NULL) {
             free(pBufferForLastReadData[Index]);
         }
         unsigned int offset = (addrStart & 0x1FF);
-        pBufferForLastReadData[Index] = (unsigned char*)malloc(range.length);
+        pBufferForLastReadData[Index] = (unsigned char*)malloc(range.length); 
         memcpy(pBufferForLastReadData[Index], vc + offset, range.length);
         UploadAddrRange = range;
     }
 
+
     if (vc != NULL)
         free(vc);
+
 
     return result;
 }
@@ -604,6 +614,7 @@ bool threadProgram(int Index)
 
 bool threadCompareFileAndChip(int Index)
 {
+    //printf("\n===>project.c ---- bool threadCompareFileAndChip(%d)\n",Index);
     bool result = true;
 
     SetIOMode(false, Index);
@@ -664,6 +675,7 @@ bool threadCompareFileAndChip(int Index)
 #endif
 
     g_is_operation_successful[Index] = result;
+	 
     return result;
 }
 
@@ -902,15 +914,19 @@ bool threadPredefinedBatchSequences(int Index)
 
 void threadRun(void* Type)
 {
+    //printf("\n====>project ---- void threadRun(void* Type)\n");
     THREAD_STRUCT* thread_data = (THREAD_STRUCT*)Type;
     OPERATION_TYPE opType = thread_data->type;
     int Index = thread_data->USBIndex;
     g_is_operation_successful[Index] = true;
     bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
+    bool is_SF700_greater_than_4_0_0 = ( g_firmversion > 0x40000);
 
     int dwUID = ReadUID(Index);
     if (g_uiAddr == 0 && g_uiLen == 0) {
-        if ((dwUID / 600000) == 0)
+        if (g_bIsSF700[Index]==true)
+            printf("\nDevice %d (SF7%05X):", Index + 1, dwUID);
+        else if ((dwUID / 600000) == 0)
             printf("\nDevice %d (DP%06d):", Index + 1, dwUID);
         else
             printf("\nDevice %d (SF%06d):", Index + 1, dwUID);
@@ -929,8 +945,9 @@ void threadRun(void* Type)
 
     if (1) // is_good())
     {
+        //printf("\n====>project ---- void threadRun(void* Type) --- is_good\n");
         TurnONVcc(Index);
-        if (is_greater_than_5_0_0) {
+        if (is_greater_than_5_0_0||is_SF700_greater_than_4_0_0) {
             SetLEDOnOff(SITE_BUSY, Index);
         }
 
@@ -964,7 +981,7 @@ void threadRun(void* Type)
                 threadConfiguredReadChip(Index);
                 break;
 
-            case VERIFY_CONTENT:
+            case VERIFY_CONTENT: 
                 threadCompareFileAndChip(Index);
                 break;
 
@@ -1027,7 +1044,7 @@ void SetIOMode(bool isProg, int Index)
     m_boEnReadQuadIO = 0;
     m_boEnWriteQuadIO = 0;
 
-    if (g_bIsSF600[Index] == false)
+    if ((g_bIsSF600[Index] == false)&&(g_bIsSF700[Index] == false))
         return;
 
     SetIOModeToSF600(IOValue, Index);
@@ -1128,8 +1145,10 @@ void SetIOMode(bool isProg, int Index)
 bool is_BoardVersionGreaterThan_5_0_0(int Index)
 {
     if (g_firmversion < FIRMWARE_VERSION(5, 0, 0))
+{
+	//printf("\n====>project.c ---- bool is_BoardVersionGreaterThan_5_0_0(Index=%d)g_firmversion=%d,FIRMWARE_VERSION(5, 0, 0)=0x%x\n",Index,g_firmversion,FIRMWARE_VERSION(5, 0, 0));
         return false;
-    return true;
+ }   return true;
 }
 
 bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index)
@@ -1166,9 +1185,18 @@ bool is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Index)
     }
     return false;
 }
-
+bool is_SF700(int Index)
+{ 
+    if (strstr(g_board_type, "SF700") != NULL) {  
+	return true;
+    }
+    return false;
+}
+#if 0
 CHIP_INFO GetFirstDetectionMatch(int Index)
 {
+
+printf("GetFirstDetectionMatch(%x)\n",Index);
     CHIP_INFO binfo;
     binfo.UniqueID = 0;
     int Found = 0;
@@ -1224,13 +1252,78 @@ CHIP_INFO GetFirstDetectionMatch(int Index)
     }
     return binfo;
 }
+#else
+CHIP_INFO GetFirstDetectionMatch(char* TypeName,int Index)
+{
 
+    //printf("GetFirstDetectionMatch_temp(%x)\n",Index);
+    CHIP_INFO binfo;
+    binfo.UniqueID = 0;
+    //char TypeName[1024]; 
+
+   // memset(TypeName, '\0', 1024);
+    int Found = 0;
+    int i = 0;
+    int Loop = 3;
+    if (strcmp(g_parameter_vcc, "NO") != 0)
+        Loop = 1;
+
+    for (i = 0; i < Loop; i++) {
+        if (Found == 1)
+            break;
+        if (Loop == 1)
+            g_Vcc = vcc3_5V;
+        else
+            g_Vcc = vcc1_8V - i;
+
+        TurnONVcc(Index);
+        if (Is_usbworking(Index)) {
+            if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true)) {
+                int startmode;
+
+                if (g_StartupMode == STARTUP_APPLI_SF_2)
+                    SetTargetFlash(STARTUP_APPLI_SF_2, Index);
+                else
+                    SetTargetFlash(STARTUP_APPLI_SF_1, Index);
+
+                startmode = g_StartupMode;
+                Found = FlashIdentifier(&binfo, 0, Index); 
+                if (Found == 0) {
+                    TurnOFFVcc(Index);
+                    SetTargetFlash(STARTUP_APPLI_SF_SKT, Index);
+                    g_CurrentSeriase = Seriase_25;
+                    TurnONVcc(Index);
+                    Found = FlashIdentifier(&binfo, 0, Index);
+ 
+                    if (Found == 0) {
+                        TurnOFFVcc(Index);
+                        g_CurrentSeriase = Seriase_45;
+                        TurnONVcc(Index);
+                        Found = FlashIdentifier(&binfo, 0, Index); 
+                        if (Found == 0)
+                            g_StartupMode = startmode;
+                    }
+                }
+            } else {
+                Found = FlashIdentifier(&binfo, 0, Index); 
+            }
+        }
+        TurnOFFVcc(Index);
+    }
+    if (Found == 0) {
+        binfo.UniqueID = 0;
+        binfo.TypeName[0] = '\0';
+    }
+    return binfo;//*TypeName;
+}
+#endif
 // fail in case of 1) USB failure, 2) unrecognised ID.
 void InitLED(int Index)
 {
-    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index);
+    bool is_greater_than_5_0_0 = is_BoardVersionGreaterThan_5_0_0(Index); 
+    bool is_SF700_greater_than_4_0_0 = ( g_firmversion > 0x40000);
 
-    if (is_greater_than_5_0_0)
+    if (is_greater_than_5_0_0||is_SF700_greater_than_4_0_0)
         SetLEDOnOff(SITE_NORMAL, Index);
 }
 
@@ -1443,7 +1536,8 @@ bool ProjectInitWithID(CHIP_INFO chipinfo, int Index) // by designated ID
 
 bool ProjectInit(int Index) // by designated ID
 {
-    Chip_Info = GetFirstDetectionMatch(Index);
+    //printf("bool ProjectInit(%d)\n",Index);
+    Chip_Info = GetFirstDetectionMatch(strTypeName,Index);
     if (Chip_Info.UniqueID == 0)
         return false;
     return ProjectInitWithID(Chip_Info, Index);

@@ -11,8 +11,9 @@ enum ErrorCode {
     EXCODE_FAIL_ERASE,
     EXCODE_FAIL_PROG,
     EXCODE_FAIL_VERIFY,
+    EXCODE_FAIL_LOADFILEWITHVERIFY,
     EXCODE_FAIL_READ,
-    EXCODE_FAIL_BLANK, // 5
+    EXCODE_FAIL_BLANK, // 7
     EXCODE_FAIL_BATCH,
     EXCODE_FAIL_CHKSUM,
     EXCODE_FAIL_IDENTIFY,
@@ -50,6 +51,7 @@ void SetVpp(int Index);
 void SetSPIClock(int Index);
 void SetVcc(int Index);
 int do_loadFile(void);
+int do_loadFileWithVerify(void);
 void BlinkProgrammer(void);
 void ListSFSerialID(void);
 void do_BlankCheck(void);
@@ -70,6 +72,7 @@ bool Program(void);
 bool Read(void);
 bool Auto(void);
 bool Verify(void);
+bool LoadFileWithVerify(void);
 bool CalChecksum(void);
 int Handler();
 bool ListTypes(void);

@@ -46,8 +46,13 @@ bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index);
 bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
 bool is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
 bool is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Index);
+bool is_SF700(int Index);
 int GetFileFormatFromExt(const char* csPath);
+#if 0
 CHIP_INFO GetFirstDetectionMatch(int Index);
+#else
+CHIP_INFO GetFirstDetectionMatch(char* TypeName,int Index);
+#endif
 void SetIOMode(bool isProg, int Index);
 bool ReadFile(const char* csPath, unsigned char* buffer, unsigned long* FileSize, unsigned char PaddingByte);
 bool WriteFile(const char* csPath, unsigned char* buffer, unsigned int FileSize);

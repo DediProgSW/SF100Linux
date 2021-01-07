@@ -303,7 +303,7 @@ typedef struct ChipInfo {
 #define BLINK BIT10
 #define DEVICE_ID BIT11
 #define LIST_TYPE BIT12
-#define LOADFILE BIT13
+#define LOADFILEWITHVERIFY BIT13
 
 struct CAddressRange {
     size_t start;
