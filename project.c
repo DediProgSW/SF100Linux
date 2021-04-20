@@ -130,7 +130,7 @@ void TurnOFFVpp(int Index)
 }
 
 void TurnONVcc(int Index)
-{
+{  
     dediprog_set_spi_voltage(g_Vcc, Index);
 }
 
@@ -430,7 +430,7 @@ bool threadBlankCheck(int Index)
 }
 
 bool threadEraseWholeChip(int Index)
-{
+{  
     bool result = false;
 
     //	power::CAutoVccPower autopowerVcc(m_usb, m_context.power.vcc,Index);
@@ -1254,30 +1254,38 @@ printf("GetFirstDetectionMatch(%x)\n",Index);
 }
 #else
 CHIP_INFO GetFirstDetectionMatch(char* TypeName,int Index)
-{
-
-    //printf("GetFirstDetectionMatch_temp(%x)\n",Index);
+{ 
     CHIP_INFO binfo;
     binfo.UniqueID = 0;
+    unsigned int g_Vcc_temp = 0;
     //char TypeName[1024]; 
 
    // memset(TypeName, '\0', 1024);
+
     int Found = 0;
     int i = 0;
     int Loop = 3;
-    if (strcmp(g_parameter_vcc, "NO") != 0)
-        Loop = 1;
+    if (strcmp(g_parameter_vcc, "NO") != 0) //g_parameter_vcc!=NO
+        Loop = 1; 
+    
+    if(strlen(TypeName)!=0)
+      g_Vcc_temp = g_Vcc;
 
     for (i = 0; i < Loop; i++) {
         if (Found == 1)
+	{
+   	    if(strlen(TypeName)!=0)
+	        g_Vcc = g_Vcc_temp;
             break;
-        if (Loop == 1)
+        }
+	if (Loop == 1)
             g_Vcc = vcc3_5V;
         else
-            g_Vcc = vcc1_8V - i;
+            g_Vcc = vcc1_8V - i; 
 
         TurnONVcc(Index);
-        if (Is_usbworking(Index)) {
+        if (Is_usbworking(Index)) 
+	{
             if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true)) {
                 int startmode;
 
@@ -1314,6 +1322,7 @@ CHIP_INFO GetFirstDetectionMatch(char* TypeName,int Index)
         binfo.UniqueID = 0;
         binfo.TypeName[0] = '\0';
     }
+ 
     return binfo;//*TypeName;
 }
 #endif
@@ -1487,6 +1496,15 @@ void SetProgReadCommand(int Index)
         mcode_SegmentErase = SE;
         mcode_ProgramCode_4Adr = 0x02;
         mcode_ReadCode = 0x0C;
+    } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Qxx_Large) != NULL) {
+        mcode_RDSR = RDSR;
+        mcode_WRSR = WRSR;
+        mcode_ChipErase = CHIP_ERASE;
+        mcode_Program = PP_4ADR_256BYTE;
+        mcode_Read = BULK_4BYTE_FAST_READ;
+        mcode_SegmentErase = SE;
+        mcode_ProgramCode_4Adr = 0x02;
+        mcode_ReadCode = 0x0B;
     } else if (strstr(Chip_Info.Class, SUPPORT_ATMEL_45DBxxxB) != NULL) {
         mcode_RDSR = 0xD7;
         mcode_WRSR = 0;
@@ -1511,13 +1529,13 @@ void SetProgReadCommand(int Index)
 }
 
 bool ProjectInitWithID(CHIP_INFO chipinfo, int Index) // by designated ID
-{
+{   
     DownloadAddrRange.start = 0;
     DownloadAddrRange.end = Chip_Info.ChipSizeInByte;
     InitLED(Index);
     //    SetTargetFlash(g_StartupMode,Index); //for SF600 Freescale issue
     SetProgReadCommand(Index);
-    if (strcmp(g_parameter_vcc, "NO") == 0) {
+    if (strcmp(g_parameter_vcc, "NO") == 0) { 
         switch (Chip_Info.VoltageInMv) {
         case 1800:
             g_Vcc = vcc1_8V;
@@ -1530,15 +1548,16 @@ bool ProjectInitWithID(CHIP_INFO chipinfo, int Index) // by designated ID
             break;
         }
     }
-
+ 
     return true;
 }
 
 bool ProjectInit(int Index) // by designated ID
-{
-    //printf("bool ProjectInit(%d)\n",Index);
+{ 
     Chip_Info = GetFirstDetectionMatch(strTypeName,Index);
     if (Chip_Info.UniqueID == 0)
+    { 
         return false;
+    }
     return ProjectInitWithID(Chip_Info, Index);
 }

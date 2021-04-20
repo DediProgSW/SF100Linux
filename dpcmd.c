@@ -496,7 +496,7 @@ int main(int argc, char* argv[])
     unsigned long r;
 	  char *env;
 
-    printf("\nDpCmd Linux 1.11.4.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.11.5.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -666,7 +666,7 @@ int main(int argc, char* argv[])
             sscanf(optarg, "%d", &g_ucTarget);
             break;
         case 'c':
-            g_parameter_vcc = optarg;
+            g_parameter_vcc = optarg; 
             sscanf(optarg, "%d", &g_Vcc);
             break;
         case 'P':
@@ -1012,8 +1012,7 @@ void cli_classic_usage(bool IsShowExample)
            //	       "                                            note: the sequence is assigned by OS during USB plug-in.\n"
            "                                            - 1: Prompt the device ID of programmer connected to USB1.\n"
            //	       "                                            - n: Prompt the device ID of programmer connected to USBn.\n"
-           "    --load-file arg                         -Load a bin/hex/s19 file and compare with the memory conten.\n"
-           "                                            -work with --verify only"
+           "    --loadFile-with-verify arg                         -Load a bin/hex/s19 file and verify with the memory conten.\n"
            "\n"
            "Miscellaneous options:\n"
            "    -t [ --timeout ] arg (=300)             Timeout value in seconds\n"
@@ -1206,11 +1205,10 @@ void CloseProject(void)
 }
 
 bool DetectChip(void)
-{
-//printf("DetectChip(void)\n");
+{ 
     int dev_cnt = get_usb_dev_cnt();
     Chip_Info = GetFirstDetectionMatch(strTypeName,0);
-    if (g_uiDevNum == 0) {
+    if (g_uiDevNum == 0) { 
         for (int i = 0; i < dev_cnt; i++) {
             if (!Is_usbworking(i)) {
                 printf("%s", msg_err_communication);
@@ -1226,7 +1224,7 @@ bool DetectChip(void)
 
             RawInstructions(i);
         }
-    } else if (g_uiDevNum <= dev_cnt) {
+    } else if (g_uiDevNum <= dev_cnt) { 
         if (!Is_usbworking(g_uiDevNum - 1)) {
             printf("%s", msg_err_communication);
             return false;

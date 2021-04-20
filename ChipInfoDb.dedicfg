@@ -2,7 +2,7 @@
 <DediProgChipDatabase
     Description="DediProg Pro Supported memory info"
     Creator="DediProg Pro"
-    Ver="3.00"
+    Ver="4.00"
     CreateDate="2007-September-25"
     Locale="2052">
 <Portofolio
@@ -15772,6 +15772,28 @@ RDIDCommand="0x9F"
     Clock="133MHz"
     Timeout="480"
     JedecDeviceID="0x9D601A"
+    ManufactureID="0x9D"
+
+    DeviceID="0x19"
+    ChipSizeInKByte="65536"
+    SectorSizeInByte="4096"
+    PageSizeInByte="256"
+    BlockSizeInByte="65536"
+    AddrWidth="4"
+
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+<Chip TypeName="IS25LP512MG"
+	ICType="SPI_NOR"
+    Class="W25Qxx_Large"
+    UniqueID="0x9D6020"
+    Description="512 Mbit Serial Flash Memory"
+    Manufacturer="ISSI"
+    ManufactureUrl="www.issi.com"
+    Voltage="3.3V"
+    Clock="133MHz"
+    Timeout="480"
+    JedecDeviceID="0x9D6020"
     ManufactureID="0x9D"
     DeviceID="0x19"
     ChipSizeInKByte="65536"

@@ -327,7 +327,7 @@ int BulkPipeWrite(unsigned char* pBuff, unsigned int size, unsigned int timeOut,
 }
 
 int dediprog_set_spi_voltage(int v, int Index)
-{
+{   
     int ret = 0;
     //    int voltage_selector;
     CNTRPIPE_RQ rq;

@@ -265,7 +265,7 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
     CHIP_INFO* Chip_Info, 
     int search_all)
 { 
-    //printf("Dedi_Search_Chip_Db_FirstDetect(RDIDCommand=0x%lx,UniqueID=0x%lx,search_all=%d)\n",RDIDCommand,UniqueID,search_all);
+    //printf("evy Dedi_Search_Chip_Db_FirstDetect(RDIDCommand=0x%lx,UniqueID=0x%lx,search_all=%d)\n",RDIDCommand,UniqueID,search_all);
  
     FILE* fp; /*Declare file pointer variable*/
     int found_flag = 0;
@@ -373,8 +373,7 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
         if (pch != NULL) {
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("Voltage"));
-            tok = strtok(test, "\"= \t");
-            //printf("Voltage = %s\n",tok);
+            tok = strtok(test, "\"= \t"); 
             if (strcmp(tok, "3.3V") == 0)
                 Chip_Info_temp.VoltageInMv = 3300;
             else if (strcmp(tok, "2.5V") == 0)
@@ -514,6 +513,7 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
 
 int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
 {
+    //printf("Dedi_Search_Chip_Db_ByTypeName = %s\n",TypeName);
     FILE* fp; /*Declare file pointer variable*/
     int found_flag = 0, i;
     char file_line_buf[linebufsize], *tok, *file_buf, test[testbufsize];

@@ -196,6 +196,7 @@ typedef struct ChipInfo {
 #define SUPPORT_WINBOND_W25Bxx "W25Bxx"
 #define SUPPORT_WINBOND_W25Pxx "W25Pxx"
 #define SUPPORT_WINBOND_W25Pxx_Large "W25Pxx_Large"
+#define SUPPORT_WINBOND_W25Qxx_Large "W25Qxx_Large"
 #define SUPPORT_WINBOND_W25Xxx "W25Xxx"
 #endif
 

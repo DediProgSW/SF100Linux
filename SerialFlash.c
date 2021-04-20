@@ -1694,7 +1694,7 @@ int S70FSxxx_Large_Enable4ByteAddrMode(int Enable4Byte, int Index)
 //Simon: unused ???
 int SerialFlash_Enable4ByteAddrMode(int bEnable, int Index)
 {
-    if (strstr(Chip_Info.Class, SUPPORT_EON_EN25QHxx_Large) != NULL || strstr(Chip_Info.Class, SUPPORT_MACRONIX_MX25Lxxx_Large) != NULL || strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx_Large) != NULL)
+    if (strstr(Chip_Info.Class, SUPPORT_EON_EN25QHxx_Large) != NULL || strstr(Chip_Info.Class, SUPPORT_MACRONIX_MX25Lxxx_Large) != NULL || strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx_Large) != NULL || strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Qxx_Large) != NULL)
         return CEN25QHxx_LargeEnable4ByteAddrMode(bEnable, Index);
     else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL)
         return S70FSxxx_Large_Enable4ByteAddrMode(bEnable, Index);
@@ -1762,17 +1762,23 @@ int SerialFlash_rangeProgram(struct CAddressRange* AddrRange, unsigned char* vDa
 {
     if (strstr(Chip_Info.Class, SUPPORT_ATMEL_45DBxxxB) != NULL || strstr(Chip_Info.Class, SUPPORT_ATMEL_45DBxxxD) != NULL)
         return AT45rangeProgram(AddrRange, vData, mcode_Program, mcode_ProgramCode_4Adr, Index);
-    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL) {
+    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL) 
+    {
         if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true)) 
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADR_256BYTE, mcode_ProgramCode_4Adr, Index);
         else
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_12, mcode_ProgramCode_4Adr, Index);
-    } else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL) {
-        if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true)) {
+    } 
+    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL) 
+    {
+        if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true))  
+        {
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_S70FS01GS, mcode_ProgramCode_4Adr_S70FSxxx, Index);
-        } else
+        } 
+        else
             return false;
-    } else
+    } 
+    else
         return SerialFlash_bulkPipeProgram(AddrRange, vData, mcode_Program, mcode_ProgramCode_4Adr, Index);
 }
 
