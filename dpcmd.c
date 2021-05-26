@@ -84,6 +84,10 @@ extern unsigned g_usb_busnum;
 unsigned long g_ucOperation;
 struct memory_id g_ChipID;
 char g_board_type[8];
+char g_FPGA_ver[8];
+char g_FW_ver[8];
+char g_HW_ver[8];
+
 int g_firmversion;
 int g_CurrentSeriase = Seriase_25;
 int m_isCanceled = 0;
@@ -138,6 +142,7 @@ struct option long_options[] = {
     { "help", 0, NULL, '?' },
     { "list", 0, NULL, 'L' },
     { "detect", 0, NULL, 'd' },
+    { "check", 0, NULL, 'C' },
     { "blank", 0, NULL, 'b' },
     { "erase", 0, NULL, 'e' },
     { "read", 1, NULL, 'r' },
@@ -490,13 +495,13 @@ int main(int argc, char* argv[])
 #endif
     int c;
     int iExitCode = EXCODE_PASS;
-    bool bDetect = false;
+    bool bDetect = false; 
     bool bDevice = false;
     bool bDeviceSN = false;
     unsigned long r;
 	  char *env;
 
-    printf("\nDpCmd Linux 1.11.5.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.12.5.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -560,6 +565,9 @@ int main(int argc, char* argv[])
             break;
         case 'd':
             bDetect = true;
+            break;
+        case 'C':
+            g_ucOperation |= CHECK_INFO;
             break;
         case 'b':
             g_ucOperation |= BLANK;
@@ -734,73 +742,106 @@ int main(int argc, char* argv[])
     }
  
     int dev_cnt = get_usb_dev_cnt();
-    if (bDetect == true) { 
-        if (bDevice == false) { 
-	    if(bDeviceSN){ 
+ 
+    if (CheckProgrammerInfo())
+        iExitCode = EXCODE_PASS;
+    goto Exit;
+ 
+    if (bDetect == true) 
+    { 
+        if (bDevice == false) 
+        { 
+	    if(bDeviceSN)
+            { 
 		char *arg_temp=&l_opt_arg[2];
 		int arg_int = atoi(arg_temp);
   
-		for (int i = 0; i < dev_cnt; i++) {
+		for (int i = 0; i < dev_cnt; i++) 
+                {
 		    int dwUID = ReadUID(i); 
-		    if(arg_int==dwUID) {
+		    if(arg_int==dwUID) 
+		    {
 			g_uiDevNum = i + 1;  
 			break;
 		    } 
 		}  
 		int dwUID = ReadUID(g_uiDevNum - 1);
-		if (g_bIsSF700[g_uiDevNum -1]==true){
+		if (g_bIsSF700[g_uiDevNum -1]==true)
+                {
 		    printf("\nDevice %d (SF7%05X):\tdetecting chip\n", g_uiDevNum, dwUID);
 		}
-		else if ((dwUID / 600000) > 0) {
+		else if ((dwUID / 600000) > 0)  
+                {
 		    printf("\nDevice %d (SF%06d):\tdetecting chip\n", g_uiDevNum, dwUID);
-		} else {
+		} 
+                else 
+                {
 		    printf("\nDevice %d (DP%06d):\tdetecting chip\n", g_uiDevNum, dwUID);
 		}
 		WriteLog(iExitCode, true);
 		Chip_Info=GetFirstDetectionMatch(strTypeName,g_uiDevNum - 1); 
-		if (Chip_Info.UniqueID != 0) { 
-		    if(strlen(strTypeName)){
+		if (Chip_Info.UniqueID != 0) 
+                { 
+		    if(strlen(strTypeName))
+                    {
 			printf("By reading the chip ID, the chip applies to [ %s ]\n\n", strTypeName);
 			printf("%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
-		    } else {
+		    } 
+                    else 
+                    {
 			printf("%s", msg_err_identifychip);
 			iExitCode = EXCODE_FAIL_IDENTIFY;
 		    }
-		} else {
+		} 
+                else 
+		{
     		    printf("%s", msg_err_identifychip);
 		    iExitCode = EXCODE_FAIL_IDENTIFY;
                 }
-	    } else { //bDevice == true 
+	    } 
+	    else 
+            {  
 		for (int i = 0; i < dev_cnt; i++) {
 		    //printf("%s\n",g_LogPath);
  
 		    int dwUID = ReadUID(i);
-		    if (g_bIsSF700[i]==true){
+		    if (g_bIsSF700[i]==true)
+                    {
 		        printf("\nDevice %d (SF7%05X):\tdetecting chip\n", i + 1, dwUID);
 		    }
-		    else if ((dwUID / 600000) > 0) {
+		    else if ((dwUID / 600000) > 0) 
+                    {
 		        printf("\nDevice %d (SF%06d):\tdetecting chip\n", i + 1, dwUID);
-		    } else {
+		    } 
+                    else 
+		    {
 		        printf("\nDevice %d (DP%06d):\tdetecting chip\n", i + 1, dwUID);
 		    }
 		    WriteLog(iExitCode, true); 
 		    Chip_Info=GetFirstDetectionMatch(strTypeName,i); 
-		    if (Chip_Info.UniqueID != 0) { 
-			if(strlen(strTypeName)){
+		    if (Chip_Info.UniqueID != 0) 
+                    { 
+			if(strlen(strTypeName))
+                        {
 			    printf("By reading the chip ID, the chip applies to [ %s ]\n", strTypeName);
 			    printf("%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
-		 	} else {
+		 	} 
+                        else 
+                        {
 			    printf("%s", msg_err_identifychip);
 			    iExitCode = EXCODE_FAIL_IDENTIFY;
 			}
-		    } else {
+		    } 
+                    else 
+                    {
     		        printf("%s", msg_err_identifychip);
 		        iExitCode = EXCODE_FAIL_IDENTIFY;
                     }
 		}
-            }
-		    
-        } else if (g_uiDevNum != 0) {  
+            }	    
+        } 
+        else if (g_uiDevNum != 0) 
+        {  
             WriteLog(iExitCode, true);
             printf("%d,\tdetecting chip\n", g_uiDevNum);
             Chip_Info=GetFirstDetectionMatch(strTypeName,g_uiDevNum - 1); 
@@ -941,7 +982,8 @@ void cli_classic_usage(bool IsShowExample)
     printf("(space is not needed between the switches and parameters. E.g. dpcmd -ubio.bin)\n");
     printf("    -? [ --help ]                           show this help message\n"
            "    --list                                  print supported chip list\n"
-           "    -d [ --detect ]                         detect chip\n"
+           "    --check        			    get programmer information\n"
+           "    -d [ --detect ]                         detect chip\n" 
            "    -b [ --blank ]                          blank check\n"
            "    -e [ --erase ]                          erase entire chip\n"
            "    -r [ --read ] arg                       read chip contents and save to a bin/hex/s19 file\n"
@@ -1077,7 +1119,7 @@ void sin_handler(int sig)
 }
 
 int Handler(void)
-{ 
+{  
     if (Is_usbworking(0) == true) {
 #if 0
         if(m_vm.count("fix-device"))
@@ -1107,9 +1149,10 @@ int Handler(void)
     if (!InitProject())
         return EXCODE_FAIL_OTHERS;
     //my_timer t;                           // opertion timer
-
+ 
     if (ListTypes())
         return EXCODE_PASS;
+   
 
     if (strlen(g_parameter_type) > 0) {
         int dev_cnt = get_usb_dev_cnt();
@@ -1301,7 +1344,127 @@ bool ListTypes(void)
         return false;
     return Dedi_List_AllChip();
 }
+bool CheckProgrammerInfo(void)
+{ 
+    if ((g_ucOperation & CHECK_INFO) != CHECK_INFO)
+        return false; 
 
+    int dev_cnt = get_usb_dev_cnt();
+    unsigned int uiFPGAVer=0;
+    if(g_uiDevNum == 0)
+    {
+	    for (int i = 0; i < dev_cnt; i++) 
+            {
+		int dwUID = ReadUID(i);
+		if (g_bIsSF700[i]==true)
+		    printf("%d,\tSF7%05X\n", i + 1, dwUID);
+		else if ((dwUID / 600000) == 0)
+		    printf("%d,\tDP%06d\n", i + 1, dwUID);
+		else
+		    printf("%d,\tSF%06d\n", i + 1, dwUID);
+
+		uiFPGAVer = GetFPGAVersion(i);  
+		GetFirmwareVer(i);
+		if(g_bIsSF600[i])
+	    	{ 
+		    if(CheckSDCard(i))
+		        printf("        Programmer type : SF600Plus\n");
+		    else
+		        printf("        Programmer type : SF600\n");
+		    printf("        Firmware version : %s\n",g_FW_ver);
+		    printf("        FPGA version : 0x%04x\n",uiFPGAVer);
+		    printf("        Hardware version : %s\n",g_HW_ver);
+	        } 
+	        else if(g_bIsSF700[i])
+	        {
+	   	    printf("        Programmer type : SF700\n");
+		    printf("        Firmware version : %s\n",g_FW_ver);
+		    printf("        FPGA version : 0x%04x\n",uiFPGAVer);
+		    printf("        Hardware version : %s\n",g_HW_ver);
+	        }
+	        else//SF100
+	        {
+		    printf("        Programmer type : SF100\n");
+		    printf("        Firmware version : %s\n",g_FW_ver);
+		    printf("        FPGA version : N.A.\n");
+		    printf("        Hardware version : N.A.\n");
+	        }   
+ 
+            }
+    }
+    else
+    {
+	char *arg_temp=&l_opt_arg[2];
+	   int arg_int = atoi(arg_temp);
+  
+	    for (int i = 0; i < dev_cnt; i++) 
+            {
+                int dwUID = ReadUID(i); 
+		if(arg_int==dwUID) 
+		{
+	  	    g_uiDevNum = i + 1;  
+		    break;
+		} 
+	    }  
+	    int dwUID = ReadUID(g_uiDevNum - 1);
+	    if (g_bIsSF700[g_uiDevNum -1]==true)
+            {
+		printf("\nDevice %d (SF7%05X):\n", g_uiDevNum, dwUID);
+   	    }
+	    else if ((dwUID / 600000) > 0)  
+            {
+    		printf("\nDevice %d (SF%06d):\n", g_uiDevNum, dwUID);
+	    } 
+            else 
+            {
+    		printf("\nDevice %d (DP%06d):\n", g_uiDevNum, dwUID);
+ 	    }
+	    
+
+	    uiFPGAVer = GetFPGAVersion(g_uiDevNum - 1);  
+            GetFirmwareVer(g_uiDevNum - 1);
+	    if(g_bIsSF600[g_uiDevNum - 1])
+	    { 
+    		if(CheckSDCard(g_uiDevNum - 1i))
+		    printf("        Programmer type : SF600Plus\n");
+		printf("        Programmer type : SF600Plus\n");
+		printf("        Firmware version : %s\n",g_FW_ver);
+		printf("        FPGA version : 0x%x\n",uiFPGAVer);
+		printf("        Hardware version : %s\n",g_HW_ver);
+	    } 
+	    else if(g_bIsSF700[g_uiDevNum - 1])
+	    {
+	   	printf("        Programmer type : SF700\n");
+		printf("        Firmware version : %s\n",g_FW_ver);
+		printf("        FPGA version : 0x%x\n",uiFPGAVer);
+		printf("        Hardware version : %s\n",g_HW_ver);
+     	    }
+	    else//SF100
+	    {
+		printf("        Programmer type : SF100\n");
+		printf("        Firmware version : %s\n",g_FW_ver);
+		printf("        FPGA version : N.A.\n");
+		printf("        Hardware version : N.A.\n");
+	    } 
+    } 
+    return true;
+}
+ 
+/*
+bool getFirmwareVer(void)
+{
+
+}
+
+bool getFPGAVer(void)
+{
+
+}
+
+bool getHWVer(void)
+{
+
+}*/
 void BlinkProgrammer(void)
 {
     bool IsV5 = is_BoardVersionGreaterThan_5_0_0(0);

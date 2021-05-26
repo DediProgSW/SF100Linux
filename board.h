@@ -8,7 +8,7 @@
 
 void SendFFSequence(int Index);
 void QueryBoard(int Index);
-unsigned char GetFPGAVersion(int Index);
+unsigned int GetFPGAVersion(int Index); 
 bool SetIO(unsigned char ioState, int Index);
 bool SetTargetFlash(unsigned char StartupMode, int Index);
 bool SetLEDProgBoard(size_t Clolor, int Index);
@@ -34,5 +34,7 @@ bool WriteSF600UID(unsigned int dwUID, unsigned char ManuID, int Index);
 bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index);
 bool UpdateSF600Firmware(const char* sFolder, int Index);
 bool UpdateFirmware(const char* sFolder, int Index);
+bool GetFirmwareVer(int Index);
+bool CheckSDCard(int Index);
 
 #endif

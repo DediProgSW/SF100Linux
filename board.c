@@ -10,6 +10,9 @@
 volatile bool g_bIsSF600 = false;
 volatile bool g_bIsSF700 = false;
 extern char g_board_type[8];
+extern char g_FPGA_ver[8];
+extern char g_FW_ver[8];
+extern char g_HW_ver[8];
 extern int g_firmversion;
 extern unsigned int g_IO1Select;
 extern unsigned int g_IO4Select;
@@ -68,7 +71,8 @@ void QueryBoard(int Index)
     }
 
     memcpy(g_board_type, &vBuffer[0], 8);
-//    memcpy(g_firmversion,&vBuffer[10],8);
+    //memcpy(g_FW_ver,&vBuffer[8],8);
+    //printf("g_FW_ver=%s\n",g_FW_ver);
 //		printf("g_board_type=%s\n",g_board_type);
 //    if(strstr(g_board_type,"SF600") != NULL)
 //        g_bIsSF600=true;
@@ -101,25 +105,28 @@ void QueryBoard(int Index)
 #endif
 }
 
-unsigned char GetFPGAVersion(int Index)
+unsigned int GetFPGAVersion(int Index)
 {
     if ((strstr(g_board_type, "SF600") == NULL) && (strstr(g_board_type, "SF700") == NULL))
         return -1; 
     CNTRPIPE_RQ rq;
-    unsigned char vDataPack;
+
+    unsigned int uiFPGAver= 0;
+    unsigned char vDataPack[2];
 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_IN;
     rq.Request = 0x1C;
     rq.Value = RFU;
     rq.Index = 0;
-    rq.Length = 1;
+    rq.Length = 2;
 
-    if (InCtrlRequest(&rq, &vDataPack, 1, Index) == SerialFlash_FALSE) {
+    if (InCtrlRequest(&rq, vDataPack, 2, Index) == SerialFlash_FALSE) {
         return -1;
     }
 
-    return vDataPack;
+    uiFPGAver = ( (unsigned int)vDataPack[1] << 8 | vDataPack[0]);
+    return uiFPGAver;
 }
 
 bool SetIO(unsigned char ioState, int Index)
@@ -332,6 +339,8 @@ bool SetSPIClockValue(unsigned short v, int Index)
 
     return true;
 }
+
+
 
 unsigned int ReadUID(int Index)
 {
@@ -726,6 +735,59 @@ bool WriteSF600UID(unsigned int dwUID, unsigned char ManuID, int Index)
 
     return true;
 }
+bool CheckSDCard(int Index)
+{
+    CNTRPIPE_RQ rq;
+    unsigned char vBuffer;
+
+    // first control packet
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_IN;
+    rq.Request = CHECK_SD_CARD;
+    rq.Value = 0;
+    rq.Index = 0;
+    rq.Length = 1; 
+
+    if (!OutCtrlRequest(&rq, &vBuffer, 1, Index))
+        return false;
+    if(vBuffer==0)
+        return false;
+    return true;
+}
+
+bool GetFirmwareVer(int Index)
+{
+
+    CNTRPIPE_RQ rq;
+    unsigned char vBuffer[26];
+
+    // first control packet
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_IN;
+    rq.Request = PROGINFO_REQUEST;
+    rq.Value = 0;
+    rq.Index = 0;
+    rq.Length = 26; 
+
+    if (!OutCtrlRequest(&rq, vBuffer, 26, Index))
+        return false;
+
+    if (!Is_usbworking(Index)) {
+        printf("Do not find SFxx programmer!!\n");
+        return false;
+    }
+
+    
+    memcpy(g_board_type, &vBuffer[0], 8);
+    memcpy(g_FW_ver,&vBuffer[10],7); 
+     
+    if(strstr(g_board_type, "SF600") != NULL)
+    	memcpy(g_HW_ver,&vBuffer[20],4); 
+    if(strstr(g_board_type, "SF700") != NULL)
+    	memcpy(g_HW_ver,&vBuffer[21],4); 
+
+    return true;
+}
 
 bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 {
@@ -942,3 +1004,4 @@ void SendFFSequence(int Index)
     unsigned char v[4] = { 0xff, 0xff, 0xff, 0xff };
     FlashCommand_SendCommand_OutOnlyInstruction(v, 4, Index);
 }
+

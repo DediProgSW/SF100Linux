@@ -43,8 +43,7 @@ typedef struct FirmwareInfo {
 } FW_INFO;
 
 typedef enum {
-    TRANSCEIVE = 0x01,
-
+    TRANSCEIVE = 0x01, 
     DTC_READ = 0x20,
     WRITE = 0x30,
 
@@ -52,6 +51,7 @@ typedef enum {
 
     READ_EEPROM = 0x05,
     WRITE_EEPROM = 0x06,
+    CHECK_SD_CARD = 0x65,
     GET_BUTTON_STATUS = 0x11,
 } USB_CMD;
 
@@ -303,8 +303,9 @@ typedef struct ChipInfo {
 #define READ_TO_FILE BIT9
 #define BLINK BIT10
 #define DEVICE_ID BIT11
-#define LIST_TYPE BIT12
+#define LIST_TYPE BIT12 
 #define LOADFILEWITHVERIFY BIT13
+#define CHECK_INFO BIT14
 
 struct CAddressRange {
     size_t start;
