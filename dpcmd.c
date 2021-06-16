@@ -501,7 +501,7 @@ int main(int argc, char* argv[])
     unsigned long r;
 	  char *env;
 
-    printf("\nDpCmd Linux 1.12.5.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.12.6.%02d Engine Version:\nLast Built on May 25 2018\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -744,8 +744,10 @@ int main(int argc, char* argv[])
     int dev_cnt = get_usb_dev_cnt();
  
     if (CheckProgrammerInfo())
+    {
         iExitCode = EXCODE_PASS;
-    goto Exit;
+        goto Exit;
+    }
  
     if (bDetect == true) 
     { 
@@ -1346,9 +1348,11 @@ bool ListTypes(void)
 }
 bool CheckProgrammerInfo(void)
 { 
+printf("evy--        CheckProgrammerInfo 1\n");
     if ((g_ucOperation & CHECK_INFO) != CHECK_INFO)
         return false; 
 
+printf("evy--        CheckProgrammerInfo 2\n");
     int dev_cnt = get_usb_dev_cnt();
     unsigned int uiFPGAVer=0;
     if(g_uiDevNum == 0)
