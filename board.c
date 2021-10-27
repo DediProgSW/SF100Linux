@@ -842,8 +842,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
         rq.Value = 0;
         rq.Index = 0;
         rq.Length = 6;
-
-        // evy 6.0.4.25 for win 8.1 with new firmware(7.0.2 up)
+ 
         unsigned char Package[6];
         Package[0] = pBuffer[0];
         Package[1] = pBuffer[1];
@@ -922,8 +921,7 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
         rq.Value = 0; // static_cast<unsigned short>(vBuffer.size() & 0xffff) ;
         rq.Index = 0; // static_cast<unsigned short>((vBuffer.size() >> 16) & 0xffff) ;
         rq.Length = 4;
-
-        // evy 6.0.4.25 for win 8.1 with new firmware(7.0.2 up)
+ 
         unsigned char Package[4];
         Package[0] = (fw_info.SecondSize & 0xff);
         Package[1] = ((fw_info.SecondSize >> 8) & 0xff);

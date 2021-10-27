@@ -23,10 +23,10 @@ unsigned char mcode_SegmentErase = SE;
 unsigned char mcode_ChipErase = CHIP_ERASE;
 unsigned char mcode_Program = PAGE_PROGRAM;
 unsigned char mcode_ProgramCode_4Adr = 0x02;
-unsigned char mcode_ProgramCode_4Adr_S70FSxxx = 0x12;
+unsigned char mcode_ProgramCode_4Adr_12 = 0x12;
 unsigned char mcode_Read = BULK_FAST_READ;
 unsigned char mcode_ReadCode = 0x0B;
-unsigned char mcode_ReadCode_S70FSxxx = 0x0C;
+unsigned char mcode_ReadCode_0C = 0x0C; 
 unsigned int g_AT45_PageSize = 0;
 unsigned int g_AT45_PageSizeMask = 0;
 size_t AT45ChipSize = 0;
@@ -1584,7 +1584,8 @@ bool CN25Qxxx_MutipleDIe_LargeWREAR(unsigned char cSR, int Index)
 
 bool CS25FLxx_LargeEnable4ByteAddrMode(bool Enable4Byte, int Index)
 {
-    if ((strstr(Chip_Info.TypeName, "S25FL512Sxxxxxx1x") != NULL) || (strstr(Chip_Info.TypeName, "S25FL512Sxxxxxx1x(Secure)") != NULL)) {
+    if ((strstr(Chip_Info.TypeName, "S25FL512Sxxxxxx1x") != NULL) || (strstr(Chip_Info.TypeName, "S25FL512Sxxxxxx1x(Secure)") != NULL)) 
+    {
         SerialFlash_waitForWEL(Index);
         if (Enable4Byte) {
             unsigned char v[2];
@@ -1607,6 +1608,19 @@ bool CS25FLxx_LargeEnable4ByteAddrMode(bool Enable4Byte, int Index)
             FlashCommand_TransceiveOut(&v, 1, false, Index);
             return true;
         }
+    }
+    return true;
+}
+bool Universal_LargeEnable4ByteAddrMode(bool Enable4Byte, int Index)
+{ 
+    if (Enable4Byte) {
+        unsigned char v = EN4B;
+        FlashCommand_TransceiveOut(&v, 1, false, Index);
+        return true;
+    } else {
+        unsigned char v = EXIT4B;
+        FlashCommand_TransceiveOut(&v, 1, false, Index);
+        return true; 
     }
     return true;
 }
@@ -1702,6 +1716,8 @@ int SerialFlash_Enable4ByteAddrMode(int bEnable, int Index)
         return CN25Qxxx_LargeEnable4ByteAddrMode(bEnable, Index);
     else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL)
         return CS25FLxx_LargeEnable4ByteAddrMode(bEnable, Index);
+    else 
+        return Universal_LargeEnable4ByteAddrMode(bEnable, Index);
     return SerialFlash_TRUE;
 }
 
@@ -1759,41 +1775,55 @@ int SerialFlash_rangeBlankCheck(struct CAddressRange* Range, int Index)
  * false, if data size larger than memory size, or operation fails
  */
 int SerialFlash_rangeProgram(struct CAddressRange* AddrRange, unsigned char* vData, int Index)
-{
+{  
     if (strstr(Chip_Info.Class, SUPPORT_ATMEL_45DBxxxB) != NULL || strstr(Chip_Info.Class, SUPPORT_ATMEL_45DBxxxD) != NULL)
         return AT45rangeProgram(AddrRange, vData, mcode_Program, mcode_ProgramCode_4Adr, Index);
     else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL) 
-    {
+    { 
         if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true)) 
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADR_256BYTE, mcode_ProgramCode_4Adr, Index);
         else
             return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_12, mcode_ProgramCode_4Adr, Index);
     } 
-    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL) 
+    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxxL_Large) != NULL) 
     {
+ 
+        return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADR_256BYTE, mcode_ProgramCode_4Adr_12, Index);
+    } 
+    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL) 
+    { 
         if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true))  
         {
-            return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_S70FS01GS, mcode_ProgramCode_4Adr_S70FSxxx, Index);
+            return SerialFlash_bulkPipeProgram(AddrRange, vData, PP_4ADDR_256BYTE_S70FS01GS, mcode_ProgramCode_4Adr_12, Index);
         } 
         else
             return false;
     } 
     else
+    {
+ 
         return SerialFlash_bulkPipeProgram(AddrRange, vData, mcode_Program, mcode_ProgramCode_4Adr, Index);
+    }
 }
 
 int SerialFlash_rangeRead(struct CAddressRange* AddrRange, unsigned char* vData, int Index)
 {
 //printf("SerialFlash_rangeRead");
-    if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL) {
+    if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL) 
+    { 
         if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true))
             return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ, mcode_ReadCode, Index);
         else
             return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ_MICRON, mcode_ReadCode, Index);
     }
-    if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL) {
+    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxxL_Large) != NULL) 
+    { 
+        return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ_MICRON, mcode_ReadCode_0C, Index);
+    }
+    else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S70FSxx_Large) != NULL) 
+    { 
         if ((g_bIsSF600[Index] == true)||(g_bIsSF700[Index] == true))
-            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ, mcode_ReadCode_S70FSxxx, Index);
+            return SerialFlash_bulkPipeRead(AddrRange, vData, BULK_4BYTE_FAST_READ, mcode_ReadCode_0C, Index);
         else
             return false;
     } else  
@@ -2139,7 +2169,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
             packageNum = down_range.length >> divider;
             //			printf("packageNum=%d  \n",packageNum);
             //			printf("down_range.start=%X, down_range.end=%X\n",down_range.start, down_range.end);
-            FlashCommand_SendCommand_SetupPacketForBulkWrite(&down_range, modeWrite, WriteCom, Index);
+            FlashCommand_SendCommand_SetupPacketForBulkWrite(&down_range, modeWrite, WriteCom, Chip_Info.PageSizeInByte, Chip_Info.AddrWidth,Index);
             for (i = 0; i < packageNum; ++i) {
                 BulkPipeWrite((unsigned char*)(itr_begin + (i << divider)), 1 << divider, USB_TIMEOUT, Index);
                 if (m_isCanceled)
@@ -2149,7 +2179,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
         }
     } else {
         size_t packageNum = (AddrRange->end - AddrRange->start) >> divider;
-        FlashCommand_SendCommand_SetupPacketForBulkWrite(AddrRange, modeWrite, WriteCom, Index);
+        FlashCommand_SendCommand_SetupPacketForBulkWrite(AddrRange, modeWrite, WriteCom, Chip_Info.PageSizeInByte, Chip_Info.AddrWidth,Index);
         for (i = 0; i < packageNum; ++i) {
             BulkPipeWrite((unsigned char*)((itr_begin + (i << divider))), 1 << divider, USB_TIMEOUT, Index);
             if (m_isCanceled)

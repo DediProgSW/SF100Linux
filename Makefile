@@ -8,7 +8,7 @@ Q:=@
 ifneq ($(V),1)
 ifneq ($(Q),)
 .SILENT:
-endif
+endif 
 endif
 
 PROGRAM = dpcmd
@@ -27,7 +27,7 @@ LDFLAGS += $(shell $(PKG_CONFIG) --libs libusb-1.0)
 DEPDIR := .deps
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
-SRCS = dpcmd.c usbdriver.c FlashCommand.c SerialFlash.c parse.c board.c project.c IntelHexFile.c MotorolaFile.c
+SRCS = dpcmd.c usbdriver.c FlashCommand.c SerialFlash.c parse.c board.c project.c IntelHexFile.c MotorolaFile.c 
 
 PROGRAMMER_OBJS := $(SRCS:%.c=%.o)
 

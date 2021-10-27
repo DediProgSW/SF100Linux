@@ -2,7 +2,7 @@
 <DediProgChipDatabase
     Description="DediProg Pro Supported memory info"
     Creator="DediProg Pro"
-    Ver="4.00"
+    Ver="5.00"
     CreateDate="2007-September-25"
     Locale="2052">
 <Portofolio
@@ -22190,7 +22190,7 @@ RDIDCommand="0x9F"/>
     RDIDCommand="0x9F" />
 <Chip TypeName="S25FL256L"
     ICType="SPI_NOR"
-    Class="S25FLxxx_Large"
+    Class="S25FLxxxL_Large"
     UniqueID="0x016019"
     Description="256 Mbit, Low Voltage, Serial Flash Memory With 50MHz SPI Bus Interface"
     Manufacturer="Spansion"

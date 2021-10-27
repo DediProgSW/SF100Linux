@@ -1,15 +1,19 @@
-#include "ChipInfoDb.h"
+#include "ChipInfoDb.h" 
 #include "project.h"
 #include <ctype.h>
 #include <libgen.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h>    
+//#include "pugixml.hpp"
 
 #define testbufsize 256
 #define linebufsize 512
 #define filebufsize 1024 * 1024
 #define min(a, b) (((a) > (b)) ? (b) : (a))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
+
+//using namespace pugi;
+//xml_document doc;
 
 FILE* openChipInfoDb(void)
 {
@@ -30,7 +34,14 @@ FILE* openChipInfoDb(void)
             if ((fp = fopen(Path, "rt")) == NULL)
                 fprintf(stderr, "Error opening file: %s\n", Path);
         }
-    }
+    } 
+
+	 
+		//xml_parse_result result = doc.load_file( Path );
+		//if ( result.status != xml_parse_status::status_ok )
+		//	return;
+
+
     return fp;
 }
 
@@ -780,6 +791,10 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
 
 bool Dedi_List_AllChip(void)
 {
+
+
+  
+
     FILE* fp; /*Declare file pointer variable*/
     char file_line_buf[linebufsize], *tok, *file_buf, test[testbufsize];
     char* pch;

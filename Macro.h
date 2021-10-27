@@ -208,6 +208,7 @@ typedef struct ChipInfo {
 #ifdef SUPPORT_SPANSION
 #define SUPPORT_SPANSION_S25FLxx "S25FLxxx"
 #define SUPPORT_SPANSION_S25FLxx_Large "S25FLxxx_Large"
+#define SUPPORT_SPANSION_S25FLxxL_Large "S25FLxxxL_Large"
 #define SUPPORT_SPANSION_S70FSxx_Large "S70FSxxx_Large"
 #endif
 

@@ -89,9 +89,9 @@ int FlashCommand_SendCommand_OneOutOneIn(unsigned char* vOut, int out_len, unsig
     return FlashCommand_TRUE;
 }
 
-int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, int Index)
+int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom,  unsigned int PageSize, unsigned int AddressMode,int Index)
 {
-    unsigned char vInstruction[10];
+    unsigned char vInstruction[16];
     CNTRPIPE_RQ rq;
     // length in terms of 256/128 bytes
     size_t divider;
@@ -125,9 +125,14 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrR
         vInstruction[7] = ((AddrRange->start >> 8) & 0xff);
         vInstruction[8] = ((AddrRange->start >> 16) & 0xff);
         vInstruction[9] = ((AddrRange->start >> 24) & 0xff);
+        vInstruction[10] = ((PageSize) & 0xff);
+        vInstruction[11] = ((PageSize >> 8) & 0xff);
+        vInstruction[12] = ((PageSize>> 16) & 0xff);
+        vInstruction[13] = ((PageSize >> 24) & 0xff);
+        vInstruction[14] = ((AddressMode) & 0xff); 
         rq.Value = 0;
         rq.Index = 0;
-        rq.Length = (unsigned long)(10);
+        rq.Length = (unsigned long)(16);
     } else {
         rq.Value = (unsigned short)(AddrRange->start & 0xffff); // 16 bits LSB
         rq.Index = (unsigned short)((AddrRange->start >> 16) & 0xffff); // 16 bits MSB
