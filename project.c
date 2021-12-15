@@ -465,7 +465,7 @@ bool threadEraseWholeChip(int Index)
 }
 
 bool threadReadRangeChip(struct CAddressRange range, int Index)
-{
+{ 
     bool result = true;
     struct CAddressRange AddrRound;
 
@@ -504,7 +504,7 @@ bool threadReadRangeChip(struct CAddressRange range, int Index)
 }
 
 bool threadReadChip(int Index)
-{
+{ 
     bool result = false;
     struct CAddressRange Addr;
     Addr.start = 0;

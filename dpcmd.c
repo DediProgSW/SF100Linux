@@ -500,7 +500,7 @@ int main(int argc, char* argv[])
     unsigned long r;
 	  char *env;
 
-    printf("\nDpCmd Linux 1.12.7.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.12.8.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -576,7 +576,7 @@ int main(int argc, char* argv[])
             break;
         case 'r':
             g_parameter_read = optarg;
-            g_ucOperation |= READ_TO_FILE;
+            g_ucOperation |= READ_TO_FILE;  
             break;
         case 'p':
             g_parameter_program = optarg;
@@ -1564,6 +1564,7 @@ void do_Read(void)
     DownloadAddrRange.end = g_uiAddr + g_uiLen;
 
     printf("%s\n", msg_info_reading);
+ 
     Run(READ_ANY_BY_PREFERENCE_CONFIGURATION, g_uiDevNum);
     Wait(msg_info_readOK, msg_info_readfail);
 }
@@ -1587,14 +1588,37 @@ void do_DisplayOrSave(void)
                 printf("\n\n");
             } else {
                 UploadAddrRange.length = UploadAddrRange.end - UploadAddrRange.start;
-                char str[64];
-                sprintf(str, "%d_", icnt + 1);
-                strcat(str, g_parameter_read);
+                char SourceStr[64];   
+	 
 
-                if (WriteFile((const char*)str, pBufferForLastReadData[icnt], UploadAddrRange.length) == 1)
-                    printf("\nSuccessfully saved into file:%s \n", str);
+		sprintf(SourceStr, "%s", g_parameter_read);
+	 	
+		
+
+		int len = strlen(SourceStr);
+		int i = len;
+		while(SourceStr[i]!='.' && i>0)
+		    i--;
+		char ExtStr[64];;
+		if(SourceStr[i]=='.')
+              	    sprintf(ExtStr, "%s", &SourceStr[i]); 
+		else
+              	    sprintf(ExtStr, "%s", &SourceStr[len]);
+		
+		char *loc = strstr(SourceStr,ExtStr); 
+		  
+		for(int i=loc-SourceStr;i<strlen(SourceStr);i++) 
+		    SourceStr[i]='\0';
+		
+		char str[64];
+              	sprintf(str, "_%d", icnt + 1);
+                strcat(SourceStr, str);
+                strcat(SourceStr, ExtStr);   
+  
+                if (WriteFile((const char*)SourceStr, pBufferForLastReadData[icnt], UploadAddrRange.length) == 1)
+                    printf("\nSuccessfully saved into file:%s \n", SourceStr);
                 else
-                    printf("\nFailed to save into file: %s\n", str);
+                    printf("\nFailed to save into file: %s\n", SourceStr);
             }
         }
     } else if (g_uiDevNum != 0) {
