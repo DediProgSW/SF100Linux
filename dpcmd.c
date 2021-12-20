@@ -1593,28 +1593,37 @@ void do_DisplayOrSave(void)
 
 		sprintf(SourceStr, "%s", g_parameter_read);
 	 	
-		
-
 		int len = strlen(SourceStr);
 		int i = len;
+		
 		while(SourceStr[i]!='.' && i>0)
 		    i--;
-		char ExtStr[64];;
+		
+		char ExtStr[64];
 		if(SourceStr[i]=='.')
+		{
               	    sprintf(ExtStr, "%s", &SourceStr[i]); 
+		    char *loc = strstr(SourceStr,ExtStr); 
+			  
+		    for(int i=loc-SourceStr;i<strlen(SourceStr);i++) 
+	  	        SourceStr[i]='\0';
+		   // printf("\n 1ExtStr= %s",ExtStr);
+		    char str[64];
+
+		    sprintf(str, "_%d", icnt + 1);
+           	    strcat(SourceStr, str);
+		    strcat(SourceStr, ExtStr);
+		}
 		else
-              	    sprintf(ExtStr, "%s", &SourceStr[len]);
-		
-		char *loc = strstr(SourceStr,ExtStr); 
-		  
-		for(int i=loc-SourceStr;i<strlen(SourceStr);i++) 
-		    SourceStr[i]='\0';
-		
-		char str[64];
-              	sprintf(str, "_%d", icnt + 1);
-                strcat(SourceStr, str);
-                strcat(SourceStr, ExtStr);   
-  
+		{
+              	    sprintf(ExtStr, "%s", &SourceStr[0]);
+		    //printf("\n 2ExtStr= %s",ExtStr);
+
+		    char str[64];
+		    sprintf(str, "_%d", icnt + 1); 
+		    strcat(SourceStr, str); 
+		}
+ 
                 if (WriteFile((const char*)SourceStr, pBufferForLastReadData[icnt], UploadAddrRange.length) == 1)
                     printf("\nSuccessfully saved into file:%s \n", SourceStr);
                 else
