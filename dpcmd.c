@@ -500,7 +500,7 @@ int main(int argc, char* argv[])
     unsigned long r;
 	  char *env;
 
-    printf("\nDpCmd Linux 1.12.8.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.12.9.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -1593,6 +1593,8 @@ void do_DisplayOrSave(void)
 
 		sprintf(SourceStr, "%s", g_parameter_read);
 	 	
+		
+
 		int len = strlen(SourceStr);
 		int i = len;
 		
@@ -1624,6 +1626,7 @@ void do_DisplayOrSave(void)
 		    strcat(SourceStr, str); 
 		}
  
+		 
                 if (WriteFile((const char*)SourceStr, pBufferForLastReadData[icnt], UploadAddrRange.length) == 1)
                     printf("\nSuccessfully saved into file:%s \n", SourceStr);
                 else
