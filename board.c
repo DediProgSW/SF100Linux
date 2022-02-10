@@ -108,10 +108,10 @@ void QueryBoard(int Index)
 unsigned int GetFPGAVersion(int Index)
 {
     if ((strstr(g_board_type, "SF600") == NULL) && (strstr(g_board_type, "SF700") == NULL))
-        return -1; 
+        return -1;
     CNTRPIPE_RQ rq;
 
-    unsigned int uiFPGAver= 0;
+    unsigned int uiFPGAver = 0;
     unsigned char vDataPack[2];
 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
@@ -125,7 +125,7 @@ unsigned int GetFPGAVersion(int Index)
         return -1;
     }
 
-    uiFPGAver = ( (unsigned int)vDataPack[1] << 8 | vDataPack[0]);
+    uiFPGAver = ((unsigned int)vDataPack[1] << 8 | vDataPack[0]);
     return uiFPGAver;
 }
 
@@ -186,12 +186,12 @@ bool SetLEDProgBoard(size_t Color, int Index)
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_OUT;
     rq.Request = SET_IO;
-    if (Is_NewUSBCommand(Index)) { 
-	rq.Value = Color | (g_IO1Select << 1);
-	rq.Value = (rq.Value& 0xFFF7) | (g_IO4Select << 3);
+    if (Is_NewUSBCommand(Index)) {
+        rq.Value = Color | (g_IO1Select << 1);
+        rq.Value = (rq.Value & 0xFFF7) | (g_IO4Select << 3);
         //rq.Value = (Color & 0xFFF7) | (g_IO1Select << 1) | (g_IO4Select << 3);
         rq.Index = 0;
-    } else { 
+    } else {
         rq.Value = 0x09;
         rq.Index = Color >> 8; // LED 0:ON  1:OFF   Bit0:Green  Bit1:Orange Bit2:Red
     }
@@ -340,8 +340,6 @@ bool SetSPIClockValue(unsigned short v, int Index)
     return true;
 }
 
-
-
 unsigned int ReadUID(int Index)
 {
     if (!Is_usbworking(Index)) {
@@ -350,10 +348,10 @@ unsigned int ReadUID(int Index)
     unsigned int dwUID = 0;
     unsigned char vUID[16];
 
-    if ((g_bIsSF600 == true)||(g_bIsSF700 == true)) { 
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)) {
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
-	if(g_bIsSF600 == true)
+        if (g_bIsSF600 == true)
             dwUID = (unsigned int)vUID[0] << 16 | (unsigned int)vUID[1] << 8 | vUID[2];
         else
             dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
@@ -451,7 +449,7 @@ unsigned char ReadManufacturerID(int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true)||(g_bIsSF700 == true)) {
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)) {
         unsigned char vUID[16];
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
@@ -611,7 +609,7 @@ bool WriteUID(unsigned int dwUID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true)||(g_bIsSF700 == true))  
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
         return true;
 
     CNTRPIPE_RQ rq;
@@ -651,7 +649,7 @@ bool WriteManufacturerID(unsigned char ManuID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true)||(g_bIsSF700 == true))  
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
         return true;
 
     CNTRPIPE_RQ rq;
@@ -746,11 +744,11 @@ bool CheckSDCard(int Index)
     rq.Request = CHECK_SD_CARD;
     rq.Value = 0;
     rq.Index = 0;
-    rq.Length = 1; 
+    rq.Length = 1;
 
     if (!OutCtrlRequest(&rq, &vBuffer, 1, Index))
         return false;
-    if(vBuffer==0)
+    if (vBuffer == 0)
         return false;
     return true;
 }
@@ -767,7 +765,7 @@ bool GetFirmwareVer(int Index)
     rq.Request = PROGINFO_REQUEST;
     rq.Value = 0;
     rq.Index = 0;
-    rq.Length = 26; 
+    rq.Length = 26;
 
     if (!OutCtrlRequest(&rq, vBuffer, 26, Index))
         return false;
@@ -777,14 +775,13 @@ bool GetFirmwareVer(int Index)
         return false;
     }
 
-    
     memcpy(g_board_type, &vBuffer[0], 8);
-    memcpy(g_FW_ver,&vBuffer[10],7); 
-     
-    if(strstr(g_board_type, "SF600") != NULL)
-    	memcpy(g_HW_ver,&vBuffer[20],4); 
-    if(strstr(g_board_type, "SF700") != NULL)
-    	memcpy(g_HW_ver,&vBuffer[21],4); 
+    memcpy(g_FW_ver, &vBuffer[10], 7);
+
+    if (strstr(g_board_type, "SF600") != NULL)
+        memcpy(g_HW_ver, &vBuffer[20], 4);
+    if (strstr(g_board_type, "SF700") != NULL)
+        memcpy(g_HW_ver, &vBuffer[21], 4);
 
     return true;
 }
@@ -842,7 +839,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
         rq.Value = 0;
         rq.Index = 0;
         rq.Length = 6;
- 
+
         unsigned char Package[6];
         Package[0] = pBuffer[0];
         Package[1] = pBuffer[1];
@@ -921,7 +918,7 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
         rq.Value = 0; // static_cast<unsigned short>(vBuffer.size() & 0xffff) ;
         rq.Index = 0; // static_cast<unsigned short>((vBuffer.size() >> 16) & 0xffff) ;
         rq.Length = 4;
- 
+
         unsigned char Package[4];
         Package[0] = (fw_info.SecondSize & 0xff);
         Package[1] = ((fw_info.SecondSize >> 8) & 0xff);
@@ -964,7 +961,7 @@ bool UpdateFirmware(const char* sFolder, int Index)
     unsigned int UID = 0;
     unsigned char ManID = 0;
     // read status
-    if ((g_bIsSF600 == true)||(g_bIsSF700 == true))
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
         return UpdateSF600Firmware(sFolder, Index);
 
     dediprog_set_spi_voltage(g_Vcc, Index);
@@ -1002,4 +999,3 @@ void SendFFSequence(int Index)
     unsigned char v[4] = { 0xff, 0xff, 0xff, 0xff };
     FlashCommand_SendCommand_OutOnlyInstruction(v, 4, Index);
 }
-

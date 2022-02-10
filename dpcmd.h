@@ -76,7 +76,7 @@ bool LoadFileWithVerify(void);
 bool CalChecksum(void);
 int Handler();
 bool ListTypes(void);
-bool CheckProgrammerInfo(void); 
+bool CheckProgrammerInfo(void);
 void GetLogPath(char* path);
 bool Wait(const char* strOK, const char* strFail);
 void ExitProgram(void);

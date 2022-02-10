@@ -8,7 +8,7 @@
 
 void SendFFSequence(int Index);
 void QueryBoard(int Index);
-unsigned int GetFPGAVersion(int Index); 
+unsigned int GetFPGAVersion(int Index);
 bool SetIO(unsigned char ioState, int Index);
 bool SetTargetFlash(unsigned char StartupMode, int Index);
 bool SetLEDProgBoard(size_t Clolor, int Index);
