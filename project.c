@@ -707,7 +707,7 @@ size_t Condense(uintptr_t* out, unsigned char* vc, uintptr_t* addrs, size_t addr
     for (j = 0; j < addrSize; j++) {
         for (i = addrs[j] - baseAddr; i < (addrs[j] - baseAddr + step); i++) {
             if (vc[i] != 0xFF) {
-                out[j] = addrs[j];
+                out[outSize] = addrs[j];
                 outSize++;
                 break;
             }
