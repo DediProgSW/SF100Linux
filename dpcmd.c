@@ -884,7 +884,8 @@ int FirmwareUpdate()
     }
 
     // obtain file size:
-    filesize = fseek(pFile, 0, SEEK_END);
+    fseek(pFile, 0, SEEK_END);
+    filesize = ftell(pFile);
     if (filesize < sizeof(FW_INFO)) {
         printf("File %s too small.\n", g_parameter_fw);
         return -1;
