@@ -1,9 +1,9 @@
-#include "ChipInfoDb.h" 
+#include "ChipInfoDb.h"
 #include "project.h"
 #include <ctype.h>
 #include <libgen.h>
 #include <stdlib.h>
-#include <string.h>    
+#include <string.h>
 //#include "pugixml.hpp"
 
 #define testbufsize 256
@@ -34,13 +34,11 @@ FILE* openChipInfoDb(void)
             if ((fp = fopen(Path, "rt")) == NULL)
                 fprintf(stderr, "Error opening file: %s\n", Path);
         }
-    } 
+    }
 
-	 
-		//xml_parse_result result = doc.load_file( Path );
-		//if ( result.status != xml_parse_status::status_ok )
-		//	return;
-
+    //xml_parse_result result = doc.load_file( Path );
+    //if ( result.status != xml_parse_status::status_ok )
+    //	return;
 
     return fp;
 }
@@ -271,13 +269,13 @@ printf("evy- Dedi_Search_Chip_Db(RDIDCommand=0x%lx,UniqueID=0x%lx,search_all=%d)
 
 #else
 
-int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
+int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
     long UniqueID,
-    CHIP_INFO* Chip_Info, 
+    CHIP_INFO* Chip_Info,
     int search_all)
-{ 
+{
     //printf("evy Dedi_Search_Chip_Db_FirstDetect(RDIDCommand=0x%lx,UniqueID=0x%lx,search_all=%d)\n",RDIDCommand,UniqueID,search_all);
- 
+
     FILE* fp; /*Declare file pointer variable*/
     int found_flag = 0;
     char file_line_buf[linebufsize], *tok, *file_buf, test[testbufsize];
@@ -286,39 +284,38 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
     int detectICNum = 0;
     char strTypeName[32][100];
     CHIP_INFO Chip_Info_temp;
- 
-    for(int i=0;i<32;i++)
-	memset(strTypeName[i], '\0', 100); 
 
-    memset(chTypeName, '\0', 1024); 
+    for (int i = 0; i < 32; i++)
+        memset(strTypeName[i], '\0', 100);
+
+    memset(chTypeName, '\0', 1024);
 
     memset(Chip_Info->TypeName, '\0', linebufsize); //strlen(Chip_Info->TypeName)=0
 
     if ((fp = openChipInfoDb()) == NULL)
-        return 1;  
+        return 1;
     sz = fsize(fp);
     file_buf = (char*)malloc(sz);
 
     memset(file_buf, '\0', sz);
     /*Read into the buffer contents within thr file stream*/
- 
+
     while (fgets(file_line_buf, linebufsize, fp) != NULL) {
         pch = strstr(file_line_buf, "TypeName");
-	//printf("ile_line_buf=%s",file_line_buf) ;       
-	if (pch != NULL) {   
-            if (found_flag == 1)
-	    {   
-		found_flag = 0; 
-    
-		if(strlen(Chip_Info->TypeName)==0) 	 	
- 	   	    *Chip_Info=Chip_Info_temp; //first chip info 
-	    }
-             //   break;
-  
+        //printf("ile_line_buf=%s",file_line_buf) ;
+        if (pch != NULL) {
+            if (found_flag == 1) {
+                found_flag = 0;
+
+                if (strlen(Chip_Info->TypeName) == 0)
+                    *Chip_Info = Chip_Info_temp; //first chip info
+            }
+            //   break;
+
             memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("TypeName")); 
-            tok = strtok(test, "\"= \t"); 
-            Chip_Info_temp.TypeName[0] = '\0'; 
+            strcpy(test, pch + strlen("TypeName"));
+            tok = strtok(test, "\"= \t");
+            Chip_Info_temp.TypeName[0] = '\0';
             Chip_Info_temp.Class[0] = '\0';
             Chip_Info_temp.UniqueID = 0;
             Chip_Info_temp.Description[0] = '\0';
@@ -342,13 +339,13 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
             Chip_Info_temp.VppSupport = 0;
             Chip_Info_temp.MXIC_WPmode = false;
             Chip_Info_temp.Timeout = 0;
-            // end of struct init  
+            // end of struct init
             strcpy(Chip_Info_temp.TypeName, tok);
-  
+
             continue;
         }
- 
-        pch = strstr(file_line_buf, "Class");  
+
+        pch = strstr(file_line_buf, "Class");
         if (pch != NULL) {
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("Class"));
@@ -366,8 +363,8 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
             Chip_Info_temp.UniqueID = strtol(tok, NULL, 16);
             if ((UniqueID == Chip_Info_temp.UniqueID)) {
                 //found_flag = 1;
-		//detectICNum++;
-	    }
+                //detectICNum++;
+            }
 
             continue;
         }
@@ -384,7 +381,7 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
         if (pch != NULL) {
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("Voltage"));
-            tok = strtok(test, "\"= \t"); 
+            tok = strtok(test, "\"= \t");
             if (strcmp(tok, "3.3V") == 0)
                 Chip_Info_temp.VoltageInMv = 3300;
             else if (strcmp(tok, "2.5V") == 0)
@@ -400,17 +397,17 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("JedecDeviceID"));
             tok = strtok(test, "\"= \t");
-           //printf("JedecDeviceID = 0x%lx\n",strtol(tok,NULL,16));
+            //printf("JedecDeviceID = 0x%lx\n",strtol(tok,NULL,16));
             Chip_Info_temp.JedecDeviceID = strtol(tok, NULL, 16);
-            if ((UniqueID == Chip_Info_temp.JedecDeviceID))	{
-		found_flag = 1;
+            if ((UniqueID == Chip_Info_temp.JedecDeviceID)) {
+                found_flag = 1;
 
-		strcpy(strTypeName[detectICNum], Chip_Info_temp.TypeName);  
-           	//printf("strTypeName[%d] = %s\n",detectICNum,strTypeName[detectICNum]);
-		strcat(chTypeName, " ");
-		strcat(chTypeName, strTypeName[detectICNum]); 
-		detectICNum++;
-	    }
+                strcpy(strTypeName[detectICNum], Chip_Info_temp.TypeName);
+                //printf("strTypeName[%d] = %s\n",detectICNum,strTypeName[detectICNum]);
+                strcat(chTypeName, " ");
+                strcat(chTypeName, strTypeName[detectICNum]);
+                detectICNum++;
+            }
             continue;
         }
         pch = strstr(file_line_buf, "ChipSizeInKByte");
@@ -505,15 +502,14 @@ int Dedi_Search_Chip_Db(char* chTypeName,long RDIDCommand,
                 Chip_Info_temp.MXIC_WPmode = false;
             // starting checking input data
         }
-	pch = strstr(file_line_buf, "Portofolio");//end
-       	if (pch != NULL) { 
-	    if(detectICNum)
-		found_flag = 1;
-	}
+        pch = strstr(file_line_buf, "Portofolio"); //end
+        if (pch != NULL) {
+            if (detectICNum)
+                found_flag = 1;
+        }
 
+    } /*Continue until EOF is encoutered*/
 
-    } /*Continue until EOF is encoutered*/ 
-    
     fclose(fp); /*Close file*/
     Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
     free(file_buf);
@@ -791,9 +787,6 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
 
 bool Dedi_List_AllChip(void)
 {
-
-
-  
 
     FILE* fp; /*Declare file pointer variable*/
     char file_line_buf[linebufsize], *tok, *file_buf, test[testbufsize];

@@ -3,7 +3,7 @@
 #ifndef ChipInfo_H
 #define ChipInfo_H
 
-#include "Macro.h" 
+#include "Macro.h"
 
 #define NUMBER_OF_SUPPORTING_CHIPS 3
 

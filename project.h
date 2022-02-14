@@ -51,7 +51,7 @@ int GetFileFormatFromExt(const char* csPath);
 #if 0
 CHIP_INFO GetFirstDetectionMatch(int Index);
 #else
-CHIP_INFO GetFirstDetectionMatch(char* TypeName,int Index);
+CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index);
 #endif
 void SetIOMode(bool isProg, int Index);
 bool ReadFile(const char* csPath, unsigned char* buffer, unsigned long* FileSize, unsigned char PaddingByte);

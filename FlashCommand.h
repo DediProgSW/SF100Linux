@@ -18,7 +18,7 @@ int FlashCommand_SendCommand_OutInstructionWithCS(unsigned char* v, int len, int
 
 int FlashCommand_SendCommand_OneOutOneIn(unsigned char* vOut, int out_len, unsigned char* vIn, int in_len, int Index);
 
-int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, unsigned int PageSize, unsigned int AddressMode,int Index);
+int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, unsigned int PageSize, unsigned int AddressMode, int Index);
 
 int FlashCommand_SendCommand_SetupPacketForAT45DBBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, int Index);
 
