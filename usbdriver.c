@@ -1,7 +1,7 @@
 #include "usbdriver.h"
 #include "FlashCommand.h"
 #include "project.h"
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 #include <string.h>
 
 unsigned int m_nbDeviceDetected = 0;
