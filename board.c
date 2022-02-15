@@ -790,7 +790,7 @@ bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 {
     unsigned char vUID[16];
     unsigned int i = 0;
-    if (ReadOnBoardFlash(vUID, true, Index) == false)
+    if (ReadOnBoardFlash(vUID, false, Index) == false)
         return false;
     for (i = 0; i < 16; i++)
         vBuffer[i] = vBuffer[i] ^ vUID[i];
@@ -802,6 +802,7 @@ bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 
 bool UpdateSF600Flash(const char* sFilePath, int Index)
 {
+        printf("		evy	UpdateSF600Flash\n");
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;
@@ -818,16 +819,14 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
     }
 
     fseek(pFile, 0, SEEK_SET);
-    lSize = fread((unsigned char*)&fw_info, 1, sizeof(FW_INFO), pFile);
+    lSize = fread((unsigned char*)&fw_info, 1, sizeof(FW_INFO), pFile); 
     if (lSize != sizeof(FW_INFO))
         printf("Possible read length error %s\n", sFilePath);
-
     pBuffer = (unsigned char*)malloc(fw_info.FirstSize);
     fseek(pFile, fw_info.FirstIndex, SEEK_SET);
-    lSize = fread(pBuffer, 1, fw_info.FirstSize, pFile);
+    lSize = fread(pBuffer, 1, fw_info.FirstSize, pFile); 
     if (lSize != fw_info.FirstSize)
         printf("Possible read length error %s\n", sFilePath);
-
     fclose(pFile);
 
     EncrypFirmware(pBuffer, fw_info.FirstSize, Index);
@@ -880,6 +879,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
 
 bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
 {
+        printf("		evy	UpdateSF600Flash_FPGA\n");
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;
@@ -956,14 +956,14 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
 }
 
 bool UpdateFirmware(const char* sFolder, int Index)
-{
+{ 
     bool bResult = true;
     unsigned int UID = 0;
     unsigned char ManID = 0;
     // read status
     if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
         return UpdateSF600Firmware(sFolder, Index);
-
+ 
     dediprog_set_spi_voltage(g_Vcc, Index);
 
     if (g_firmversion > 0x040107) // 4.1.7
