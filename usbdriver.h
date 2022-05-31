@@ -3,7 +3,7 @@
 #ifndef DEDI_USB_DRIVER
 #define DEDI_USB_DRIVER
 
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
