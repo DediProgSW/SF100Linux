@@ -27,6 +27,7 @@ extern int m_boEnReadQuadIO;
 extern int m_boEnWriteQuadIO;
 extern volatile bool g_bIsSF600[16];
 extern volatile bool g_bIsSF700[16];
+extern volatile bool g_bIsSF600PG2[16];
 extern char g_board_type[8];
 extern int g_firmversion;
 extern char* g_parameter_vcc;
@@ -924,6 +925,8 @@ void threadRun(void* Type)
     if (g_uiAddr == 0 && g_uiLen == 0) {
         if (g_bIsSF700[Index] == true)
             printf("\nDevice %d (SF7%05X):", Index + 1, dwUID);
+	else if (g_bIsSF600PG2[Index] == true)
+            printf("\nDevice %d (SPG%05X):", Index + 1, dwUID);
         else if ((dwUID / 600000) == 0)
             printf("\nDevice %d (DP%06d):", Index + 1, dwUID);
         else
@@ -1042,7 +1045,7 @@ void SetIOMode(bool isProg, int Index)
     m_boEnReadQuadIO = 0;
     m_boEnWriteQuadIO = 0;
 
-    if ((g_bIsSF600[Index] == false) && (g_bIsSF700[Index] == false))
+    if ((g_bIsSF600[Index] == false) && (g_bIsSF700[Index] == false) && (g_bIsSF600PG2[Index] == false))
         return;
 
     SetIOModeToSF600(IOValue, Index);
@@ -1190,6 +1193,13 @@ bool is_SF700(int Index)
     }
     return false;
 }
+bool is_SF600PG2(int Index)
+{
+    if (strstr(g_board_type, "SF600PG2") != NULL) {
+        return true;
+    }
+    return false;
+}
 #if 0
 CHIP_INFO GetFirstDetectionMatch(int Index)
 {
@@ -1282,7 +1292,7 @@ CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
 
         TurnONVcc(Index);
         if (Is_usbworking(Index)) {
-            if ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)) {
+            if ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true)) {
                 int startmode;
 
                 if (g_StartupMode == STARTUP_APPLI_SF_2)
@@ -1491,6 +1501,18 @@ void SetProgReadCommand(int Index)
         mcode_Read = BULK_4BYTE_FAST_READ;
         mcode_SegmentErase = SE;
         mcode_ProgramCode_4Adr = 0x02;
+        mcode_ReadCode = 0x0C;
+    } else if (strstr(Chip_Info.Class, SUPPORT_ST_M25Pxx_Large) != NULL) {
+        mcode_RDSR = RDSR;
+        mcode_WRSR = WRSR;
+        mcode_ChipErase = CHIP_ERASE;
+        mcode_Program = PP_4ADR_256BYTE;
+        mcode_Read = BULK_4BYTE_FAST_READ;
+        mcode_SegmentErase = SE;
+        if (strstr(Chip_Info.TypeName, "GD25LB256E") != NULL)
+            mcode_ProgramCode_4Adr = 0x12;
+        else
+            mcode_ProgramCode_4Adr = 0x02;
         mcode_ReadCode = 0x0C;
     } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Qxx_Large) != NULL) {
         mcode_RDSR = RDSR;

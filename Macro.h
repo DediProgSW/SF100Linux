@@ -177,6 +177,7 @@ typedef struct ChipInfo {
 #ifdef SUPPORT_ST
 #define SUPPORT_ST_M25PExx "M25PExx"
 #define SUPPORT_ST_M25Pxx "M25Pxx"
+#define SUPPORT_ST_M25Pxx_Large "M25Pxx_Large"
 #define SUPPORT_ST_M45PExx "M45PExx"
 #define SUPPORT_NUMONYX_Alverstone "Alverstone"
 #define SUPPORT_NUMONYX_N25Qxxx_Large "N25Qxxx_Large"

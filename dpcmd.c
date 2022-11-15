@@ -22,6 +22,7 @@ extern unsigned int g_uiFileChecksum;
 extern unsigned long g_ulFileSize;
 extern volatile bool g_bIsSF600[16];
 extern volatile bool g_bIsSF700[16];
+extern volatile bool g_bIsSF600PG2[16];
 extern unsigned char g_BatchIndex;
 
 unsigned int g_Vcc = vcc3_5V;
@@ -499,7 +500,7 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-    printf("\nDpCmd Linux 1.12.10.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.12.11.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);

@@ -9,6 +9,7 @@
 
 volatile bool g_bIsSF600 = false;
 volatile bool g_bIsSF700 = false;
+volatile bool g_bIsSF600PG2 = false;
 extern char g_board_type[8];
 extern char g_FPGA_ver[8];
 extern char g_FW_ver[8];
@@ -55,59 +56,33 @@ void QueryBoard(int Index)
     }
 
     CNTRPIPE_RQ rq;
-    unsigned char vBuffer[16];
+    unsigned char vBuffer[32];
 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_IN;
     rq.Request = PROGINFO_REQUEST;
     rq.Value = RFU;
     rq.Index = 0x00;
-    rq.Length = (unsigned long)16;
-    memset(vBuffer, '\0', 16);
+    rq.Length = (unsigned long)32;
+    memset(vBuffer, '\0', 32);
 
-    if (InCtrlRequest(&rq, vBuffer, 16, Index) == SerialFlash_FALSE) {
+    if (InCtrlRequest(&rq, vBuffer, 32, Index) == SerialFlash_FALSE) {
         printf("send fail\n");
         return;
     }
 
-    memcpy(g_board_type, &vBuffer[0], 8);
-    //memcpy(g_FW_ver,&vBuffer[8],8);
-    //printf("g_FW_ver=%s\n",g_FW_ver);
-//		printf("g_board_type=%s\n",g_board_type);
-//    if(strstr(g_board_type,"SF600") != NULL)
-//        g_bIsSF600=true;
-//    else
-//        g_bIsSF600=false;
-#if 0
-    m_info.fpga_version=GetFPGAVersion(Index);
-             vector<unsigned char> vBuffer1(3) ;
-
-		rq.Function     = URB_FUNCTION_VENDOR_OTHER ;
-		rq.Direction    = VENDOR_DIRECTION_IN ;
-		rq.Request      = 0x7;
-		rq.Value        = 0 ;
-		rq.Index        = 0xEF00 ;
-		rq.Length       = 3;
-
-
-		if(! m_usb.InCtrlRequest(rq, vBuffer1,Index))
-		{
-			return ;
-		}
-
-            if(m_info.board_type==L"SF600")
-            {
-			ReadOnBoardFlash(false,Index);
-               m_info.dwUID=(DWORD)m_vUID[0]<<16 | (DWORD)m_vUID[1]<<8 | m_vUID[2];
-            }
-            else
-		m_info.dwUID=(DWORD)vBuffer1[0]<<16 | (DWORD)vBuffer1[1]<<8 | vBuffer1[2];
-#endif
+    memcpy(g_board_type, &vBuffer[0], 8); 
+    
+    unsigned char ucData;
+    if((strstr(g_board_type, "SF600PG2") != NULL))
+    { 
+        printf("		evy	UpdateSF600Flash\n");
+    }
 }
 
 unsigned int GetFPGAVersion(int Index)
 {
-    if ((strstr(g_board_type, "SF600") == NULL) && (strstr(g_board_type, "SF700") == NULL))
+    if ((strstr(g_board_type, "SF600PG2") == NULL)&& (strstr(g_board_type, "SF600") == NULL) && (strstr(g_board_type, "SF700") == NULL))
         return -1;
     CNTRPIPE_RQ rq;
 
@@ -348,7 +323,7 @@ unsigned int ReadUID(int Index)
     unsigned int dwUID = 0;
     unsigned char vUID[16];
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)) {
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true) || (g_bIsSF600PG2 == true)) {
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
         if (g_bIsSF600 == true)
@@ -449,7 +424,7 @@ unsigned char ReadManufacturerID(int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)) {
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true)) {
         unsigned char vUID[16];
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
@@ -609,7 +584,7 @@ bool WriteUID(unsigned int dwUID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true))
         return true;
 
     CNTRPIPE_RQ rq;
@@ -649,7 +624,7 @@ bool WriteManufacturerID(unsigned char ManuID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true))
         return true;
 
     CNTRPIPE_RQ rq;
@@ -778,6 +753,8 @@ bool GetFirmwareVer(int Index)
     memcpy(g_board_type, &vBuffer[0], 8);
     memcpy(g_FW_ver, &vBuffer[10], 7);
 
+    if (strstr(g_board_type, "SF600PG2") != NULL)
+        memcpy(g_HW_ver, &vBuffer[20], 4);
     if (strstr(g_board_type, "SF600") != NULL)
         memcpy(g_HW_ver, &vBuffer[20], 4);
     if (strstr(g_board_type, "SF700") != NULL)
@@ -802,7 +779,7 @@ bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 
 bool UpdateSF600Flash(const char* sFilePath, int Index)
 {
-        printf("		evy	UpdateSF600Flash\n");
+      //  printf("		evy	UpdateSF600Flash\n");
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;
@@ -961,7 +938,7 @@ bool UpdateFirmware(const char* sFolder, int Index)
     unsigned int UID = 0;
     unsigned char ManID = 0;
     // read status
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true))
+    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true))
         return UpdateSF600Firmware(sFolder, Index);
  
     dediprog_set_spi_voltage(g_Vcc, Index);

@@ -1,13 +1,14 @@
 #include "usbdriver.h"
 #include "FlashCommand.h"
 #include "project.h"
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 #include <string.h>
 
 unsigned int m_nbDeviceDetected = 0;
 unsigned char DevIndex = 0;
 extern volatile bool g_bIsSF600[16];
 extern volatile bool g_bIsSF700[16];
+extern volatile bool g_bIsSF600PG2[16];
 extern int g_CurrentSeriase;
 extern char g_board_type[8];
 extern int g_firmversion;
@@ -72,20 +73,21 @@ void AssignSF600orSF700var(int Index)
 
     g_bIsSF600[Index] = false;
     g_bIsSF700[Index] = false;
+    g_bIsSF600PG2[Index] = false;
 
     CNTRPIPE_RQ rq;
-    unsigned char vBuffer[16];
+    unsigned char vBuffer[32];
     int fw[3];
-    memset(vBuffer, '\0', 16);
+    memset(vBuffer, '\0', 32);
 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_IN;
     rq.Request = 0x08;
     rq.Value = 0;
     rq.Index = 0;
-    rq.Length = 16;
+    rq.Length = 32;
 
-    if (InCtrlRequest(&rq, vBuffer, 16, Index) == SerialFlash_FALSE)
+    if (InCtrlRequest(&rq, vBuffer, 32, Index) == SerialFlash_FALSE)
         return;
 
     memcpy(g_board_type, &vBuffer[0], 8);
@@ -93,15 +95,21 @@ void AssignSF600orSF700var(int Index)
     sscanf((char*)&vBuffer[8], "V:%d.%d.%d", &fw[0], &fw[1], &fw[2]);
     g_firmversion = ((fw[0] << 16) | (fw[1] << 8) | fw[2]);
 
-    if (strstr(g_board_type, "SF600") != NULL)
-        g_bIsSF600[Index] = true;
-    else
-        g_bIsSF600[Index] = false;
-
     if (strstr(g_board_type, "SF700") != NULL)
-        g_bIsSF700[Index] = true;
-    else
-        g_bIsSF700[Index] = false;
+        g_bIsSF700[Index] = true; 
+
+    else if (strstr(g_board_type, "SF600") != NULL)
+    {
+	if (strstr(g_board_type, "SF600PG2") != NULL)
+	{  
+  	    g_bIsSF600PG2[Index] = true; 
+        }
+	else
+        {
+            g_bIsSF600[Index] = true; 
+        }
+    } 
+
 
     GetFPGAVersion(Index);
 }
