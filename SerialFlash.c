@@ -2106,7 +2106,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
     if (SerialFlash_EnableQuadIO(true, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE)
         return false;
 
-printf("WriteMode=%d, WriteCom=%02X\n", modeWrite,WriteCom);
+//printf("WriteMode=%d, WriteCom=%02X\n", modeWrite,WriteCom);
     itr_begin = vData;
     switch (modeWrite) {
     //transfer how many data each time
