@@ -33,10 +33,9 @@ unsigned g_usb_busnum = -1;
 
 bool Is_NewUSBCommand(int Index)
 {
-    if (is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index) || is_SF700(Index)) {
-        //printf("\n====>usbdriver.c ---- Is_NewUSBCommand(Index=%d) == ture\n",Index);
+    if (is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index) || is_SF700(Index)) { 
         return true;
-    }
+    } 
     return false;
 }
 extern unsigned char GetFPGAVersion(int Index);
@@ -66,8 +65,7 @@ void usb_db_init(void)
 }
 
 void AssignSF600orSF700var(int Index)
-{
-    //printf("\n===>usbdrive.c --- IsSF600\n");
+{ 
     if (Index == -1)
         Index = DevIndex;
 
@@ -86,20 +84,19 @@ void AssignSF600orSF700var(int Index)
     rq.Value = 0;
     rq.Index = 0;
     rq.Length = 32;
-
+ 
     if (InCtrlRequest(&rq, vBuffer, 32, Index) == SerialFlash_FALSE)
-        return;
+        return; 
 
     memcpy(g_board_type, &vBuffer[0], 8);
     //memcpy(g_firmversion,&vBuffer[10],8);
     sscanf((char*)&vBuffer[8], "V:%d.%d.%d", &fw[0], &fw[1], &fw[2]);
     g_firmversion = ((fw[0] << 16) | (fw[1] << 8) | fw[2]);
 
-    if (strstr(g_board_type, "SF700") != NULL)
-        g_bIsSF700[Index] = true; 
-
+    if (strstr(g_board_type, "SF700") != NULL) 
+        g_bIsSF700[Index] = true;  
     else if (strstr(g_board_type, "SF600") != NULL)
-    {
+    { 
 	if (strstr(g_board_type, "SF600PG2") != NULL)
 	{  
   	    g_bIsSF600PG2[Index] = true; 
@@ -108,7 +105,7 @@ void AssignSF600orSF700var(int Index)
         {
             g_bIsSF600[Index] = true; 
         }
-    } 
+    }  
 
 
     GetFPGAVersion(Index);
@@ -199,11 +196,12 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
 
 int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, int Index)
 {
-    int requesttype;
-    int ret = 0;
+    unsigned int requesttype;
+    unsigned int ret = 0;
 
     if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)))
         return true;
+ 
     if (Index == -1)
         Index = DevIndex;
 
@@ -229,7 +227,25 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
         printf("no device");
     }
 
-    if (ret != buf_size) {
+    if (ret != 0 /*!= buf_size*/) 
+	return ret;
+    else
+    {
+
+#if 0
+
+        printf("InCtrlRequest ---ret=%X\n",ret);
+        printf("evInCtrlRequesty ---Control Pipe output error!\n");
+        printf("InCtrlRequest ---rq->Direction=%lX\n",rq->Direction);
+        printf("InCtrlRequest ---rq->Function=%X\n",rq->Function);
+        printf("InCtrlRequest ---rq->Request=%X\n",rq->Request);
+        printf("InCtrlRequest ---rq->Value=%X\n",rq->Value);
+        printf("InCtrlRequest ---rq->Index=%X\n",rq->Index);
+        printf("InCtrlRequest ---rq->Length=%lX\n",rq->Length);
+        printf("InCtrlRequest ---buf_size=%lX\n",buf_size);
+        printf("InCtrlRequest ---buf[0]=%X\n",buf[0]);
+        //printf("g_bIsSF600=%d\n",g_bIsSF600);
+#endif
         printf("Control Pipe input error!\n");
         return -1;
     }

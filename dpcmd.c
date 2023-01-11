@@ -500,7 +500,7 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-    printf("\nDpCmd Linux 1.12.11.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.13.11.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -1311,12 +1311,9 @@ bool ListTypes(void)
     return Dedi_List_AllChip();
 }
 bool CheckProgrammerInfo(void)
-{
-    //printf("evy--        CheckProgrammerInfo 1\n");
+{ 
     if ((g_ucOperation & CHECK_INFO) != CHECK_INFO)
-        return false;
-
-    //printf("evy--        CheckProgrammerInfo 2\n");
+        return false; 
     int dev_cnt = get_usb_dev_cnt();
     unsigned int uiFPGAVer = 0;
     if (g_uiDevNum == 0) {

@@ -35,15 +35,14 @@ int FlashCommand_TransceiveOut(unsigned char* v, int len, int has_result_in, int
 
 int FlashCommand_TransceiveIn(unsigned char* v, int len, int Index)
 {
-    CNTRPIPE_RQ rq;
-
+    CNTRPIPE_RQ rq; 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_IN;
     rq.Request = TRANSCEIVE;
-    if (Is_NewUSBCommand(Index)) {
+    if (Is_NewUSBCommand(Index)) { 
         rq.Value = 0x01;
         rq.Index = NO_REGISTER;
-    } else {
+    } else { 
         rq.Value = CTRL_TIMEOUT;
         rq.Index = NO_REGISTER;
     }
@@ -198,6 +197,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange* AddrRa
 
     // length in terms of 256 bytes
     size_t pageNum = AddrRange->length >> 9;
+
 
     vInstruction[0] = (unsigned char)(pageNum & 0xff); // lowest byte of length : page number
     vInstruction[1] = (unsigned char)((pageNum >> 8) & 0xff); // highest byte of length: page number

@@ -1153,10 +1153,11 @@ bool is_BoardVersionGreaterThan_5_0_0(int Index)
 }
 
 bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index)
-{
-    if ((g_firmversion >= FIRMWARE_VERSION(5, 5, 0)) && strstr(g_board_type, "SF100") != NULL)
+{ 
+    if ((g_firmversion >= FIRMWARE_VERSION(5, 5, 0)) && strstr(g_board_type, "SF100") != NULL) 
         return true;
-    return false;
+  
+   return false;
 }
 
 bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index)
