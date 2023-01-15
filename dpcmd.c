@@ -500,11 +500,7 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-<<<<<<< HEAD
-    printf("\nDpCmd Linux 1.13.11.%02d Engine Version:\nLast Built on October 27 2021\n\n", GetConfigVer()); // 1. new feature.bug.configS
-=======
     printf("\nDpCmd Linux 1.12.11.%02d Engine Version:\nLast Built on January 7 2023\n\n", GetConfigVer()); // 1. new feature.bug.configS
->>>>>>> c7ae315afb55178ec7fd2cf7cdfc76a04081421d
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -1315,9 +1311,9 @@ bool ListTypes(void)
     return Dedi_List_AllChip();
 }
 bool CheckProgrammerInfo(void)
-{ 
+{
     if ((g_ucOperation & CHECK_INFO) != CHECK_INFO)
-        return false; 
+        return false;
     int dev_cnt = get_usb_dev_cnt();
     unsigned int uiFPGAVer = 0;
     if (g_uiDevNum == 0) {
@@ -1902,11 +1898,11 @@ bool Wait(const char* strOK, const char* strFail)
 #if 0
 int FlashIdentifier(CHIP_INFO* Chip_Info ,int search_all, int Index)
 {
- 
+
 printf("FlashIdentifier(search_all=%d,Index=%x)\n",search_all,Index);
     long UniqueID = 0;
     int rc = 0;
-	
+
     for (int c = 0; c < 2; c++) {
         if (c == 1)
             SendFFSequence(Index);
