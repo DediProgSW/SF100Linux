@@ -1286,9 +1286,7 @@ CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
                 g_Vcc = g_Vcc_temp;
             break;
         }
-        if (Loop == 1)
-            g_Vcc = vcc3_5V;
-        else
+        if (Loop != 1)
             g_Vcc = vcc1_8V - i;
 
         TurnONVcc(Index);
