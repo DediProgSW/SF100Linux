@@ -545,6 +545,21 @@ int main(int argc, char* argv[])
         g_usb_busnum = (unsigned char)r;
     }
 
+    // Filter by DP Device num, same as setting --device flag
+    // Only touches target device since it is before OpenUSB()
+    env = getenv("DPCMD_DEVNUM");
+    if (env) {
+        r = strtoul(env, NULL, 10);
+        if (r == ULONG_MAX || r >= 256) {
+            fprintf(stderr, "E: invalid device number in"
+                            " DPCMD_DEVNUM\n");
+            return 1;
+        }
+	g_uiDevNum = (unsigned char)r;
+	bDevice = true;
+    }
+
+
     if (OpenUSB() == 0)
         iExitCode = EXCODE_FAIL_USB;
 
@@ -1350,16 +1365,6 @@ bool CheckProgrammerInfo(void)
             }
         }
     } else {
-        char* arg_temp = &l_opt_arg[2];
-        int arg_int = atoi(arg_temp);
-
-        for (int i = 0; i < dev_cnt; i++) {
-            int dwUID = ReadUID(i);
-            if (arg_int == dwUID) {
-                g_uiDevNum = i + 1;
-                break;
-            }
-        }
         int dwUID = ReadUID(g_uiDevNum - 1);
         if (g_bIsSF700[g_uiDevNum - 1] == true) {
             printf("\nDevice %d (SF7%05X):\n", g_uiDevNum, dwUID);
