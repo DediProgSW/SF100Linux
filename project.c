@@ -1492,6 +1492,16 @@ void SetProgReadCommand(int Index)
         mcode_Read = BULK_FAST_READ;
         mcode_Program = PP_32BYTE;
         mcode_SegmentErase = 0xD8;
+    } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx) != NULL) {
+
+        mcode_RDSR = RDSR;
+        mcode_WRSR = WRSR;
+        mcode_ChipErase = CHIP_ERASE;
+        mcode_Program = PAGE_PROGRAM;
+        mcode_Read = BULK_FAST_READ;
+        mcode_SegmentErase = SE;
+        mcode_ProgramCode_4Adr = 0x02;
+        mcode_ReadCode = 0x0B; 
     } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx_Large) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;

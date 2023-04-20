@@ -65,7 +65,7 @@ void usb_db_init(void)
 }
 
 void AssignSF600orSF700var(int Index)
-{ 
+{  
     if (Index == -1)
         Index = DevIndex;
 
@@ -147,14 +147,14 @@ static int FindUSBDevice(void)
 }
 
 int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, int Index)
-{
+{ 
     int requesttype;
     int ret = 0;
 
     if (Index == -1)
         Index = DevIndex;
 
-    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)))
+    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true) || (g_bIsSF600PG2[Index] == true)))
         return true;
 
     requesttype = 0x00;
@@ -175,19 +175,7 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
     } else {
         printf("no device");
     }
-    if (ret != buf_size) {
-#if 0
-        printf("Control Pipe output error!\n");
-        printf("rq->Direction=%X\n",rq->Direction);
-        printf("rq->Function=%X\n",rq->Function);
-        printf("rq->Request=%X\n",rq->Request);
-        printf("rq->Value=%X\n",rq->Value);
-        printf("rq->Index=%X\n",rq->Index);
-        printf("rq->Length=%X\n",rq->Length);
-        printf("buf_size=%X\n",buf_size);
-        printf("buf[0]=%X\n",buf[0]);
-        printf("g_bIsSF600=%d\n",g_bIsSF600);
-#endif
+    if (ret != buf_size) { 
         printf("Error: %s\n", libusb_strerror(ret));
         return -1;
     }
@@ -199,7 +187,7 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
     unsigned int requesttype;
     unsigned int ret = 0;
 
-    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)))
+    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true)))
         return true;
  
     if (Index == -1)
@@ -256,7 +244,10 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
 // part of USB driver , open usb pipes for data transfor
 // should be called after usb successfully opens pipes.
 int dediprog_start_appli(int Index)
-{
+{  
+    if((g_bIsSF600[Index] != false) || (g_bIsSF700[Index] != false) || (g_bIsSF600PG2[Index] != false))
+	return 1;
+
     CNTRPIPE_RQ rq;
     int ret;
     unsigned char vInstruction;
@@ -323,10 +314,9 @@ int BulkPipeRead(unsigned char* pBuff, unsigned int timeOut, int Index)
         Index = DevIndex;
 
     unsigned long cnRead = 512;
-    ret = libusb_bulk_transfer(dediprog_handle[Index], 2 | LIBUSB_ENDPOINT_IN, pBuff, cnRead, &actual_length, DEFAULT_TIMEOUT);
+    ret = libusb_bulk_transfer(dediprog_handle[Index], 2 | LIBUSB_ENDPOINT_IN, pBuff, cnRead, &actual_length, DEFAULT_TIMEOUT); 
     if (ret != 0) //libusb_bulk_transfer return false
-        return 0;
-
+        return 0; 
     return cnRead;
 }
 
@@ -344,7 +334,7 @@ int BulkPipeWrite(unsigned char* pBuff, unsigned int size, unsigned int timeOut,
     if (Index == -1)
         Index = DevIndex;
 
-    ret = libusb_bulk_transfer(dediprog_handle[Index], ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)) ? 0x01 : 0x02, pData, nWrite, &actual_length, DEFAULT_TIMEOUT);
+    ret = libusb_bulk_transfer(dediprog_handle[Index], ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true)) ? 0x01 : 0x02, pData, nWrite, &actual_length, DEFAULT_TIMEOUT);
     nWrite = ret;
     return nWrite;
 }
@@ -517,8 +507,8 @@ int usb_driver_init(void)
                 return 0;
             }
 
+            AssignSF600orSF700var(i); 
             dediprog_start_appli(i);
-            AssignSF600orSF700var(i);
             result = (dediprog_handle[i] != NULL);
         }
     } else {
@@ -545,9 +535,9 @@ int usb_driver_init(void)
             return 0;
         }
 
-        dediprog_start_appli(g_uiDevNum - 1);
 
         AssignSF600orSF700var(g_uiDevNum - 1);
+        dediprog_start_appli(g_uiDevNum - 1);
 
         result = (dediprog_handle[g_uiDevNum - 1] != NULL);
     }
@@ -565,41 +555,7 @@ int usb_driver_release(void)
     }
     return 0;
 }
-
-#if 0 //Simon: unit test code
-int usb_driver_test(void)
-{
-	struct usb_bus *bus;
-	struct usb_device *dev;
-
-	unsigned int vid = 0x0483;
-	unsigned int pid = 0xdada;
-	int device_cnt = 0;
-	int ret, i;
-	char string[256];
-	unsigned char readaddr[3];
-	unsigned char writeaddr[3];
-    usb_dev_handle *udev;
-    usb_dev_init();
-
-    device_cnt = FindUSBDevice();
-//    printf("\ndevice_cnt =%d\n", device_cnt);
-    dediprog_handle = usb_open(&usb_device_entry[device_cnt-1].usb_device_handler);
-    ret = libusb_set_configuration(dediprog_handle, 1);
-    ret = libusb_claim_interface(dediprog_handle, 0);
-    dediprog_start_appli(0);
-
-	dediprog_set_spi_voltage(3300);
-
-    dediprog_get_chipid(0);
-
-    dediprog_set_leds(PASS_ON | BUSY_ON | ERROR_ON);
-    usb_close (dediprog_handle);
-
-    return 0;
-}
-#endif
-
+ 
 bool Is_usbworking(int Index)
 {
     usleep(1000); // unknow reson

@@ -17573,6 +17573,29 @@ ICType="SPI_NOR"
 
 
 
+<Chip TypeName="MX77L12850F"
+ICType="SPI_NOR"
+    Class="MX25Lxxx"
+    UniqueID="0xC27518"
+    Description="128 Mbit, Serial Flash Memory"
+    Manufacturer="Macronix"
+    ManufactureUrl="www.MXIC.com"
+    Voltage="3.3V"
+    Clock="85MHz"
+    Timeout="250"
+    ManufactureID="0xC2"
+    JedecDeviceID="0xC27518"
+    ChipSizeInKByte="16384"
+    SectorSizeInByte="65536"
+
+    PageSizeInByte="256"
+    MXIC_WPmode="true"
+    ProgramIOMethod="QPQD_RSWQW"
+    AddrWidth="3"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+
+
 <Chip TypeName="MT25QL01GB"
 ICType="SPI_NOR"
     Class="N25Qxxx_Large_2Die"
@@ -25272,6 +25295,28 @@ RDIDCommand="0x9F"/>
     IDNumber="3"
     RDIDCommand="0x9F"/>
 
+
+<Chip TypeName="W77Q128JW"
+    ICType="SPI_NOR"
+    Class="W25Pxx"
+    UniqueID="0xEF8A18"
+    Description="128 Mbit, Low Voltage, Serial Flash Memory With 75MHz SPI Bus Interface"
+    Manufacturer="Winbond Electronics Corp"
+    ManufactureUrl="www.winbond.com"
+    Voltage="1.8V"
+    Clock="75MHz"
+    Timeout="250"
+    JedecDeviceID="0xEF8A18"
+    ManufactureID="0xEF"
+    DeviceID="0x17"
+    ChipSizeInKByte="16384"
+    SectorSizeInByte="4096"
+    PageSizeInByte="256"
+    BlockSizeInByte="65536"
+    AddrWidth="3"
+    ProgramIOMethod="SPQD_RQWSW"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
 
 <Chip TypeName="W25M121AW-W25Q128JW"
     ICType="SPI_NOR"

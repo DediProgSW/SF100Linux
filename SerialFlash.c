@@ -1716,7 +1716,7 @@ int SerialFlash_Enable4ByteAddrMode(int bEnable, int Index)
         return CN25Qxxx_LargeEnable4ByteAddrMode(bEnable, Index);
     else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxx_Large) != NULL)
         return CS25FLxx_LargeEnable4ByteAddrMode(bEnable, Index);
-    else
+    else if(Chip_Info.ChipSizeInByte > 0x1000000)
         return Universal_LargeEnable4ByteAddrMode(bEnable, Index);
     return SerialFlash_TRUE;
 }
