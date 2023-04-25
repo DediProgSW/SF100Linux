@@ -923,14 +923,18 @@ void threadRun(void* Type)
 
     int dwUID = ReadUID(Index);
     if (g_uiAddr == 0 && g_uiLen == 0) {
-        if (g_bIsSF700[Index] == true)
-            printf("\nDevice %d (SF7%05X):", Index + 1, dwUID);
-	else if (g_bIsSF600PG2[Index] == true)
-            printf("\nDevice %d (SPG%05X):", Index + 1, dwUID);
-        else if ((dwUID / 600000) == 0)
+	if(is_SF700_Or_SF600PG2(Index)){
+	    if (g_bIsSF700[Index] == true)
+                printf("\nDevice %d (SF7%05X):", Index + 1, dwUID);
+	    else if (g_bIsSF600PG2[Index] == true) 
+                printf("\nDevice %d (S6%05X):", Index + 1, dwUID);
+	}
+        else {
+        if ((dwUID / 600000) == 0)
             printf("\nDevice %d (DP%06d):", Index + 1, dwUID);
         else
             printf("\nDevice %d (SF%06d):", Index + 1, dwUID);
+        }
     }
 
     if (opType == UPDATE_FIRMWARE) {
@@ -1045,7 +1049,7 @@ void SetIOMode(bool isProg, int Index)
     m_boEnReadQuadIO = 0;
     m_boEnWriteQuadIO = 0;
 
-    if ((g_bIsSF600[Index] == false) && (g_bIsSF700[Index] == false) && (g_bIsSF600PG2[Index] == false))
+    if ((g_bIsSF600[Index] == false) && (is_SF700_Or_SF600PG2(Index) == false))
         return;
 
     SetIOModeToSF600(IOValue, Index);
@@ -1187,20 +1191,26 @@ bool is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Index)
     }
     return false;
 }
-bool is_SF700(int Index)
+
+bool is_SF700_Or_SF600PG2(int Index)
 {
     if (strstr(g_board_type, "SF700") != NULL) {
         return true;
+    } 
+    else if (strstr(g_board_type, "SF600PG2") != NULL) {
+        return true;
     }
+
     return false;
 }
+/*
 bool is_SF600PG2(int Index)
 {
     if (strstr(g_board_type, "SF600PG2") != NULL) {
         return true;
     }
     return false;
-}
+}*/
 #if 0
 CHIP_INFO GetFirstDetectionMatch(int Index)
 {
@@ -1291,7 +1301,7 @@ CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
 
         TurnONVcc(Index);
         if (Is_usbworking(Index)) {
-            if ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true)) {
+            if ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index)) {
                 int startmode;
 
                 if (g_StartupMode == STARTUP_APPLI_SF_2)

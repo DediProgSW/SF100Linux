@@ -89,8 +89,7 @@ int FlashCommand_SendCommand_OneOutOneIn(unsigned char* vOut, int out_len, unsig
 }
 
 int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, unsigned int PageSize, unsigned int AddressMode, int Index)
-{printf("\nevy          FlashCommand_SendCommand_SetupPacketForBulkWrite");
-printf("\nevy          modeWrite=%x,WriteCom=%x,PageSize=%x",modeWrite,WriteCom,PageSize);
+{ 
     unsigned char vInstruction[15];
     CNTRPIPE_RQ rq;
     // length in terms of 256/128 bytes

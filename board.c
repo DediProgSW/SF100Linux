@@ -42,22 +42,22 @@ bool ReadSF700AndSF600PG2SN(unsigned char* Data, int Index)
     vBuffer[4]=0; 
     vBuffer[5]=0; 
 
-//must  read twice
+//must read twice
     if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)  
         return false;
-    
+    //first
     unsigned char vBufferSN[512];
     BulkPipeRead(vBufferSN, USB_TIMEOUT, Index);
 
     if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)  
         return false;
-
+    //second
     BulkPipeRead(vBufferSN, USB_TIMEOUT, Index);
 
     memcpy(Data, vBufferSN, 16);
     return true;
 }
-bool ReadOnBoardFlash(unsigned char* Data, bool ReadUID, int Index)
+ bool ReadOnBoardFlash(unsigned char* Data, bool ReadUID, int Index)
 {
     CNTRPIPE_RQ rq;
     unsigned char vBuffer[16];
@@ -344,6 +344,27 @@ bool SetSPIClockValue(unsigned short v, int Index)
     return true;
 }
 
+bool SetIOMOdeValue(int Index)
+{
+    if (!Is_usbworking(Index))
+        return false;
+
+    // send request
+    CNTRPIPE_RQ rq;
+    unsigned char vBuffer;
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_OUT;
+    rq.Request = SET_IOMODE;
+    rq.Value = 0;//single IO
+    rq.Index = RFU;
+    rq.Length = 0;
+
+    if (OutCtrlRequest(&rq, &vBuffer, 0, Index) == SerialFlash_FALSE)
+        return false;
+    Sleep(200);
+    return true;
+}
+
 unsigned int ReadUID(int Index)
 {
     if (!Is_usbworking(Index)) {
@@ -352,7 +373,7 @@ unsigned int ReadUID(int Index)
     unsigned int dwUID = 0;
     unsigned char vUID[16];
 
-    if ((g_bIsSF700 == true) || (g_bIsSF600PG2 == true)) {
+    if (is_SF700_Or_SF600PG2(Index)) { 
         if (ReadSF700AndSF600PG2SN(vUID, Index) == false)
             return false;
 //Sleep(200);
@@ -465,7 +486,7 @@ unsigned char ReadManufacturerID(int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true)) {
+    if ((g_bIsSF600 == true) || is_SF700_Or_SF600PG2(Index) == true) {
         unsigned char vUID[16];
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
@@ -625,7 +646,7 @@ bool WriteUID(unsigned int dwUID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true))
+    if ((g_bIsSF600 == true) || is_SF700_Or_SF600PG2(Index) == true)
         return true;
 
     CNTRPIPE_RQ rq;
@@ -665,7 +686,7 @@ bool WriteManufacturerID(unsigned char ManuID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true))
+    if ((g_bIsSF600 == true) || is_SF700_Or_SF600PG2(Index) == true)
         return true;
 
     CNTRPIPE_RQ rq;
@@ -776,7 +797,7 @@ bool GetFirmwareVer(int Index)
     unsigned char vBuffer[32];
     unsigned int BufferSize =32;
 
-    if((g_bIsSF600== false) && (g_bIsSF700 == false) && (g_bIsSF600PG2 == false))
+    if((g_bIsSF600== false) && (is_SF700_Or_SF600PG2(Index) == false))
 	BufferSize = 16;	
 	
     // first control packet
@@ -988,7 +1009,7 @@ bool UpdateFirmware(const char* sFolder, int Index)
     unsigned int UID = 0;
     unsigned char ManID = 0;
     // read status
-    if ((g_bIsSF600 == true) || (g_bIsSF700 == true)|| (g_bIsSF600PG2 == true))
+    if ((g_bIsSF600 == true) || (is_SF700_Or_SF600PG2(Index) == true))
         return UpdateSF600Firmware(sFolder, Index);
  
     dediprog_set_spi_voltage(g_Vcc, Index);

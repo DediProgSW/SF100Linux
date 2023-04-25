@@ -20,6 +20,7 @@ bool SetCS(size_t value, int Index);
 bool SetIOModeToSF600(size_t value, int Index);
 bool BlinkProgBoard(bool boIsV5, int Index);
 bool LeaveSF600Standalone(bool Enable, int Index);
+bool SetIOMOdeValue(int Index);
 bool SetSPIClockValue(unsigned short v, int Index);
 unsigned int ReadUID(int Index);
 bool SetSPIClockDefault(int Index);

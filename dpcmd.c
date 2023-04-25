@@ -408,13 +408,13 @@ void GetLogPath(char* pBuf)
 
 void EnterStandaloneMode(int Index)
 {
-    if ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true))
+    if ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index))
         LeaveSF600Standalone(false, Index);
 }
 
 void LeaveStandaloneMode(int Index)
 {
-    if ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true))
+    if ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index))
         LeaveSF600Standalone(true, Index);
 }
 
@@ -774,10 +774,12 @@ int main(int argc, char* argv[])
                     }
                 }
                 int dwUID = ReadUID(g_uiDevNum - 1);
-                if (g_bIsSF700[g_uiDevNum - 1] == true) {
-                    printf("\nDevice %d (SF7%05d):\tdetecting chip\n", g_uiDevNum, dwUID);
-                } else if (g_bIsSF600PG2[g_uiDevNum - 1] == true) {
-                    printf("\nDevice %d (S6B%05d):\tdetecting chip\n", g_uiDevNum, dwUID);
+                if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
+		    if (g_bIsSF700[g_uiDevNum - 1] == true) {
+                        printf("\nDevice %d (SF7%05d):\tdetecting chip\n", g_uiDevNum, dwUID);
+                    } else if (g_bIsSF600PG2[g_uiDevNum - 1] == true) {
+                        printf("\nDevice %d (S6B%05d):\tdetecting chip\n", g_uiDevNum, dwUID);
+		    }
                 } else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0) {
                     printf("\nDevice %d (SF%06d):\tdetecting chip\n", g_uiDevNum, dwUID);
                 } else if ((dwUID / 100000) > 0) {
@@ -804,10 +806,12 @@ int main(int argc, char* argv[])
                     //printf("%s\n",g_LogPath);
 
                     int dwUID = ReadUID(i);
-                    if (g_bIsSF700[i] == true) {
-                        printf("\nDevice %d (SF7%05d):\tdetecting chip\n", i + 1, dwUID);
-                    } else if (g_bIsSF600PG2[i] == true) {
-                        printf("\nDevice %d (S6B%05d):\tdetecting chip\n", i + 1, dwUID);
+                    if (is_SF700_Or_SF600PG2(i)) {
+			if (g_bIsSF700[i] == true) {
+                            printf("\nDevice %d (SF7%05d):\tdetecting chip\n", i + 1, dwUID);
+                        } else if (g_bIsSF600PG2[i] == true) {
+                            printf("\nDevice %d (S6B%05d):\tdetecting chip\n", i + 1, dwUID);
+			}
                     } else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0) {
                         printf("\nDevice %d (SF%06d):\tdetecting chip\n", i + 1, dwUID);
                     } else if ((dwUID / 100000) > 0) {
@@ -1182,8 +1186,10 @@ bool InitProject(void)
             for (int i = 0; i < dev_cnt; i++) {
                 g_StartupMode = targets[g_ucTarget];
                 SetTargetFlash((unsigned char)targets[g_ucTarget], i);
+                SetSPIIOMode(i);
                 SetSPIClock(i);
                 SetVcc(i);
+		SetVppVoltage(0,i);
 
                 if (strlen(g_parameter_type) > 0) {
                     if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &Chip_Info)) {
@@ -1204,8 +1210,10 @@ bool InitProject(void)
         } else if (g_uiDevNum <= dev_cnt) {
             g_StartupMode = targets[g_ucTarget];
             SetTargetFlash((unsigned char)targets[g_ucTarget], g_uiDevNum - 1);
+	    SetSPIIOMode(g_uiDevNum - 1);
             SetSPIClock(g_uiDevNum - 1);
             SetVcc(g_uiDevNum - 1);
+	    SetVppVoltage(0,g_uiDevNum - 1);
 
             if (strlen(g_parameter_type) > 0) {
                 if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &Chip_Info)) {
@@ -1282,6 +1290,10 @@ void SetVpp(int Index)
 {
 }
 
+void SetSPIIOMode(int Index)
+{
+    SetIOMOdeValue(Index);
+}
 void SetSPIClock(int Index)
 {
     //    sscanf(g_parameter_spi_clk,"%d",&g_ucSPIClock);
@@ -1289,10 +1301,48 @@ void SetSPIClock(int Index)
 }
 
 void SetVcc(int Index)
-{
+{ 
     //    sscanf(g_parameter_vcc,"%d",&g_Vcc);
-    if (!(g_Vcc <= 3800 && g_Vcc >= 1800 && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true) || (g_bIsSF600PG2[Index] == true))))
+    if (!(g_Vcc <= 3800 && g_Vcc >= 1800 && ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index))))
         g_Vcc = (0x10 | (g_Vcc & 0x03));
+}
+
+int SetVppVoltage(int vol, int Index)
+{
+    int ret;
+    int voltage_selector;
+    CNTRPIPE_RQ rq;
+
+    switch (vol) {
+    case 0:
+        /* Admittedly this one is an assumption. */
+        voltage_selector = 0x0;
+        break;
+    case 9:
+        voltage_selector = 0x1;
+        break;
+    case 12:
+        voltage_selector = 0x2;
+        break;
+    default:
+        return 1;
+    }
+
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_OUT;
+    rq.Request = 0x03;
+    rq.Value = voltage_selector;
+    rq.Index = 0;
+    rq.Length = 0x0;
+
+    ret = OutCtrlRequest(&rq, NULL, 0, Index);
+
+    if (ret == SerialFlash_FALSE) {
+        //		printf("Command Set VPP Voltage 0x%x failed!\n", voltage_selector);
+        return 1;
+    }
+    Sleep(200);
+    return 0;
 }
 
 int do_loadFile(void)
@@ -1342,11 +1392,12 @@ bool CheckProgrammerInfo(void)
     if (g_uiDevNum == 0) {
         for (int i = 0; i < dev_cnt; i++) {
             int dwUID = ReadUID(i);
-            if (g_bIsSF700[i] == true)
-                printf("%d,\tSF7%05d\n", i + 1, dwUID);
-            else if (g_bIsSF600PG2[i] == true)
-                printf("%d,\tS6B%05d\n", i + 1, dwUID);
-            else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
+            if (is_SF700_Or_SF600PG2(i)) {
+		if (g_bIsSF700[i] == true)
+                    printf("%d,\tSF7%05d\n", i + 1, dwUID);
+                else if (g_bIsSF600PG2[i] == true)
+                    printf("%d,\tS6B%05d\n", i + 1, dwUID);
+            } else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
                 printf("%d,\tSF%06d\n", i + 1, dwUID);
             else if ((dwUID / 100000) > 0)
                 printf("%d,\tSF%06d\n", i + 1, dwUID);
@@ -1363,16 +1414,18 @@ bool CheckProgrammerInfo(void)
                 printf("        Firmware version : %s\n", g_FW_ver);
                 printf("        FPGA version : 0x%04x\n", uiFPGAVer);
                 printf("        Hardware version : %s\n", g_HW_ver);
-            } else if (g_bIsSF700[i]) {
-                printf("        Programmer type : SF700\n");
-                printf("        Firmware version : %s\n", g_FW_ver);
-                printf("        FPGA version : 0x%04x\n", uiFPGAVer);
-                printf("        Hardware version : %s\n", g_HW_ver);
-            } else if (g_bIsSF600PG2[i]) {
-                printf("        Programmer type : SF600Plus-G2\n");
-                printf("        Firmware version : %s\n", g_FW_ver);
-                printf("        FPGA version : 0x%04x\n", uiFPGAVer);
-                printf("        Hardware version : %s\n", g_HW_ver);
+            } else if (is_SF700_Or_SF600PG2(i)){
+	        if (g_bIsSF700[i]) {
+                    printf("        Programmer type : SF700\n");
+                    printf("        Firmware version : %s\n", g_FW_ver);
+                    printf("        FPGA version : 0x%04x\n", uiFPGAVer);
+                    printf("        Hardware version : %s\n", g_HW_ver);
+                } else if (g_bIsSF600PG2[i]) {
+                    printf("        Programmer type : SF600Plus-G2\n");
+                    printf("        Firmware version : %s\n", g_FW_ver);
+                    printf("        FPGA version : 0x%04x\n", uiFPGAVer);
+                    printf("        Hardware version : %s\n", g_HW_ver);
+                }
             } else //SF100
             {
                 printf("        Programmer type : SF100\n");
@@ -1383,10 +1436,12 @@ bool CheckProgrammerInfo(void)
         }
     } else {
         int dwUID = ReadUID(g_uiDevNum - 1);
-        if (g_bIsSF700[g_uiDevNum - 1] == true) {
-            printf("\nDevice %d (SF7%05d):\n", g_uiDevNum, dwUID);
-        } else if (g_bIsSF600PG2[g_uiDevNum - 1] == true) {
-            printf("\nDevice %d (S6B%05d):\n", g_uiDevNum, dwUID);
+	if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
+            if (g_bIsSF700[g_uiDevNum - 1] == true) {
+                printf("\nDevice %d (SF7%05d):\n", g_uiDevNum, dwUID);
+            } else if (g_bIsSF600PG2[g_uiDevNum - 1] == true) {
+                printf("\nDevice %d (S6B%05d):\n", g_uiDevNum, dwUID);
+            }
         } else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0) {
             printf("\nDevice %d (SF%06d):\n", g_uiDevNum, dwUID);
         } else if ((dwUID / 100000) > 0) {
@@ -1404,18 +1459,16 @@ bool CheckProgrammerInfo(void)
             printf("        Firmware version : %s\n", g_FW_ver);
             printf("        FPGA version : 0x%x\n", uiFPGAVer);
             printf("        Hardware version : %s\n", g_HW_ver);
-        } else if (g_bIsSF700[g_uiDevNum - 1]) {
-            printf("        Programmer type : SF700\n");
+        } else if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
+	    if (g_bIsSF700[g_uiDevNum - 1]) {
+                printf("        Programmer type : SF700\n");
+            } else if (g_bIsSF600PG2[g_uiDevNum - 1]) {
+                printf("        Programmer type : SF600Plus-G2\n");
+            }
             printf("        Firmware version : %s\n", g_FW_ver);
             printf("        FPGA version : 0x%x\n", uiFPGAVer);
             printf("        Hardware version : %s\n", g_HW_ver);
-        } else if (g_bIsSF600PG2[g_uiDevNum - 1]) {
-            printf("        Programmer type : SF600Plus-G2\n");
-            printf("        Firmware version : %s\n", g_FW_ver);
-            printf("        FPGA version : 0x%x\n", uiFPGAVer);
-            printf("        Hardware version : %s\n", g_HW_ver);
-        } else //SF100
-        {
+        } else {//SF100 
             printf("        Programmer type : SF100\n");
             printf("        Firmware version : %s\n", g_FW_ver);
             printf("        FPGA version : N.A.\n");
@@ -1476,11 +1529,12 @@ void ListSFSerialID(void)
     if (g_uiDeviceID < 1) {
         for (unsigned int i = 0; i < dev_cnt; i++) {
             dwUID = ReadUID(i);
-            if (g_bIsSF700[i] == true)
-                printf("%d,\tSF7%05d\n", i + 1, dwUID);
-            else if (g_bIsSF600PG2[i] == true)
-                printf("%d,\tS6B%05d\n", i + 1, dwUID);
-            else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
+	    if (is_SF700_Or_SF600PG2(i)) {
+                if (g_bIsSF700[i] == true)
+                    printf("%d,\tSF7%05d\n", i + 1, dwUID);
+                else if (g_bIsSF600PG2[i] == true)
+                    printf("%d,\tS6B%05d\n", i + 1, dwUID);
+            } else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
                 printf("%d,\tSF%06d\n", i + 1, dwUID);
             else if ((dwUID / 100000) > 0)
                 printf("%d,\tSF%06d\n", i + 1, dwUID);
@@ -1492,11 +1546,12 @@ void ListSFSerialID(void)
             printf("The number of programmer is not defined!\n");
         else {
             dwUID = ReadUID(g_uiDeviceID - 1);
-            if (g_bIsSF700[g_uiDeviceID - 1] == true)
-                printf("%d,\tSF7%05d\n", g_uiDeviceID, dwUID);
-            else if (g_bIsSF600PG2[g_uiDeviceID - 1] == true)
-                printf("%d,\tS6B%05d\n", g_uiDeviceID, dwUID);
-            else if ((g_bIsSF600[g_uiDeviceID - 1] == true) && (dwUID / 600000) > 0)
+	    if (is_SF700_Or_SF600PG2(g_uiDeviceID - 1)) {
+                if (g_bIsSF700[g_uiDeviceID - 1] == true)
+                    printf("%d,\tSF7%05d\n", g_uiDeviceID, dwUID);
+                else if (g_bIsSF600PG2[g_uiDeviceID - 1] == true)
+                    printf("%d,\tS6B%05d\n", g_uiDeviceID, dwUID);
+	    } else if ((g_bIsSF600[g_uiDeviceID - 1] == true) && (dwUID / 600000) > 0)
                 printf("%d,\tSF%06d\n", g_uiDeviceID, dwUID);
             else if ((dwUID / 100000) > 0)
                 printf("%d,\tSF%06d\n", g_uiDeviceID, dwUID);
@@ -1832,11 +1887,12 @@ bool CalChecksum(void)
             for (int i = 0; i < dev_cnt; i++) {
                 int dwUID = ReadUID(i);
                 if (g_uiAddr == 0 && g_uiLen == 0) {
-                    if (g_bIsSF700[i] == true)
-                        printf("\nDevice %d (SF7%05d):", i + 1, dwUID);
-                    else if (g_bIsSF600PG2[i] == true)
-                        printf("\nDevice %d (S6B%05d):", i + 1, dwUID);
-                    else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
+	    	    if (is_SF700_Or_SF600PG2(i)) {
+                        if (g_bIsSF700[i] == true)
+                            printf("\nDevice %d (SF7%05d):", i + 1, dwUID);
+                        else if (g_bIsSF600PG2[i] == true)
+                            printf("\nDevice %d (S6B%05d):", i + 1, dwUID);
+                    } else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
                         printf("\nDevice %d (SF%06d):", i + 1, dwUID);
                     else if ((dwUID / 100000) > 0)
                         printf("\nDevice %d (SF%06d):", i + 1, dwUID);
@@ -1845,11 +1901,12 @@ bool CalChecksum(void)
 
                     printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[i], Chip_Info.ChipSizeInByte));
                 } else {
-                    if (g_bIsSF700[i] == true)
-                        printf("\nDevice %d (SF7%05d):", i + 1, ReadUID(i));
-                    else if (g_bIsSF600PG2[i] == true)
-                        printf("\nDevice %d (S6B%05d):", i + 1, ReadUID(i));
-                    else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
+                    if (is_SF700_Or_SF600PG2(i)) {
+			if (g_bIsSF700[i] == true)
+                            printf("\nDevice %d (SF7%05d):", i + 1, ReadUID(i));
+                        else if (g_bIsSF600PG2[i] == true)
+                            printf("\nDevice %d (S6B%05d):", i + 1, ReadUID(i));
+                    } else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
                         printf("\nDevice %d (SF%06d):", i + 1, ReadUID(i));
                     else if ((dwUID / 100000) > 0)
                         printf("\nDevice %d (SF%06d):", i + 1, ReadUID(i));
@@ -1862,11 +1919,12 @@ bool CalChecksum(void)
         } else if (g_uiDevNum != 0) {
             int dwUID = ReadUID(g_uiDevNum - 1);
             if (g_uiAddr == 0 && g_uiLen == 0) {
-                if (g_bIsSF700[g_uiDevNum - 1] == true)
-                    printf("\nDevice %d (SF7%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
-                else if (g_bIsSF600PG2[g_uiDevNum - 1] == true)
-                    printf("\nDevice %d (S6B%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
-                else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0)
+		if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
+                    if (g_bIsSF700[g_uiDevNum - 1] == true)
+                        printf("\nDevice %d (SF7%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
+                    else if (g_bIsSF600PG2[g_uiDevNum - 1] == true)
+                        printf("\nDevice %d (S6B%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
+                } else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0)
                     printf("\nDevice %d (SF%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
                 else if ((dwUID / 100000) > 0)
                     printf("\nDevice %d (SF%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
@@ -1875,11 +1933,12 @@ bool CalChecksum(void)
 
                 printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[g_uiDevNum - 1], Chip_Info.ChipSizeInByte));
             } else {
-                if (g_bIsSF700[g_uiDevNum - 1] == true)
-                    printf("\nDevice %d (SF7%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
-                else if (g_bIsSF600PG2[g_uiDevNum - 1] == true)
-                    printf("\nDevice %d (S6B%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
-                else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0)
+		if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
+                    if (g_bIsSF700[g_uiDevNum - 1] == true)
+                        printf("\nDevice %d (SF7%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
+                    else if (g_bIsSF600PG2[g_uiDevNum - 1] == true)
+                        printf("\nDevice %d (S6B%05d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
+                } else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0)
                     printf("\nDevice %d (SF%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
                 else if ((dwUID / 100000) > 0)
                     printf("\nDevice %d (SF%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
@@ -1927,11 +1986,12 @@ bool Wait(const char* strOK, const char* strFail)
     {
         for (int i = 0; i < dev_cnt; i++) {
             int dwUID = ReadUID(i);
-            if (g_bIsSF700[i] == true)
-                printf("\nDevice %d (SF7%05d):", i + 1, dwUID);
-            else if (g_bIsSF600PG2[i] == true)
-                printf("\nDevice %d (S6B%05d):", i + 1, dwUID);
-            else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
+            if (is_SF700_Or_SF600PG2(i)) {
+		if (g_bIsSF700[i] == true)
+                    printf("\nDevice %d (SF7%05d):", i + 1, dwUID);
+                else if (g_bIsSF600PG2[i] == true)
+                    printf("\nDevice %d (S6B%05d):", i + 1, dwUID);
+            } else if ((g_bIsSF600[i] == true) && (dwUID / 600000) > 0)
                 printf("\nDevice %d (SF%06d):", i + 1, dwUID);
             else if ((dwUID / 100000) > 0)
                 printf("\nDevice %d (SF%06d):", i + 1, dwUID);
@@ -1942,11 +2002,12 @@ bool Wait(const char* strOK, const char* strFail)
         }
     } else if (g_uiDevNum <= dev_cnt) {
         int dwUID = ReadUID(g_uiDevNum - 1);
-        if (g_bIsSF700[g_uiDevNum - 1] == true)
-            printf("\nDevice %d (SF7%05d):", g_uiDevNum, dwUID);
-        else if (g_bIsSF600PG2[g_uiDevNum - 1] == true)
-            printf("\nDevice %d (S6B%05d):", g_uiDevNum, dwUID);
-        else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0)
+        if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
+   	    if (g_bIsSF700[g_uiDevNum - 1] == true)
+                printf("\nDevice %d (SF7%05d):", g_uiDevNum, dwUID);
+            else if (g_bIsSF600PG2[g_uiDevNum - 1] == true)
+                printf("\nDevice %d (S6B%05d):", g_uiDevNum, dwUID);
+        } else if ((g_bIsSF600[g_uiDevNum - 1] == true) && (dwUID / 600000) > 0)
             printf("\nDevice %d (SF%06d):", g_uiDevNum, dwUID);
         else if ((dwUID / 100000) > 0)
             printf("\nDevice %d (SF%06d):", g_uiDevNum, dwUID);

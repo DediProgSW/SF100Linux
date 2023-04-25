@@ -33,7 +33,7 @@ unsigned g_usb_busnum = -1;
 
 bool Is_NewUSBCommand(int Index)
 {
-    if (is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index) || is_SF700(Index)) { 
+    if (is_SF100nBoardVersionGreaterThan_5_5_0(Index) || is_SF600nBoardVersionGreaterThan_6_9_0(Index) || is_SF700_Or_SF600PG2(Index)) { 
         return true;
     } 
     return false;
@@ -67,8 +67,7 @@ void usb_db_init(void)
 void AssignSF600orSF700var(int Index)
 {  
     if (Index == -1)
-        Index = DevIndex;
-
+        Index = DevIndex; 
     g_bIsSF600[Index] = false;
     g_bIsSF700[Index] = false;
     g_bIsSF600PG2[Index] = false;
@@ -99,7 +98,8 @@ void AssignSF600orSF700var(int Index)
     { 
 	if (strstr(g_board_type, "SF600PG2") != NULL)
 	{  
-  	    g_bIsSF600PG2[Index] = true; 
+  	    g_bIsSF600PG2[Index] = true;  
+	    Sleep(2);
         }
 	else
         {
@@ -154,7 +154,7 @@ int OutCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, 
     if (Index == -1)
         Index = DevIndex;
 
-    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true) || (g_bIsSF600PG2[Index] == true)))
+    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) ||  is_SF700_Or_SF600PG2(Index) == true))
         return true;
 
     requesttype = 0x00;
@@ -187,7 +187,7 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
     unsigned int requesttype;
     unsigned int ret = 0;
 
-    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true)))
+    if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index) == true))
         return true;
  
     if (Index == -1)
@@ -245,7 +245,7 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
 // should be called after usb successfully opens pipes.
 int dediprog_start_appli(int Index)
 {  
-    if((g_bIsSF600[Index] != false) || (g_bIsSF700[Index] != false) || (g_bIsSF600PG2[Index] != false))
+    if((g_bIsSF600[Index] != false) ||  is_SF700_Or_SF600PG2(Index)!=false)
 	return 1;
 
     CNTRPIPE_RQ rq;
@@ -334,7 +334,7 @@ int BulkPipeWrite(unsigned char* pBuff, unsigned int size, unsigned int timeOut,
     if (Index == -1)
         Index = DevIndex;
 
-    ret = libusb_bulk_transfer(dediprog_handle[Index], ((g_bIsSF600[Index] == true) || (g_bIsSF700[Index] == true)|| (g_bIsSF600PG2[Index] == true)) ? 0x01 : 0x02, pData, nWrite, &actual_length, DEFAULT_TIMEOUT);
+    ret = libusb_bulk_transfer(dediprog_handle[Index], ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index) == true) ? 0x01 : 0x02, pData, nWrite, &actual_length, DEFAULT_TIMEOUT);
     nWrite = ret;
     return nWrite;
 }
@@ -369,13 +369,12 @@ int dediprog_set_spi_voltage(int v, int Index)
             unsigned char v[4] = { 0xff, 0xff, 0xff, 0xff };
             FlashCommand_SendCommand_OutOnlyInstruction(v, 4, Index);
         }
-    }
-
+    } 
     return ret;
 }
 
 int dediprog_set_vpp_voltage(int volt, int Index)
-{
+{ 
     int ret;
     int voltage_selector;
     CNTRPIPE_RQ rq;
@@ -573,6 +572,8 @@ long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Ind
     // DoRDP() ;
 
     // send request
+ 
+
     CNTRPIPE_RQ rq;
     unsigned char vInstruction[8];
     unsigned long rc = 0;
