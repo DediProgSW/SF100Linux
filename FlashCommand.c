@@ -118,8 +118,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrR
     vInstruction[3] = modeWrite; // PAGE_PROGRAM, PAGE_WRITE, AAI_1_BYTE, AAI_2_BYTE, PP_128BYTE, PP_AT26DF041
     vInstruction[4] = WriteCom;
 
-    if (Is_NewUSBCommand(Index)) {
-printf("\nevy          Is_NewUSBCommand");
+    if (Is_NewUSBCommand(Index)) { 
         vInstruction[5] = 0;
         vInstruction[6] = (AddrRange->start & 0xff);
         vInstruction[7] = ((AddrRange->start >> 8) & 0xff);

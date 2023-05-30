@@ -22,7 +22,7 @@ extern unsigned int g_uiFileChecksum;
 extern unsigned long g_ulFileSize;
 extern volatile bool g_bIsSF600[16];
 extern volatile bool g_bIsSF700[16];
-extern volatile bool g_bIsSF600PG2[16];
+extern volatile bool g_bIsSF600PG2[16]; 
 extern unsigned char g_BatchIndex;
 
 unsigned int g_Vcc = vcc3_5V;
@@ -594,17 +594,17 @@ int main(int argc, char* argv[])
             break;
         case 'p':
             g_parameter_program = optarg;
-            g_ucOperation |= PROGRAM;
+            g_ucOperation |= PROGRAM; 
             break;
         case 'u':
             g_parameter_auto = optarg;
             g_ucOperation |= BATCH;
-            g_BatchIndex = 2;
+            g_BatchIndex = 2; 
             break;
         case 'z':
             g_parameter_batch = optarg;
             g_ucOperation |= BATCH;
-            g_BatchIndex = 1;
+            g_BatchIndex = 1; 
             break;
         case 's': // display chip checksum
             g_ucOperation |= CSUM;
@@ -648,9 +648,7 @@ int main(int argc, char* argv[])
             //             printf("hexadecimal starting address (with arg: %s)\n", l_opt_arg);
             break;
         case 'N': //lock length
-            sscanf(optarg, "%x", &g_uiLockLen);
-            //                 l_opt_arg = optarg;
-            //            printf("hexadecimal length of area that will be kept unchanged while updating (with arg: %s)\n", l_opt_arg);
+            sscanf(optarg, "%x", &g_uiLockLen); 
             break;
         case 'B':
             sscanf(optarg, "%d", &g_uiBlink);
@@ -671,7 +669,7 @@ int main(int argc, char* argv[])
             //	printf("Fix programmer serial number with programmer sequence. (with arg: %s)\n", l_opt_arg);
             //	break;
             g_parameter_loadfile_with_verify = optarg;
-            g_ucOperation |= LOADFILEWITHVERIFY;
+            g_ucOperation |= LOADFILEWITHVERIFY; 
             break;
         case 'V':
             sscanf(optarg, "%d", &g_uiDeviceID);
@@ -1580,7 +1578,7 @@ void do_Erase(void)
 void do_Program(void)
 {
     if (!do_loadFile())
-        return;
+        return; 
     SaveProgContextChanges();
 
     printf("%s\n", msg_info_programming);
@@ -1835,9 +1833,8 @@ bool Erase(void)
 
 bool Program(void)
 {
-    if (g_ucOperation & PROGRAM)
-        do_Program();
-
+    if (g_ucOperation & PROGRAM)   
+        do_Program(); 
     return g_bStatus;
 }
 
@@ -1852,8 +1849,8 @@ bool Read(void)
 
 bool Auto(void)
 {
-    if (g_ucOperation & BATCH)
-        do_Auto();
+    if (g_ucOperation & BATCH)  
+        do_Auto(); 
     return g_bStatus;
 }
 
@@ -1861,8 +1858,8 @@ bool LoadFileWithVerify(void)
 {
     if (g_ucOperation & LOADFILEWITHVERIFY) {
         do_loadFileWithVerify();
-        if (g_bStatus)
-            do_Verify();
+        if (g_bStatus)  
+            do_Verify();  
     }
     return g_bStatus;
 }

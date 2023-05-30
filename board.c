@@ -9,7 +9,7 @@
 
 volatile bool g_bIsSF600 = false;
 volatile bool g_bIsSF700 = false;
-volatile bool g_bIsSF600PG2 = false;
+volatile bool g_bIsSF600PG2 = false; 
 extern char g_board_type[8];
 extern char g_FPGA_ver[8];
 extern char g_FW_ver[10];

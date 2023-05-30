@@ -13,7 +13,7 @@ extern int m_boEnWriteQuadIO;
 extern CHIP_INFO Chip_Info;
 extern volatile bool g_bIsSF600[16];
 extern volatile bool g_bIsSF700[16];
-extern volatile bool g_bIsSF600PG2[16];
+extern volatile bool g_bIsSF600PG2[16]; 
 extern bool Is_NewUSBCommand(int Index);
 
 unsigned char mcode_WRSR = 0x01;
@@ -2090,7 +2090,7 @@ int SerialFlash_DieErase(int Index)
 }
 
 int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeWrite, unsigned char WriteCom, int Index)
-{
+{ 
     size_t i, j, divider;
     unsigned char* itr_begin;
 
@@ -2105,8 +2105,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
     SerialFlash_Enable4ByteAddrMode(true, Index);
     if (SerialFlash_EnableQuadIO(true, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE)
         return false;
-
-//printf("WriteMode=%d, WriteCom=%02X\n", modeWrite,WriteCom);
+ 
     itr_begin = vData;
     switch (modeWrite) {
     //transfer how many data each time
@@ -2132,9 +2131,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
         down_range.start = AddrRange->start;
         down_range.end = AddrRange->end;
         size_t packageNum;
-        size_t loop = (range_temp.end - range_temp.start) / 0x1000000;
-        //				printf("loop=%d      \n",loop);
-        //				printf("range_temp.end=%x,range_temp.start=%x\n\r",range_temp.end,range_temp.start);
+        size_t loop = (range_temp.end - range_temp.start) / 0x1000000; 
 
         for (j = 0; j < loop; j++) {
             if (j == (loop - 1))
@@ -2148,9 +2145,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
                 down_range.start = (AddrRange->start & 0xFF000000) + (0x1000000 * j);
 
             down_range.length = down_range.end - down_range.start;
-            packageNum = down_range.length >> divider;
-            //			printf("packageNum=%d  \n",packageNum);
-            //			printf("down_range.start=%X, down_range.end=%X\n",down_range.start, down_range.end);
+            packageNum = down_range.length >> divider; 
             FlashCommand_SendCommand_SetupPacketForBulkWrite(&down_range, modeWrite, WriteCom, Chip_Info.PageSizeInByte, Chip_Info.AddrWidth, Index);
             for (i = 0; i < packageNum; ++i) {
                 BulkPipeWrite((unsigned char*)(itr_begin + (i << divider)), 1 << divider, USB_TIMEOUT, Index);
@@ -2162,7 +2157,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
     } else {
         size_t packageNum = (AddrRange->end - AddrRange->start) >> divider;
         FlashCommand_SendCommand_SetupPacketForBulkWrite(AddrRange, modeWrite, WriteCom, Chip_Info.PageSizeInByte, Chip_Info.AddrWidth, Index);
-        for (i = 0; i < packageNum; ++i) {
+        for (i = 0; i < packageNum; ++i) { 
             BulkPipeWrite((unsigned char*)((itr_begin + (i << divider))), 1 << divider, USB_TIMEOUT, Index);
             if (m_isCanceled)
                 return false;
@@ -2184,7 +2179,7 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
 }
 
 int SerialFlash_bulkPipeRead(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeRead, unsigned char ReadCom, int Index)
-{
+{ 
     size_t i, j, loop, pageNum, BufferLocation = 0;
     int ret = 0;
     if (!SerialFlash_StartofOperation(Index))
