@@ -187,8 +187,10 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
     unsigned int requesttype;
     unsigned int ret = 0;
 
+ 
     if ((rq->Function != URB_FUNCTION_VENDOR_ENDPOINT) && ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index) == true))
         return true;
+ 
  
     if (Index == -1)
         Index = DevIndex;
@@ -216,10 +218,11 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
     }
 
     if (ret != 0 /*!= buf_size*/) 
+{ 
 	return ret;
-    else
-    {
-
+ }
+   else
+    { 
 #if 0
 
         printf("InCtrlRequest ---ret=%X\n",ret);
@@ -506,8 +509,8 @@ int usb_driver_init(void)
                 return 0;
             }
 
-            AssignSF600orSF700var(i); 
             dediprog_start_appli(i);
+            AssignSF600orSF700var(i); 
             result = (dediprog_handle[i] != NULL);
         }
     } else {
@@ -534,9 +537,9 @@ int usb_driver_init(void)
             return 0;
         }
 
+        dediprog_start_appli(g_uiDevNum - 1);
 
         AssignSF600orSF700var(g_uiDevNum - 1);
-        dediprog_start_appli(g_uiDevNum - 1);
 
         result = (dediprog_handle[g_uiDevNum - 1] != NULL);
     }
