@@ -340,8 +340,7 @@ bool ValidateProgramParameters(int Index)
 }
 
 bool ProgramChip(int Index)
-{ 
-
+{  
     bool need_padding = (g_ucFill != 0xFF);
     unsigned char* vc;
     struct CAddressRange real_addr[16];
@@ -560,7 +559,7 @@ bool threadConfiguredReadChip(int Index)
 }
 
 bool threadProgram(int Index)
-{
+{ 
     int pthread_mutex_init(pthread_mutex_t * restrict mutex, const pthread_mutexattr_t* restricattr);
 
     bool result = true;
@@ -640,7 +639,7 @@ bool threadCompareFileAndChip(int Index)
         unsigned int crcFile = CRC32(pBufferforLoadedFile, offset);
         unsigned int crcChip = CRC32(pBufferForLastReadData[Index], offset);
  
-        result = (crcChip == crcFile);
+        result = (crcChip == crcFile); 
     }
  
     g_is_operation_successful[Index] = result;
@@ -865,8 +864,7 @@ bool threadPredefinedBatchSequences(int Index)
 }
 
 void threadRun(void* Type)
-{
-    //printf("\n====>project ---- void threadRun(void* Type)\n");
+{ 
     THREAD_STRUCT* thread_data = (THREAD_STRUCT*)Type;
     OPERATION_TYPE opType = thread_data->type;
     int Index = thread_data->USBIndex;
@@ -902,8 +900,7 @@ void threadRun(void* Type)
     }
 
     if (1) // is_good())
-    {
-        //printf("\n====>project ---- void threadRun(void* Type) --- is_good\n");
+    { 
         TurnONVcc(Index);
         if (is_greater_than_5_0_0 || is_SF700_greater_than_4_0_0) {
             SetLEDOnOff(SITE_BUSY, Index);
@@ -1102,8 +1099,7 @@ void SetIOMode(bool isProg, int Index)
 
 bool is_BoardVersionGreaterThan_5_0_0(int Index)
 {
-    if (g_firmversion < FIRMWARE_VERSION(5, 0, 0)) {
-        //printf("\n====>project.c ---- bool is_BoardVersionGreaterThan_5_0_0(Index=%d)g_firmversion=%d,FIRMWARE_VERSION(5, 0, 0)=0x%x\n",Index,g_firmversion,FIRMWARE_VERSION(5, 0, 0));
+    if (g_firmversion < FIRMWARE_VERSION(5, 0, 0)) { 
         return false;
     }
     return true;
@@ -1118,11 +1114,9 @@ bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index)
 }
 
 bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index)
-{
-    //	printf("g_board_type=%s\n",g_board_type);
+{ 
     if (strstr(g_board_type, "SF600") != NULL) {
-        if ((g_firmversion > FIRMWARE_VERSION(7, 0, 1)) || (g_firmversion == FIRMWARE_VERSION(6, 9, 0))) {
-            //			printf("g_firmversion=%X\n",g_firmversion);
+        if ((g_firmversion > FIRMWARE_VERSION(7, 0, 1)) || (g_firmversion == FIRMWARE_VERSION(6, 9, 0))) { 
             return true;
         }
     }
@@ -1463,8 +1457,20 @@ void SetProgReadCommand(int Index)
         mcode_Read = BULK_4BYTE_FAST_READ;
         mcode_SegmentErase = SE;
         mcode_ProgramCode_4Adr = 0x02;
-        mcode_ReadCode = 0x0C;
-    } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx) != NULL) {
+        mcode_ReadCode = 0x0C; 
+    }  else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL) {
+        mcode_RDSR = RDSR;
+        mcode_WRSR = WRSR;
+        mcode_ChipErase = CHIP_ERASE;
+	if (strstr(g_board_type, "SF100") != NULL) // is sf100
+            mcode_Program = PP_4ADDR_256BYTE_12;
+    	else
+            mcode_Program = PP_4ADR_256BYTE;
+        mcode_Read = BULK_4BYTE_FAST_READ_MICRON;
+        mcode_SegmentErase = SE;
+        mcode_ProgramCode_4Adr = 0x12;
+        mcode_ReadCode = 0x0C; 
+    }else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = CHIP_ERASE;

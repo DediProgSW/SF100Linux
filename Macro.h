@@ -119,7 +119,7 @@ typedef struct ChipInfo {
 #define BULK_FAST_READ 0x02 ///< fast read via bulk pipes
 #define BULK_AT45xx_READ 0x03 ///< fast read via bulk pipes
 #define BULK_4BYTE_FAST_READ 0x04 ///< For size is bigger than 128Mb
-#define BULK_4BYTE_FAST_READ_MICRON 0x05
+#define BULK_4BYTE_FAST_READ_MICRON 0x05 //for 0x0c
 
 //for flash card
 #define POLLING 0x02 ///< polling
@@ -199,6 +199,7 @@ typedef struct ChipInfo {
 #define SUPPORT_WINBOND_W25Pxx_Large "W25Pxx_Large"
 #define SUPPORT_WINBOND_W25Qxx_Large "W25Qxx_Large"
 #define SUPPORT_WINBOND_W25Xxx "W25Xxx"
+#define SUPPORT_WINBOND_W25Mxx_Large "W25Mxx_Large"
 #endif
 
 #ifdef SUPPORT_PMC

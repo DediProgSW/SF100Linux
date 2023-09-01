@@ -333,6 +333,7 @@ int Check(int argc, char *argv[])
 }
 
 #endif
+
 int Sequence()
 {
     // *** the calling order in the following block must be kept as is ***

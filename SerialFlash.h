@@ -53,8 +53,7 @@ int SerialFlash_Enable4ByteAddrMode(int bEnable, int Index);
 
 int SerialFlash_rangeBlankCheck(struct CAddressRange* Range, int Index);
 
-int SerialFlash_rangeProgram(struct CAddressRange* AddrRange, unsigned char* vData, int Index);
-
+int SerialFlash_rangeProgram(struct CAddressRange* AddrRange, unsigned char* vData, int Index); 
 int SerialFlash_rangeRead(struct CAddressRange* AddrRange, unsigned char* vData, int Index);
 
 int SerialFlash_DoPolling(int Index);
@@ -70,8 +69,12 @@ int SerialFlash_DieErase(int Index);
 
 int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeWrite, unsigned char WriteCom, int Index);
 
+int SerialFlash_bulkPipeProgram_twoDie(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeWrite, unsigned char WriteCom, int Index); 
+
 int SerialFlash_bulkPipeRead(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeRead, unsigned char ReadCom, int Index);
 
+int SerialFlash_bulkPipeRead_twoDie(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeRead, unsigned char ReadCom, int Index);
+bool SerialFlash_doSelectDie(unsigned char dieNum,int Index);
 void SerialFlash_SetCancelOperationFlag();
 
 void SerialFlash_ClearCancelOperationFlag();
