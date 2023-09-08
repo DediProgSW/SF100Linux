@@ -1452,7 +1452,7 @@ bool CheckProgrammerInfo(void)
         uiFPGAVer = GetFPGAVersion(g_uiDevNum - 1);
         GetFirmwareVer(g_uiDevNum - 1);
         if (g_bIsSF600[g_uiDevNum - 1]) {
-            if (CheckSDCard(g_uiDevNum - 1i))
+            if (CheckSDCard(g_uiDevNum - 1))
                 printf("        Programmer type : SF600Plus\n");
             printf("        Programmer type : SF600Plus\n");
             printf("        Firmware version : %s\n", g_FW_ver);
