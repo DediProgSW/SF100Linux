@@ -294,6 +294,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
 
     fclose(fp); /*Close file*/
     Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
+               
     free(file_buf);
     return found_flag; /*Executed without errors*/
 } /*End main*/
@@ -557,6 +558,7 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
     } /*Continue until EOF is encoutered*/
     fclose(fp); /*Close file*/
     Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
+                
     if (found_flag == 0) {
         Chip_Info->TypeName[0] = 0;
         Chip_Info->UniqueID = 0;

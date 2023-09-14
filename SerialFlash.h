@@ -59,7 +59,7 @@ int SerialFlash_rangeRead(struct CAddressRange* AddrRange, unsigned char* vData,
 int SerialFlash_DoPolling(int Index);
 
 int SerialFlash_is_good();
-
+int SerialFlash_batchErase_W25Mxx_Large(uintptr_t* vAddrs, size_t AddrSize, int Index);
 int SerialFlash_batchErase(uintptr_t* vAddrs, size_t AddrSize, int Index);
 
 int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddressRange* AddrRange, int Index);

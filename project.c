@@ -738,8 +738,12 @@ Leng = GenerateDiff(addrs, vc + offsetOfRealStartAddrOffset, DownloadAddrRange.l
         uintptr_t* condensed_addr = (size_t*)malloc(min(DownloadAddrRange.length, g_ulFileSize));
         size_t condensed_size;
         condensed_size = Condense(condensed_addr, vc, addrs, Leng, effectiveRange.start, Chip_Info.MaxErasableSegmentInByte);
- 
-        SerialFlash_batchErase(condensed_addr, condensed_size, Index);
+  
+        if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL) {
+	    SerialFlash_batchErase_W25Mxx_Large(condensed_addr, condensed_size, Index);
+	}
+        else
+	    SerialFlash_batchErase(condensed_addr, condensed_size, Index);
 
         if (strstr(Chip_Info.Class, SUPPORT_MACRONIX_MX25Lxxx) != NULL) {
             TurnOFFVcc(Index);
@@ -1467,7 +1471,7 @@ void SetProgReadCommand(int Index)
     	else
             mcode_Program = PP_4ADR_256BYTE;
         mcode_Read = BULK_4BYTE_FAST_READ_MICRON;
-        mcode_SegmentErase = SE;
+        mcode_SegmentErase = 0xDC;
         mcode_ProgramCode_4Adr = 0x12;
         mcode_ReadCode = 0x0C; 
     }else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx) != NULL) {

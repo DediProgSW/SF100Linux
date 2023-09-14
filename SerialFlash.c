@@ -1865,15 +1865,75 @@ int SerialFlash_is_good()
     //Simon	return ( m_info.is_good() && m_usb.is_open() ) ;
     return SerialFlash_TRUE;
 }
+int SerialFlash_batchErase_W25Mxx_Large(uintptr_t* vAddrs, size_t AddrSize, int Index)
+{ 
+    if (!SerialFlash_StartofOperation(Index))
+        return false;
+ 
+    if (0 == mcode_SegmentErase)
+        return 1; //  chipErase code not initialised or not supported, please check chip class ctor.SerialFlash_waitForWEL
 
+    if (SerialFlash_protectBlock(false, Index) == SerialFlash_FALSE)
+        return false;
+    SerialFlash_Enable4ByteAddrMode(true, Index);
+
+    // send request
+    CNTRPIPE_RQ rq;
+    size_t i;
+    size_t addrTemp;
+    unsigned char vInstruction[5]; //(5, mcode_SegmentErase) ;
+    vInstruction[0] = mcode_SegmentErase;
+
+ 
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_OUT;
+    rq.Request = TRANSCEIVE;
+    if (Is_NewUSBCommand(Index)) {
+        rq.Value = NO_RESULT_IN;
+        rq.Index = RFU;
+    } else {
+        rq.Value = RFU;
+        rq.Index = NO_RESULT_IN;
+    }
+    rq.Length = 5;
+    for (i = 0; i < AddrSize; i++) {
+        SerialFlash_waitForWEL(Index);
+	if (vAddrs[i]>=0x2000000) { 
+	   SerialFlash_doSelectDie(0x01,Index);
+	   addrTemp = vAddrs[i] - 0x2000000;
+        }
+	else {
+	   SerialFlash_doSelectDie(0x00,Index);
+	   addrTemp = vAddrs[i];
+        }
+        //if (Chip_Info.ChipSizeInByte > 0x1000000) {
+            // MSB~ LSB (31...0)
+            vInstruction[1] = (unsigned char)((addrTemp >> 24) & 0xff); //MSB
+            vInstruction[2] = (unsigned char)((addrTemp >> 16) & 0xff); //M
+            vInstruction[3] = (unsigned char)((addrTemp >> 8) & 0xff); //M
+            vInstruction[4] = (unsigned char)(addrTemp & 0xff); //LSB
+            rq.Length = 5;
+       /* } else {
+            // MSB~ LSB (23...0)
+            vInstruction[1] = (unsigned char)((vAddrs[i] >> 16) & 0xff); //MSB
+            vInstruction[2] = (unsigned char)((vAddrs[i] >> 8) & 0xff); //M
+            vInstruction[3] = (unsigned char)(vAddrs[i] & 0xff); //LSB
+            rq.Length = 4;
+        }*/
+        OutCtrlRequest(&rq, vInstruction, rq.Length, Index);
+
+        SerialFlash_waitForWIP(Index);
+    }
+    SerialFlash_Enable4ByteAddrMode(false, Index);
+    if (!SerialFlash_EndofOperation(Index))
+        return false;
+    return true;
+}
 int SerialFlash_batchErase(uintptr_t* vAddrs, size_t AddrSize, int Index)
 {
     if (!SerialFlash_StartofOperation(Index))
         return false;
-    //    if(strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxB) != NULL ||
-    //    strstr(Chip_Info.Class,SUPPORT_ATMEL_45DBxxxD) != NULL)
-    //        return AT45batchErase(vAddrs, AddrSize,Index);
-
+ 
     if (0 == mcode_SegmentErase)
         return 1; //  chipErase code not initialised or not supported, please check chip class ctor.SerialFlash_waitForWEL
 
@@ -1887,8 +1947,7 @@ int SerialFlash_batchErase(uintptr_t* vAddrs, size_t AddrSize, int Index)
     unsigned char vInstruction[5]; //(5, mcode_SegmentErase) ;
     vInstruction[0] = mcode_SegmentErase;
 
-    //	printf("mcode_SegmentErase=%x\n",mcode_SegmentErase);
-    // instrcution format
+ 
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_OUT;
     rq.Request = TRANSCEIVE;
