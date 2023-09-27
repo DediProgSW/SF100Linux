@@ -12456,6 +12456,25 @@
     IDNumber="3"
     RDIDCommand="0x9F"/>
 
+<Chip TypeName="GD25B512B"
+    ICType="SPI_NOR"
+    Class="M25Pxx"
+    UniqueID="0xC84017"
+    Description="512 Mbit, Low Voltage, Serial Flash Memory With 120MHz SPI Bus Interface"
+    Manufacturer="GigaDevice"
+    ManufactureUrl="www.gigadevice.com"
+    Voltage="3.3V"
+    Clock="120MHz"
+    Timeout="1280"
+    ManufactureID="0xC8"
+    JedecDeviceID="0xC8471A"
+    ChipSizeInKByte="65536"
+    SectorSizeInByte="4096"
+    PageSizeInByte="256"
+    AddrWidth="3"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+
 <!-- 20130219 END-->
 
 <!--20130221 Modify-->
