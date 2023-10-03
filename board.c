@@ -851,8 +851,7 @@ bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 }
 
 bool UpdateSF600Flash(const char* sFilePath, int Index)
-{
-      //  printf("		evy	UpdateSF600Flash\n");
+{ 
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;

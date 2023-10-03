@@ -687,7 +687,7 @@ size_t Condense(uintptr_t* out, unsigned char* vc, uintptr_t* addrs, size_t addr
 extern void SetPageSize(CHIP_INFO* mem, int USBIndex);
 
 bool BlazeUpdate(int Index)
-{ 
+{  
     struct CAddressRange down_with_lock_range;
     down_with_lock_range.start = DownloadAddrRange.start;
     down_with_lock_range.end = DownloadAddrRange.end;
@@ -705,7 +705,8 @@ bool BlazeUpdate(int Index)
     effectiveRange.start = down_with_lock_range.start & (~(Chip_Info.MaxErasableSegmentInByte - 1));
     effectiveRange.end = (down_with_lock_range.end + (Chip_Info.MaxErasableSegmentInByte - 1)) & (~(Chip_Info.MaxErasableSegmentInByte - 1));
     effectiveRange.length = effectiveRange.end - effectiveRange.start;
- 
+ 	
+     
     if (!threadReadRangeChip(effectiveRange, Index))
         return false;
 
@@ -721,11 +722,11 @@ bool BlazeUpdate(int Index)
 
     memcpy(vc, pBufferForLastReadData[Index], effectiveRange.length); //memory data
 
-    if (LockAddrrange.length > 0) {
+    if (LockAddrrange.length > 0) { 
        offsetOfRealStartAddrOffset = LockAddrrange.start - effectiveRange.start;  
         memcpy(pBufferforLoadedFile + offsetOfRealStartAddrOffset, pBufferForLastReadData[Index] + offsetOfRealStartAddrOffset, LockAddrrange.length);
         Leng = GenerateDiff(addrs, vc, DownloadAddrRange.length, pBufferforLoadedFile, g_ulFileSize, DownloadAddrRange.start, Chip_Info.MaxErasableSegmentInByte);
-    } else {
+    } else { 
         offsetOfRealStartAddrOffset = DownloadAddrRange.start - effectiveRange.start; 
         
 Leng = GenerateDiff(addrs, vc + offsetOfRealStartAddrOffset, DownloadAddrRange.length, pBufferforLoadedFile, g_ulFileSize, DownloadAddrRange.start, Chip_Info.MaxErasableSegmentInByte);
