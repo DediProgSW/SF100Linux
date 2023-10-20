@@ -26,6 +26,7 @@
     SectorSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="Alverstone-128M(Bottom)"
@@ -44,6 +45,7 @@
     SectorSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="P5Q-128M"
@@ -62,6 +64,7 @@
     SectorSizeInByte="131072"
     PageSizeInByte="64"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P05A"
@@ -81,6 +84,7 @@
     SectorSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P05VP"
@@ -100,6 +104,7 @@
     SectorSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P10A"
@@ -119,6 +124,7 @@
     SectorSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="EPCS1S"
@@ -138,6 +144,7 @@
     SectorSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P16"
@@ -157,6 +164,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="EPCS16S"
@@ -176,6 +184,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P20"
@@ -195,6 +204,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P32"
@@ -214,6 +224,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     IDNumber="3"
     RDIDCommand="0x9F" />
@@ -234,6 +245,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="EPCS4S"
@@ -253,6 +265,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P64"
@@ -272,6 +285,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -292,6 +306,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -310,6 +325,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25P128"
@@ -328,6 +344,7 @@
     SectorSizeInByte="262144"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     IDNumber="3"
     RDIDCommand="0x9F" />
@@ -347,6 +364,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWDWSW"
     VppSupport="9"
     IDNumber="3"
@@ -367,6 +385,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWDWSW"
     VppSupport="9"
     IDNumber="3"
@@ -387,6 +406,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWDWSW"
     VppSupport="9"
     IDNumber="3"
@@ -407,6 +427,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="QPQD_RQWDWSW"
     VppSupport="9"
     IDNumber="3"
@@ -427,6 +448,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWDWSW"
     VppSupport="9"
     IDNumber="3"
@@ -447,6 +469,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="QPQD_RQWDWSW"
     IDNumber="3"
@@ -467,6 +490,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="QPQD_RQWDWSW"
     IDNumber="3"
@@ -487,6 +511,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="4"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="QPQD_RQWDWSW"
     IDNumber="3"
@@ -509,6 +534,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="SPDD_RDWSW"
     IDNumber="3"
@@ -530,6 +556,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="SPDD_RDWSW"
     IDNumber="3"
@@ -551,6 +578,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="SPDD_RDWSW"
     IDNumber="3"
@@ -572,6 +600,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     VppSupport="9"
     ProgramIOMethod="SPDD_RDWSW"
     IDNumber="3"
@@ -593,6 +622,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="M25PE10"
@@ -611,6 +641,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25PE20"
@@ -629,6 +660,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25PE40"
@@ -647,6 +679,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25PE80"
@@ -665,6 +698,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M25PE16"
@@ -683,6 +717,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M45PE10"
@@ -701,6 +736,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M45PE20"
@@ -719,6 +755,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M45PE40"
@@ -737,6 +774,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M45PE80"
@@ -755,6 +793,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="M45PE16"
@@ -773,6 +812,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="25LF020A"
@@ -793,8 +833,9 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
-    RDIDCommand="0x90" />
+    RDIDCommand="0x9addrwidth0" />
 <Chip TypeName="25LF040A"
     ICType="SPI_NOR"
     Class="25xFxxA"
@@ -813,6 +854,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90" />
 <Chip TypeName="25LF080A"
@@ -833,6 +875,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90" />
 
@@ -854,6 +897,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90" />
 
@@ -875,6 +919,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="25WF010"
@@ -895,6 +940,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90" />
 <Chip TypeName="25WF020"
@@ -915,6 +961,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90" />
 <Chip TypeName="25WF040"
@@ -935,6 +982,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90" />
 <Chip TypeName="25WF080"
@@ -955,6 +1003,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 
@@ -976,6 +1025,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="25VF032B"
@@ -996,6 +1046,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="25VF020(A)"
@@ -1016,6 +1067,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="25VF020B"
@@ -1036,6 +1088,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="25VF040(A)"
@@ -1056,6 +1109,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="25VF040B"
@@ -1076,6 +1130,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="25VF080B"
@@ -1096,6 +1151,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="2"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="25VF512A"
@@ -1116,6 +1172,7 @@
     BlockSizeInByte="32768"
     PageSizeInByte="1"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="W25B40(TopBoot)"
@@ -1136,6 +1193,7 @@
     SectorSizeInByte="4096"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="W25B40(BottomBoot)"
@@ -1156,6 +1214,7 @@
     SectorSizeInByte="4096"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="W25P10"
@@ -1175,6 +1234,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="W25P20"
@@ -1194,6 +1254,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="W25P40"
@@ -1213,6 +1274,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0x90"/>
 <Chip TypeName="W25P80"
@@ -1232,6 +1294,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="W25P16"
@@ -1251,6 +1314,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="W25X10(A)"
@@ -1272,6 +1336,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1294,6 +1359,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1316,6 +1382,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1339,6 +1406,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1361,6 +1429,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1383,6 +1452,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1405,6 +1475,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1427,6 +1498,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1449,6 +1521,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1471,6 +1544,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1493,6 +1567,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1515,6 +1590,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1537,6 +1613,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1559,6 +1636,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1581,6 +1659,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1603,6 +1682,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1625,6 +1705,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1647,6 +1728,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1669,6 +1751,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1690,6 +1773,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1711,6 +1795,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1732,6 +1817,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1753,6 +1839,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1775,6 +1862,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1796,6 +1884,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1817,6 +1906,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1839,6 +1929,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1861,6 +1952,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1882,6 +1974,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1903,6 +1996,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1924,6 +2018,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1945,6 +2040,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1966,6 +2062,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -1988,6 +2085,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPDD_RSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -2009,6 +2107,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -2030,6 +2129,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -2051,6 +2151,7 @@
 		PageSizeInByte="256"
 		BlockSizeInByte="65536"
 		AddrWidth="3"
+    ReadDummyLen="4"
 		ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -2093,6 +2194,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LD020C"
@@ -2113,6 +2215,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LD040"
@@ -2133,6 +2236,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LD512C"
@@ -2153,6 +2257,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LD256C"
@@ -2173,6 +2278,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LQ080"
@@ -2193,6 +2299,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 
@@ -2214,6 +2321,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LQ032"
@@ -2234,6 +2342,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LV512"
@@ -2254,6 +2363,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0xAB"/>
 <Chip TypeName="Pm25LV512A"
@@ -2274,6 +2384,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LV010"
@@ -2294,6 +2405,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="2"
     RDIDCommand="0xAB"/>
 <Chip TypeName="Pm25LV010A"
@@ -2314,6 +2426,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="32768"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LV020"
@@ -2334,6 +2447,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LV040"
@@ -2354,6 +2468,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LV080B"
@@ -2372,6 +2487,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="Pm25LV016B"
@@ -2390,6 +2506,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="Pm25W020"
@@ -2410,6 +2527,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25WD020"
@@ -2430,6 +2548,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25WD040"
@@ -2450,6 +2569,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="Pm25LQ040"
@@ -2470,6 +2590,7 @@
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="S25FL004A"
@@ -2488,6 +2609,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="S25FL004K"
@@ -2507,6 +2629,7 @@
     PageSizeInByte="256"
     ProgramIOMethod="SPQD_RQWSW"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="S25FL008A"
@@ -2525,6 +2648,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="S25FL008K"
@@ -2544,6 +2668,7 @@
     PageSizeInByte="256"
     ProgramIOMethod="SPQD_RQWSW"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="S25FL016A"
@@ -2562,6 +2687,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <!--Chip TypeName="S25FL016K"
@@ -2581,6 +2707,7 @@
     PageSizeInByte="256"
     ProgramIOMethod="SPQD_RQWSW"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/-->
 <Chip TypeName="S25FL032A"
@@ -2599,6 +2726,7 @@
     SectorSizeInByte="65536"
     PageSizeInByte="256"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F" />
 <Chip TypeName="S25FL032P"
@@ -2618,6 +2746,7 @@
     PageSizeInByte="256"
     ProgramIOMethod="SPQD_RQWSW"
     AddrWidth="3"
+    ReadDummyLen="4"
     IDNumber="3"
     RDIDCommand="0x9F"/>
 <Chip TypeName="S25FL032K"
@@ -21205,6 +21334,7 @@ RDIDCommand="0x9F"/>
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>
@@ -21226,6 +21356,7 @@ RDIDCommand="0x9F"/>
     PageSizeInByte="256"
     BlockSizeInByte="65536"
     AddrWidth="3"
+    ReadDummyLen="4"
     ProgramIOMethod="SPQD_RQWSW"
     IDNumber="3"
     RDIDCommand="0x9F"/>

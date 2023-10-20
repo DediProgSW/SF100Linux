@@ -1154,76 +1154,7 @@ bool is_SF700_Or_SF600PG2(int Index)
     }
 
     return false;
-}
-/*
-bool is_SF600PG2(int Index)
-{
-    if (strstr(g_board_type, "SF600PG2") != NULL) {
-        return true;
-    }
-    return false;
-}*/
-#if 0
-CHIP_INFO GetFirstDetectionMatch(int Index)
-{
-
-printf("GetFirstDetectionMatch(%x)\n",Index);
-    CHIP_INFO binfo;
-    binfo.UniqueID = 0;
-    int Found = 0;
-    int i = 0;
-    int Loop = 3;
-    if (strcmp(g_parameter_vcc, "NO") != 0)
-        Loop = 1;
-
-    for (i = 0; i < Loop; i++) {
-        if (Found == 1)
-            break;
-        if (Loop == 1)
-            g_Vcc = vcc3_5V;
-        else
-            g_Vcc = vcc1_8V - i;
-
-        TurnONVcc(Index);
-        if (Is_usbworking(Index)) {
-            if (g_bIsSF600[Index] == true) {
-                int startmode;
-
-                if (g_StartupMode == STARTUP_APPLI_SF_2)
-                    SetTargetFlash(STARTUP_APPLI_SF_2, Index);
-                else
-                    SetTargetFlash(STARTUP_APPLI_SF_1, Index);
-
-                startmode = g_StartupMode;
-                Found = FlashIdentifier(&binfo, 0, Index);
-                if (Found == 0) {
-                    TurnOFFVcc(Index);
-                    SetTargetFlash(STARTUP_APPLI_SF_SKT, Index);
-                    g_CurrentSeriase = Seriase_25;
-                    TurnONVcc(Index);
-                    Found = FlashIdentifier(&binfo, 0, Index);
-                    if (Found == 0) {
-                        TurnOFFVcc(Index);
-                        g_CurrentSeriase = Seriase_45;
-                        TurnONVcc(Index);
-                        Found = FlashIdentifier(&binfo, 0, Index);
-                        if (Found == 0)
-                            g_StartupMode = startmode;
-                    }
-                }
-            } else {
-                Found = FlashIdentifier(&binfo, 0, Index);
-            }
-        }
-        TurnOFFVcc(Index);
-    }
-    if (Found == 0) {
-        binfo.UniqueID = 0;
-        binfo.TypeName[0] = '\0';
-    }
-    return binfo;
-}
-#else
+} 
 CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
 {
     CHIP_INFO binfo;
@@ -1292,7 +1223,7 @@ CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
 
     return binfo; //*TypeName;
 }
-#endif
+ 
 // fail in case of 1) USB failure, 2) unrecognised ID.
 void InitLED(int Index)
 {

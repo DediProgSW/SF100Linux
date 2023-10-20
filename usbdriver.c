@@ -315,9 +315,9 @@ int BulkPipeRead(unsigned char* pBuff, unsigned int timeOut, int Index)
     int ret, actual_length;
     if (Index == -1)
         Index = DevIndex;
-
-    unsigned long cnRead = 512;
-    ret = libusb_bulk_transfer(dediprog_handle[Index], 2 | LIBUSB_ENDPOINT_IN, pBuff, cnRead, &actual_length, DEFAULT_TIMEOUT); 
+ 
+    unsigned long cnRead = 512; 
+    ret = libusb_bulk_transfer(dediprog_handle[Index], 2 | LIBUSB_ENDPOINT_IN, pBuff, cnRead, &actual_length, DEFAULT_TIMEOUT);  
     if (ret != 0) //libusb_bulk_transfer return false
         return 0; 
     return cnRead;

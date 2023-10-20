@@ -79,6 +79,7 @@ typedef struct ChipInfo {
     size_t MaxErasableSegmentInByte;
 
     size_t AddrWidth;
+    size_t ReadDummyLen;
 
     bool DualID;
     size_t VppSupport;

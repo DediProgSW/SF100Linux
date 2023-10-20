@@ -114,13 +114,14 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             Chip_Info_temp.BlockSizeInByte = 0;
             Chip_Info_temp.PageSizeInByte = 0;
             Chip_Info_temp.AddrWidth = 0;
+            Chip_Info_temp.ReadDummyLen = 0;
             Chip_Info_temp.IDNumber = 0;
             Chip_Info_temp.RDIDCommand = 0;
             Chip_Info_temp.MaxErasableSegmentInByte = 0;
             Chip_Info_temp.DualID = false;
             Chip_Info_temp.VppSupport = 0;
             Chip_Info_temp.MXIC_WPmode = false;
-            Chip_Info_temp.Timeout = 0;
+            Chip_Info_temp.Timeout = 0; 
             // end of struct init
             strcpy(Chip_Info_temp.TypeName, tok);
 
@@ -237,6 +238,15 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             Chip_Info_temp.AddrWidth = strtol(tok, NULL, 10);
             continue;
         }
+        pch = strstr(file_line_buf, "ReadDummyLen");
+        if (pch != NULL) {
+            memset(test, '\0', testbufsize);
+            strcpy(test, pch + strlen("ReadDummyLen"));
+            tok = strtok(test, "\"= \t");
+            //printf("ReadDummyLen = %ld\n",strtol(tok,NULL,10));
+            Chip_Info_temp.ReadDummyLen = strtol(tok, NULL, 10);
+            continue;
+        }
         pch = strstr(file_line_buf, "IDNumber");
         if (pch != NULL) {
             memset(test, '\0', testbufsize);
@@ -283,7 +293,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             else
                 Chip_Info_temp.MXIC_WPmode = false;
             // starting checking input data
-        }
+        } 
         pch = strstr(file_line_buf, "Portofolio"); //end
         if (pch != NULL) {
             if (detectICNum)
@@ -351,12 +361,13 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
                 Chip_Info->BlockSizeInByte = 0;
                 Chip_Info->PageSizeInByte = 0;
                 Chip_Info->AddrWidth = 0;
+                Chip_Info->ReadDummyLen = 0;
                 Chip_Info->IDNumber = 0;
                 Chip_Info->RDIDCommand = 0;
                 Chip_Info->MaxErasableSegmentInByte = 0;
                 Chip_Info->DualID = false;
                 Chip_Info->VppSupport = 0;
-                Chip_Info->MXIC_WPmode = false;
+                Chip_Info->MXIC_WPmode = false; 
                 Chip_Info->Timeout = 0;
                 // end of struct init
                 strcpy(Chip_Info->TypeName, tok);
@@ -464,6 +475,15 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
             Chip_Info->AddrWidth = strtol(tok, NULL, 10);
             continue;
         }
+        pch = strstr(file_line_buf, "ReadDummyLen");
+        if (pch != NULL) {
+            memset(test, '\0', testbufsize);
+            strcpy(test, pch + strlen("ReadDummyLen"));
+            tok = strtok(test, "\"= \t");
+            //printf("ReadDummyLen = %ld\n",strtol(tok,NULL,10));
+            Chip_Info->ReadDummyLen = strtol(tok, NULL, 10);
+            continue;
+        } 
         pch = strstr(file_line_buf, "IDNumber");
         if (pch != NULL) {
             memset(test, '\0', testbufsize);
@@ -509,52 +529,7 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
                 Chip_Info->MXIC_WPmode = false;
             // starting checking input data
             continue;
-        }
-#if 0
-
-			 pch=strstr(file_line_buf,"ManufactureUrl=");
-			 if(pch != NULL) {
-					 memset(test, '\0', testbufsize);
-					 strcpy(test,pch+strlen("ManufactureUrl="));
-					 tok = strtok(test,"\"");
-					 //printf("ManufactureUrl = %s\n",tok);
-					 strcpy(Chip_Info->ManufactureUrl,tok);
-			 }
-			 pch=strstr(file_line_buf,"Description=");
-			 if( pch != NULL) {
-							 memset(test, '\0', testbufsize);
-							 strcpy(test,pch+strlen("Description="));
-							 tok = strtok(test,"\"");
-							 //printf("Description = %s\n",tok);
-							 strcpy(Chip_Info->Description,tok);
-					 }
-					pch=strstr(file_line_buf,"Clock=");
-					if(pch != NULL)  {
-							 memset(test, '\0', testbufsize);
-							 strcpy(test,pch+strlen("Clock="));
-							 tok = strtok(test,"\"");
-							 //printf("Clock = %s\n",tok);
-							 Chip_Info->Clock[0] = '\0';
-					 }
-
-					pch=strstr(file_line_buf,"ManufactureID=");
-					if(pch != NULL) {
-							 memset(test, '\0', testbufsize);
-							 strcpy(test,pch+strlen("ManufactureID="));
-							 tok = strtok(test,"\"");
-							 //printf("ManufactureID = 0x%lx\n",strtol(tok,NULL,16));
-							 Chip_Info->ManufactureID = strtol(tok,NULL,16);
-					 }
-
-					pch=strstr(file_line_buf,"DeviceID=");
-					if(pch != NULL) {
-							 memset(test, '\0', testbufsize);
-							 strcpy(test,pch+strlen("DeviceID="));
-							 tok = strtok(test,"\"");
-							 //printf("DeviceID = 0x%lx\n",strtol(tok,NULL,16));
-							 Chip_Info->AlternativeID= strtol(tok,NULL,16);
-					 }
-#endif
+        } 
     } /*Continue until EOF is encoutered*/
     fclose(fp); /*Close file*/
     Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
