@@ -109,7 +109,7 @@ bool isSendFFsequence = false;
 //static const char*    msg_err_openfile      = "Error: Failed to open file.\n";
 
 static const char* msg_err_communication = "Error: USB communication error or configuration file missing.\n";
-static const char* msg_err_identifychip = "Error: chip not identified.\n";
+static const char* msg_err_identifychip = "Error: chip not identified or chip is not supported.\n";
 static const char* msg_err_timeout_abortion = "\nError: Abort abnormally due to timeout.\n*** You might need to un-plug the USB device to recover the state. ***\n";
 static const char* msg_info_loading = "\nLoading file, please wait ...";
 static const char* msg_info_checking = "\nChecking, please wait ...";
@@ -501,7 +501,7 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-    printf("\nDpCmd Linux 1.14.16.%02d Engine Version:\nLast Built on %s\n\n", GetConfigVer(), __DATE__); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.14.17.%02d Engine Version:\nLast Built on %s\n\n", GetConfigVer(), __DATE__); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
@@ -1300,8 +1300,7 @@ void SetSPIClock(int Index)
 }
 
 void SetVcc(int Index)
-{ 
-    //    sscanf(g_parameter_vcc,"%d",&g_Vcc);
+{  
     if (!(g_Vcc <= 3800 && g_Vcc >= 1800 && ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index))))
         g_Vcc = (0x10 | (g_Vcc & 0x03));
 }
@@ -1389,8 +1388,8 @@ bool CheckProgrammerInfo(void)
     int dev_cnt = get_usb_dev_cnt();
     unsigned int uiFPGAVer = 0;
     if (g_uiDevNum == 0) {
-        for (int i = 0; i < dev_cnt; i++) {
-            int dwUID = ReadUID(i);
+        for (int i = 0; i < dev_cnt; i++) { 
+            int dwUID = ReadUID(i); 
             if (is_SF700_Or_SF600PG2(i)) {
 		if (g_bIsSF700[i] == true)
                     printf("%d,\tSF7%05d\n", i + 1, dwUID);
@@ -1781,7 +1780,6 @@ void do_RawInstructions(int Index)
     int iReturn = 0;
     int i = 0;
     strcpy(parameter, g_parameter_raw);
-    memset(pchReturn, 0, 30);
     TurnONVcc(Index);
     pch[i] = strtok(parameter, "|");
     while (pch[i] != NULL) { 

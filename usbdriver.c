@@ -88,6 +88,7 @@ void AssignSF600orSF700var(int Index)
         return; 
 
     memcpy(g_board_type, &vBuffer[0], 8);
+     
     //memcpy(g_firmversion,&vBuffer[10],8);
     sscanf((char*)&vBuffer[8], "V:%d.%d.%d", &fw[0], &fw[1], &fw[2]);
     g_firmversion = ((fw[0] << 16) | (fw[1] << 8) | fw[2]);
@@ -103,7 +104,7 @@ void AssignSF600orSF700var(int Index)
         }
 	else
         {
-            g_bIsSF600[Index] = true; 
+            g_bIsSF600[Index] = true;  
         }
     }  
 
@@ -141,8 +142,7 @@ static int FindUSBDevice(void)
             dev_index++;
         }
     }
-    printf(" \n");
-
+    printf(" \n"); 
     return dev_index;
 }
 

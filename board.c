@@ -7,9 +7,9 @@
 #define SerialFlash_TRUE 1
 #define min(a, b) (a > b ? b : a)
 
-volatile bool g_bIsSF600 = false;
-volatile bool g_bIsSF700 = false;
-volatile bool g_bIsSF600PG2 = false; 
+volatile bool g_bIsSF600[16] = {false};
+volatile bool g_bIsSF700[16] = {false};
+volatile bool g_bIsSF600PG2[16] = {false}; 
 extern char g_board_type[8];
 extern char g_FPGA_ver[8];
 extern char g_FW_ver[10];
@@ -373,22 +373,20 @@ unsigned int ReadUID(int Index)
     unsigned int dwUID = 0;
     unsigned char vUID[16];
 
-    if (is_SF700_Or_SF600PG2(Index)) { 
+    if (is_SF700_Or_SF600PG2(Index)) {  
         if (ReadSF700AndSF600PG2SN(vUID, Index) == false)
             return false;
-//Sleep(200);
-       //if (ReadSF700AndSF600PG2SN(vUID, Index) == false)
-         // return false;
+
 
 	dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
         return dwUID;	
 
     }
 
-    if ((g_bIsSF600 == true) ) {
+    if ((g_bIsSF600[Index] == true) ) { 
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
-        if (g_bIsSF600 == true)
+        if (g_bIsSF600[Index] == true)
             dwUID = (unsigned int)vUID[0] << 16 | (unsigned int)vUID[1] << 8 | vUID[2];
         else
             dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
@@ -486,7 +484,7 @@ unsigned char ReadManufacturerID(int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || is_SF700_Or_SF600PG2(Index) == true) {
+    if ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index) == true) {
         unsigned char vUID[16];
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
@@ -646,7 +644,7 @@ bool WriteUID(unsigned int dwUID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || is_SF700_Or_SF600PG2(Index) == true)
+    if ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index) == true)
         return true;
 
     CNTRPIPE_RQ rq;
@@ -686,7 +684,7 @@ bool WriteManufacturerID(unsigned char ManuID, int Index)
     if (!Is_usbworking(Index))
         return false;
 
-    if ((g_bIsSF600 == true) || is_SF700_Or_SF600PG2(Index) == true)
+    if ((g_bIsSF600[Index] == true) || is_SF700_Or_SF600PG2(Index) == true)
         return true;
 
     CNTRPIPE_RQ rq;
@@ -927,8 +925,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
 }
 
 bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
-{
-        printf("		evy	UpdateSF600Flash_FPGA\n");
+{ 
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;
@@ -1008,7 +1005,7 @@ bool UpdateFirmware(const char* sFolder, int Index)
     unsigned int UID = 0;
     unsigned char ManID = 0;
     // read status
-    if ((g_bIsSF600 == true) || (is_SF700_Or_SF600PG2(Index) == true))
+    if ((g_bIsSF600[Index] == true) || (is_SF700_Or_SF600PG2(Index) == true))
         return UpdateSF600Firmware(sFolder, Index);
  
     dediprog_set_spi_voltage(g_Vcc, Index);
