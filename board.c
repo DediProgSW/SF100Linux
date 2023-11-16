@@ -9,7 +9,7 @@
 
 volatile bool g_bIsSF600[16] = {false};
 volatile bool g_bIsSF700[16] = {false};
-volatile bool g_bIsSF600PG2[16] = {false}; 
+volatile bool g_bIsSF600PG2[16] = {false};
 extern char g_board_type[8];
 extern char g_FPGA_ver[8];
 extern char g_FW_ver[10];
@@ -31,25 +31,25 @@ bool ReadSF700AndSF600PG2SN(unsigned char* Data, int Index)
     rq.Direction = VENDOR_DIRECTION_OUT;
     rq.Request = 0x71;
     rq.Value = 0;
-    rq.Index = 0; 
+    rq.Index = 0;
     rq.Length = 6;
 
 
     vBuffer[0]=0;
-    vBuffer[1]=0; 
-    vBuffer[2]=0; 
-    vBuffer[3]=2; 
-    vBuffer[4]=0; 
-    vBuffer[5]=0; 
+    vBuffer[1]=0;
+    vBuffer[2]=0;
+    vBuffer[3]=2;
+    vBuffer[4]=0;
+    vBuffer[5]=0;
 
 //must read twice
-    if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)  
+    if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)
         return false;
     //first
     unsigned char vBufferSN[512];
     BulkPipeRead(vBufferSN, USB_TIMEOUT, Index);
 
-    if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)  
+    if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)
         return false;
     //second
     BulkPipeRead(vBufferSN, USB_TIMEOUT, Index);
@@ -106,7 +106,7 @@ void QueryBoard(int Index)
         return;
     }
 
-    memcpy(g_board_type, &vBuffer[0], 8);  
+    memcpy(g_board_type, &vBuffer[0], 8);
 }
 
 unsigned int GetFPGAVersion(int Index)
@@ -373,17 +373,17 @@ unsigned int ReadUID(int Index)
     unsigned int dwUID = 0;
     unsigned char vUID[16];
 
-    if (is_SF700_Or_SF600PG2(Index)) {  
+    if (is_SF700_Or_SF600PG2(Index)) {
         if (ReadSF700AndSF600PG2SN(vUID, Index) == false)
             return false;
 
 
 	dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
-        return dwUID;	
+        return dwUID;
 
     }
 
-    if ((g_bIsSF600[Index] == true) ) { 
+    if ((g_bIsSF600[Index] == true) ) {
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
         if (g_bIsSF600[Index] == true)
@@ -392,7 +392,7 @@ unsigned int ReadUID(int Index)
             dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
         return dwUID;
     }
-	 
+
     CNTRPIPE_RQ rq;
     unsigned char vBuffer[3];
 
@@ -406,7 +406,7 @@ unsigned int ReadUID(int Index)
 
     if (InCtrlRequest(&rq, vBuffer, 3, Index) == SerialFlash_FALSE) {
         return false;
-    } 
+    }
 
     dwUID = (unsigned int)vBuffer[0] << 16 | (unsigned int)vBuffer[1] << 8 | vBuffer[2];
     return dwUID;
@@ -795,31 +795,31 @@ bool GetFirmwareVer(int Index)
     unsigned char vBuffer[32];
     unsigned int BufferSize =32;
 
-    if((g_bIsSF600== false) && (is_SF700_Or_SF600PG2(Index) == false))
-	BufferSize = 16;	
-	
+    if((g_bIsSF600[Index] == false) && (is_SF700_Or_SF600PG2(Index) == false))
+        BufferSize = 16;
+
     // first control packet
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_IN;
     rq.Request = PROGINFO_REQUEST;
     rq.Value = 0;
     rq.Index = 0;
-    rq.Length = BufferSize; 
+    rq.Length = BufferSize;
 
     if (!OutCtrlRequest(&rq, vBuffer, BufferSize, Index))
         return false;
- 
+
     if (!Is_usbworking(Index)) {
         printf("Do not find SFxx programmer!!\n");
         return false;
     }
- 
-    memcpy(g_board_type, &vBuffer[0], 8); 
+
+    memcpy(g_board_type, &vBuffer[0], 8);
 
     if (strstr(g_board_type, "SF600PG2") != NULL)
-    { 
-    	memcpy(g_FW_ver, &vBuffer[12], 9); 
-        memcpy(g_HW_ver, &vBuffer[25], 5); 
+    {
+    	memcpy(g_FW_ver, &vBuffer[12], 9);
+        memcpy(g_HW_ver, &vBuffer[25], 5);
     }
     else
     {
@@ -828,8 +828,8 @@ bool GetFirmwareVer(int Index)
             memcpy(g_HW_ver, &vBuffer[20], 4);
         if (strstr(g_board_type, "SF700") != NULL)
             memcpy(g_HW_ver, &vBuffer[21], 4);
-    }    
-     
+    }
+
 
     return true;
 }
@@ -849,7 +849,7 @@ bool EncrypFirmware(unsigned char* vBuffer, unsigned int Size, int Index)
 }
 
 bool UpdateSF600Flash(const char* sFilePath, int Index)
-{ 
+{
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;
@@ -866,12 +866,12 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
     }
 
     fseek(pFile, 0, SEEK_SET);
-    lSize = fread((unsigned char*)&fw_info, 1, sizeof(FW_INFO), pFile); 
+    lSize = fread((unsigned char*)&fw_info, 1, sizeof(FW_INFO), pFile);
     if (lSize != sizeof(FW_INFO))
         printf("Possible read length error %s\n", sFilePath);
     pBuffer = (unsigned char*)malloc(fw_info.FirstSize);
     fseek(pFile, fw_info.FirstIndex, SEEK_SET);
-    lSize = fread(pBuffer, 1, fw_info.FirstSize, pFile); 
+    lSize = fread(pBuffer, 1, fw_info.FirstSize, pFile);
     if (lSize != fw_info.FirstSize)
         printf("Possible read length error %s\n", sFilePath);
     fclose(pFile);
@@ -925,7 +925,7 @@ bool UpdateSF600Flash(const char* sFilePath, int Index)
 }
 
 bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
-{ 
+{
     CNTRPIPE_RQ rq;
     unsigned char* pBuffer;
     int pagenum = 0;
@@ -971,7 +971,7 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
         Package[2] = ((fw_info.SecondSize >> 16) & 0xff);
         Package[3] = ((fw_info.SecondSize >> 24) & 0xff);
 
-        if (!OutCtrlRequest(&rq, Package, 4, Index)) { 
+        if (!OutCtrlRequest(&rq, Package, 4, Index)) {
             free(pBuffer);
             return false;
         }
@@ -983,7 +983,7 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
         rq.Index = (unsigned short)((fw_info.SecondSize >> 16) & 0xffff);
         rq.Length = 0;
 
-        if (!OutCtrlRequest(&rq, pBuffer, 0, Index)) { 
+        if (!OutCtrlRequest(&rq, pBuffer, 0, Index)) {
             free(pBuffer);
             return false;
         }
@@ -1000,14 +1000,14 @@ bool UpdateSF600Flash_FPGA(const char* sFilePath, int Index)
 }
 
 bool UpdateFirmware(const char* sFolder, int Index)
-{ 
+{
     bool bResult = true;
     unsigned int UID = 0;
     unsigned char ManID = 0;
     // read status
     if ((g_bIsSF600[Index] == true) || (is_SF700_Or_SF600PG2(Index) == true))
         return UpdateSF600Firmware(sFolder, Index);
- 
+
     dediprog_set_spi_voltage(g_Vcc, Index);
 
     if (g_firmversion > 0x040107) // 4.1.7
