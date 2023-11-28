@@ -1346,7 +1346,7 @@ void SetProgReadCommand(int Index)
         mcode_ProgramCode_4Adr = 0x12;
         mcode_ReadCode = 0x0C;
         // printf("Read Code=%X\n",mcode_ReadCode);
-    } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL || strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL) {
+    } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = 0xC4;
@@ -1365,6 +1365,16 @@ void SetProgReadCommand(int Index)
             mcode_Read = BULK_4BYTE_FAST_READ_MICRON;
         }
 
+    }  else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL) {
+        mcode_RDSR = RDSR;
+        mcode_WRSR = WRSR;
+        mcode_ChipErase = 0xC4;
+        mcode_Program = PAGE_PROGRAM;
+        mcode_SegmentErase = 0xD8;
+        mcode_ProgramCode_4Adr = 0x02;
+        mcode_ReadCode = 0x03;
+        mcode_Read = BULK_NORM_READ;
+        
     } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
