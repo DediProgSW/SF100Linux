@@ -582,31 +582,8 @@ bool threadProgram(int Index)
         result = true;
     } else {
         result = false;
-    }
-
-#if 0
-
-    /*  if( !bAuto[Index] ) 
-    { 
-   	
-	 CompleteCnt++;   
-	
-       if( CompleteCnt==get_usb_dev_cnt() )
-	{
-		//m_context.runtime.is_operation_on_going  = false;
-		//m_chip[Index]->ClearCancelOperationFlag(); 
-                g_is_operation_on_going = false;
-		 SerialFlash_ClearCancelOperationFlag();
-	}
-
-    }
-    else
-    { 
-	  //  SerialFlash_ClearCancelOperationFlag();
+    } 
  
-    }*/
-#endif
-
     g_is_operation_successful[Index] = result;
     return result;
 }

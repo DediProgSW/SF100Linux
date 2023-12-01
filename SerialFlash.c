@@ -2297,15 +2297,14 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
 }
 
 int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeWrite, unsigned char WriteCom, int Index)
-{  
+{   
     size_t i, j, divider;
     unsigned char* itr_begin;
 
     if (!SerialFlash_StartofOperation(Index))
         return false;
     if (SerialFlash_protectBlock(false, Index) == SerialFlash_FALSE)
-        return false;
-  
+        return false; 
  
     if (SerialFlash_EnableQuadIO(true, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE)
         return false;
@@ -2357,6 +2356,7 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
 	    EAR = (down_range.start & 0xFF000000)>>24;
 	    if((EAR != preEAR)&&(EAR!=0)) {
 		    do{ 
+			CN25Qxxx_Large_4Die_WREAR(EAR,Index); 
 			Sleep(1);
 			CN25Qxxx_Large_4Die_RDEAR(&re,Index);    
 			timeout--;
@@ -2413,13 +2413,12 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
     }
  
 
-    if (SerialFlash_protectBlock(m_bProtectAfterWritenErase, Index) == SerialFlash_FALSE)
+    if (SerialFlash_protectBlock(m_bProtectAfterWritenErase, Index) == SerialFlash_FALSE) 
         return false;
-    if (SerialFlash_EnableQuadIO(false, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE)
-        return false;
-
-    if (!SerialFlash_EndofOperation(Index))
-        return false;
+    if (SerialFlash_EnableQuadIO(false, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE) 
+      return false; 
+    if (!SerialFlash_EndofOperation(Index)) 
+       return false; 
     return true;
 } 
 bool SerialFlash_doSelectDie(unsigned char dieNum,int Index)
