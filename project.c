@@ -664,7 +664,7 @@ size_t Condense(uintptr_t* out, unsigned char* vc, uintptr_t* addrs, size_t addr
 extern void SetPageSize(CHIP_INFO* mem, int USBIndex);
 
 bool BlazeUpdate(int Index)
-{  
+{   
     struct CAddressRange down_with_lock_range;
     down_with_lock_range.start = DownloadAddrRange.start;
     down_with_lock_range.end = DownloadAddrRange.end;
@@ -696,7 +696,7 @@ bool BlazeUpdate(int Index)
 
     uintptr_t* addrs = (size_t*)malloc(min(DownloadAddrRange.length, g_ulFileSize));
     size_t Leng = 0;
-
+ 
     memcpy(vc, pBufferForLastReadData[Index], effectiveRange.length); //memory data
 
     if (LockAddrrange.length > 0) { 
@@ -708,20 +708,18 @@ bool BlazeUpdate(int Index)
         
 Leng = GenerateDiff(addrs, vc + offsetOfRealStartAddrOffset, DownloadAddrRange.length, pBufferforLoadedFile, g_ulFileSize, DownloadAddrRange.start, Chip_Info.MaxErasableSegmentInByte);
     }
-  
-    if (Leng == 0) // speed optimisation
-    {
+   
+    if (Leng == 0) // speed optimisation 
         return true;
-    } else {
+    else {
         uintptr_t* condensed_addr = (size_t*)malloc(min(DownloadAddrRange.length, g_ulFileSize));
         size_t condensed_size;
         condensed_size = Condense(condensed_addr, vc, addrs, Leng, effectiveRange.start, Chip_Info.MaxErasableSegmentInByte);
-  
-        if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL) {
+   
+        if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL)  
 	    SerialFlash_batchErase_W25Mxx_Large(condensed_addr, condensed_size, Index);
-	}
-        else
-	    SerialFlash_batchErase(condensed_addr, condensed_size, Index);
+        else  
+	    SerialFlash_batchErase(condensed_addr, condensed_size, Index); 
 
         if (strstr(Chip_Info.Class, SUPPORT_MACRONIX_MX25Lxxx) != NULL) {
             TurnOFFVcc(Index);
@@ -738,7 +736,8 @@ Leng = GenerateDiff(addrs, vc + offsetOfRealStartAddrOffset, DownloadAddrRange.l
             addr_range.start = addrs[i];
             addr_range.end = addrs[i] + Chip_Info.MaxErasableSegmentInByte;
             addr_range.length = addr_range.end - addr_range.start; 
-            if (SerialFlash_rangeProgram(&addr_range, vc + idx_in_vc, Index) == 0) {
+ 
+            if (SerialFlash_rangeProgram(&addr_range, vc + idx_in_vc, Index) == 0) { 
                 free(vc);
                 free(addrs);
                 free(condensed_addr);
@@ -800,6 +799,8 @@ bool RangeUpdateThruChipErase(int Index)
     addr.start = 0;
     addr.end = Chip_Info.ChipSizeInByte;
     addr.length = Chip_Info.ChipSizeInByte;
+
+ 
     return SerialFlash_rangeProgram(&addr, vc, Index);
 }
 
@@ -822,7 +823,7 @@ bool ReplaceChipContentThruChipErase(int Index)
 }
 
 bool threadPredefinedBatchSequences(int Index)
-{
+{ 
     bool result = true;
 
     if (g_ulFileSize == 0)
@@ -833,11 +834,11 @@ bool threadPredefinedBatchSequences(int Index)
  
     if (result) {
         switch (g_BatchIndex) {
-        case 1: //-z
+        case 1: //-z 
             result = ReplaceChipContentThruChipErase(Index);
             break;
         case 2:
-        default:
+        default: 
             result = RangeUpdate(Index); 
             break;
         }

@@ -2297,18 +2297,17 @@ int SerialFlash_bulkPipeProgram(struct CAddressRange* AddrRange, unsigned char* 
 }
 
 int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, unsigned char* vData, unsigned char modeWrite, unsigned char WriteCom, int Index)
-{   
+{    
     size_t i, j, divider;
     unsigned char* itr_begin;
 
-    if (!SerialFlash_StartofOperation(Index))
-        return false;
-    if (SerialFlash_protectBlock(false, Index) == SerialFlash_FALSE)
+    if (!SerialFlash_StartofOperation(Index)) 
         return false; 
- 
-    if (SerialFlash_EnableQuadIO(true, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE)
-        return false;
- 
+   if (SerialFlash_protectBlock(false, Index) == SerialFlash_FALSE) 
+        return false;  
+    if (SerialFlash_EnableQuadIO(true, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE) 
+       return false;
+
     itr_begin = vData; 
     divider = 8;
 
@@ -2317,17 +2316,17 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
     unsigned char EAR = (AddrRange->start & 0xFF000000)>>24;
     unsigned char preEAR = 0;
 	
-    do{
+    do{ 
     	CN25Qxxx_Large_4Die_WREAR(0,Index);
     	Sleep(1);
     	CN25Qxxx_Large_4Die_RDEAR(&re,Index);    
     	timeout--;
-    }while(((re&EAR)!=EAR)&&(timeout!=0));
-   if(timeout == 0)
+    }while((re!=0)&&(timeout!=0));
+   if(timeout == 0) 
     	return false;
-		    
+
     if ((AddrRange->end / 0x1000000) > (AddrRange->start / 0x1000000))   
-    {
+    { 
         struct CAddressRange down_range;
         struct CAddressRange range_temp;
         range_temp.start = AddrRange->start & 0xFF000000;
@@ -2355,7 +2354,7 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
 	    re = 0;
 	    EAR = (down_range.start & 0xFF000000)>>24;
 	    if((EAR != preEAR)&&(EAR!=0)) {
-		    do{ 
+		    do{  
 			CN25Qxxx_Large_4Die_WREAR(EAR,Index); 
 			Sleep(1);
 			CN25Qxxx_Large_4Die_RDEAR(&re,Index);    
@@ -2363,7 +2362,7 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
 		    }while(((re&EAR)!=EAR)&&(timeout!=0));
 		    if(timeout == 0)
 		    	return false;
-		    preEAR = EAR;
+		    preEAR = EAR; 
 	    }
 	    	 
 	down_range.end=down_range.end-(0x1000000*EAR);
@@ -2380,24 +2379,23 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
             }
             itr_begin = itr_begin + (packageNum << divider);
         }
-    } else {
-    
+    } else { 
         struct CAddressRange down_range;
     	divider = 8;
     
             timeout = 3;
 	    re = 0;
-	    EAR = (down_range.start & 0xFF000000)>>24;
+	    EAR = (AddrRange->start & 0xFF000000)>>24;
 	    if((EAR != preEAR)&&(EAR!=0)) {
-		    do{
+		    do{ 
 			CN25Qxxx_Large_4Die_WREAR(EAR,Index);
 			Sleep(1);
 			CN25Qxxx_Large_4Die_RDEAR(&re,Index);    
 			timeout--;
+		   	preEAR = EAR; 
 		    }while(((re&EAR)!=EAR)&&(timeout!=0));
-		    if(timeout == 0)
-		    	return false;
-		    preEAR = EAR;
+		    if(timeout == 0) 
+		    	return false; 
 	    }
 
 	down_range.end=AddrRange->end-(0x1000000*EAR);
@@ -2413,12 +2411,12 @@ int SerialFlash_bulkPipeProgram_Micron_4Die(struct CAddressRange* AddrRange, uns
     }
  
 
-    if (SerialFlash_protectBlock(m_bProtectAfterWritenErase, Index) == SerialFlash_FALSE) 
-        return false;
-    if (SerialFlash_EnableQuadIO(false, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE) 
-      return false; 
-    if (!SerialFlash_EndofOperation(Index)) 
-       return false; 
+    if (SerialFlash_protectBlock(m_bProtectAfterWritenErase, Index) == SerialFlash_FALSE)  
+        return false; 
+   if (SerialFlash_EnableQuadIO(false, m_boEnWriteQuadIO, Index) == SerialFlash_FALSE)  
+      return false;  
+    if (!SerialFlash_EndofOperation(Index))  
+       return false;   
     return true;
 } 
 bool SerialFlash_doSelectDie(unsigned char dieNum,int Index)
@@ -2684,7 +2682,7 @@ int SerialFlash_bulkPipeRead_Micron_4die(struct CAddressRange* AddrRange, unsign
 	 Sleep(1);
 	 CN25Qxxx_Large_4Die_RDEAR(&re,Index);  
 	 timeout--;  
-    }while(((re&EAR)!=EAR)&&(timeout!=0));
+    }while((re != 0)&&(timeout!=0));
     if(timeout == 0)
 	 return false;
    
