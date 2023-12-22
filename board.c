@@ -265,7 +265,7 @@ bool SetCS(size_t value, int Index)
 }
 
 bool SetIOModeToSF600(size_t value, int Index)
-{
+{ 
     if (!Is_usbworking(Index)) {
         return false;
     }
@@ -346,6 +346,8 @@ bool SetSPIClockValue(unsigned short v, int Index)
 
 bool SetIOMOdeValue(int Index)
 {
+    if (strstr(g_board_type, "SF100"))
+	return true; 
     if (!Is_usbworking(Index))
         return false;
 

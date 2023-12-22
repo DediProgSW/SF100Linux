@@ -248,8 +248,8 @@ int InCtrlRequest(CNTRPIPE_RQ* rq, unsigned char* buf, unsigned long buf_size, i
 // should be called after usb successfully opens pipes.
 int dediprog_start_appli(int Index)
 {  
-    if((g_bIsSF600[Index] != false) ||  is_SF700_Or_SF600PG2(Index)!=false)
-	return 1;
+   // if((g_bIsSF600[Index] != false) ||  is_SF700_Or_SF600PG2(Index)!=false)
+//	return 1;
 
     CNTRPIPE_RQ rq;
     int ret;

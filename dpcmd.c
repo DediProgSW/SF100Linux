@@ -183,7 +183,7 @@ struct option long_options[] = {
 };
 
 int OpenUSB(void);
-#if 0 //evy test SF700
+#if 0 
 int verbose = 1;
 
 void print_endpoint(struct usb_endpoint_descriptor *endpoint)
@@ -501,7 +501,7 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-    printf("\nDpCmd Linux 1.14.18.%02d Engine Version:\nLast Built on %s\n\n", GetConfigVer(), __DATE__); // 1. new feature.bug.configS
+    printf("\nDpCmd Linux 1.14.19.%02d Engine Version:\nLast Built on %s\n\n", GetConfigVer(), __DATE__); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
