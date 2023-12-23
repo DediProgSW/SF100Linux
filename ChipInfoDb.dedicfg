@@ -25021,6 +25021,26 @@ RDIDCommand="0x9F"/>
     IDNumber="3"
     RDIDCommand="0x9F"/>
 
+<Chip TypeName="W25Q512NW-IM"
+    ICType="SPI_NOR"
+    Class="W25Pxx_Large"
+    UniqueID="0xEF8020"
+    Description="512 Mbit, Low Voltage, Serial Flash Memory With 133MHz SPI Bus Interface"
+    Manufacturer="Winbond Electronics Corp"
+    ManufactureUrl="www.winbond.com"
+    Voltage="1.8V"
+    Clock="133MHz"
+    Timeout="960"
+    ManufactureID="0xEF"
+    JedecDeviceID="0xEF8020"
+    ChipSizeInKByte="65536"
+    SectorSizeInByte="4096"
+    PageSizeInByte="256"
+    AddrWidth="4"
+    ProgramIOMethod="SPQD_RQWDWSW"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
+
 <Chip TypeName="PY25Q01GHB"
     ICType="SPI_NOR"
     Class="W25Pxx_Large"
