@@ -25701,6 +25701,26 @@ RDIDCommand="0x9F"/>
       JedecDeviceID="0xEF4019"
       ManufactureID="0xEF"
       UniqueID="0xEF4019"/>
+<Chip TypeName="IS25WP512MG"
+	ICType="SPI_NOR"
+    Class="W25Qxx_Large"
+    UniqueID="0x9D7020"
+    Description="512 Mbit Serial Flash Memory"
+    Manufacturer="ISSI"
+    ManufactureUrl="www.issi.com"
+    Voltage="1.8V"
+    Clock="133MHz"
+    Timeout="480"
+    JedecDeviceID="0x9D7020"
+    ManufactureID="0x9D"
+    DeviceID="0x19"
+    ChipSizeInKByte="65536"
+    SectorSizeInByte="4096"
+    PageSizeInByte="256"
+    BlockSizeInByte="65536"
+    AddrWidth="4"
+    IDNumber="3"
+    RDIDCommand="0x9F"/>
 
 </Portofolio>
 </DediProgChipDatabase>
