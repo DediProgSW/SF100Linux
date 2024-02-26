@@ -1322,7 +1322,14 @@ void SetProgReadCommand(int Index)
         mcode_Program = PP_4ADR_256BYTE;
         mcode_SegmentErase = 0xD8;
         mcode_ProgramCode_4Adr = 0x12;
-        mcode_ReadCode = 0x0C;
+	if (strstr(Chip_Info.TypeName, "S25HL01GT") != NULL
+		|| strstr(Chip_Info.TypeName, "S25HL512T") != NULL
+		|| strstr(Chip_Info.TypeName, "S25HL256T") != NULL
+		|| strstr(Chip_Info.TypeName, "S25FS256T") != NULL
+		|| strstr(Chip_Info.TypeName, "S35HL256T") != NULL)
+		mcode_ReadCode = 0x0B;	
+	else
+	    mcode_ReadCode = 0x0C;
         // printf("Read Code=%X\n",mcode_ReadCode);
     } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ) {
         mcode_RDSR = RDSR;
