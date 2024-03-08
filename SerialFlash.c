@@ -959,7 +959,6 @@ bool S25FSxxS_Large_doRDCF3V(unsigned char *cSR, int Index)
         return SerialFlash_FALSE;
 
     *cSR = vBuffer;
-	printf("*\r\n*cSR=0x%X\r\n'", *cSR);
 
     return SerialFlash_TRUE;
 }
