@@ -4,7 +4,6 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
-//#include "pugixml.hpp"
 
 #define testbufsize 256
 #define linebufsize 512

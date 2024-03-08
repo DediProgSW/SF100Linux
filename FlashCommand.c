@@ -105,6 +105,13 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrR
     case PP_128BYTE: // 128 bytes
         divider = 7;
         break;
+    case PP_PROGRAM_ANYSIZE_PAGESIZE:
+        if(PageSize == 0x200)
+            divider = 9;
+        else if(PageSize == 0x400)
+            divider = 10;
+        else 
+            divider = 8;
     default: // 256 bytes
         divider = 8;
         break;

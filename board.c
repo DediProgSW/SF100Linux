@@ -42,7 +42,7 @@ bool ReadSF700AndSF600PG2SN(unsigned char* Data, int Index)
     vBuffer[4]=0;
     vBuffer[5]=0;
 
-//must read twice
+    //must read twice
     if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)
         return false;
     //first

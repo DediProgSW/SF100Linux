@@ -114,6 +114,9 @@ typedef struct ChipInfo {
 #define PP_4ADDR_256BYTE_12 0x0B
 #define PP_4ADDR_256BYTE_MICROM 0x0C
 #define PP_4ADDR_256BYTE_S70FS01GS 0x0D
+#define PP_PROGRAM_DIE2 0x0E
+#define PP_PROGRAM_MX25L202XX 0x0F
+#define PP_PROGRAM_ANYSIZE_PAGESIZE 0x11
 
 // bulk read mode
 #define BULK_NORM_READ 0x01 ///< read via bulk pipes
@@ -211,6 +214,7 @@ typedef struct ChipInfo {
 #ifdef SUPPORT_SPANSION
 #define SUPPORT_SPANSION_S25FLxx "S25FLxxx"
 #define SUPPORT_SPANSION_S25FLxx_Large "S25FLxxx_Large"
+#define SUPPORT_SPANSION_S25FLxxS_Large "S25FSxxxS_Large"
 #define SUPPORT_SPANSION_S25FLxxL_Large "S25FLxxxL_Large"
 #define SUPPORT_SPANSION_S70FSxx_Large "S70FSxxx_Large"
 #endif
