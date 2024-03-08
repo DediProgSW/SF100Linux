@@ -1322,6 +1322,21 @@ void SetProgReadCommand(int Index)
         mcode_Program = PP_4ADR_256BYTE;
         mcode_SegmentErase = 0xD8;
         mcode_ProgramCode_4Adr = 0x12;
+        mcode_ReadCode = 0x0C;
+    }else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxxS_Large) != NULL) {
+        mcode_RDSR = RDSR;
+        mcode_WRSR = WRSR;
+        mcode_ChipErase = CHIP_ERASE;
+        if(strstr(Chip_Info.TypeName, "S25FS256T") != NULL)
+            mcode_Read = BULK_NORM_READ;
+        else
+	    mcode_Read = BULK_4BYTE_FAST_READ;
+        if(g_bIsSF600[Index] == true || g_bIsSF700[Index] == true || g_bIsSF600PG2[Index] == true)
+            mcode_Program = PP_PROGRAM_ANYSIZE_PAGESIZE;
+        else
+            mcode_Program = PP_4ADR_256BYTE;
+        mcode_SegmentErase = 0xD8;
+        mcode_ProgramCode_4Adr = 0x12;
 	if (strstr(Chip_Info.TypeName, "S25HL01GT") != NULL
 		|| strstr(Chip_Info.TypeName, "S25HL512T") != NULL
 		|| strstr(Chip_Info.TypeName, "S25HL256T") != NULL
@@ -1330,7 +1345,6 @@ void SetProgReadCommand(int Index)
 		mcode_ReadCode = 0x0B;	
 	else
 	    mcode_ReadCode = 0x0C;
-        // printf("Read Code=%X\n",mcode_ReadCode);
     } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
