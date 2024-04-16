@@ -110,8 +110,8 @@ bool S19FileToBin(const char* filePath, unsigned char* vData, unsigned long* Fil
     FILE* Filin; /* input files */
 
     /* size in bytes */
-    const long MEMORY_SIZE = 1024 * 1024 * 4;
-    const long ADDRESS_MASK = 0x003FFFFF;
+    const long MEMORY_SIZE = 1024 * 1024 * 256;
+    const long ADDRESS_MASK = 0xFFFFFFFF;
     const int MAX_LINE_SIZE = 512;
 
     const int CKS_8 = 0;
