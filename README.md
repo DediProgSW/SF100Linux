@@ -14,6 +14,12 @@ $ make
 The resulting binary should be called `dpcmd` and located in the root of the
 source tree. There is no install target at the moment.
 
+`dpcmd` can also be built with `meson`. Ensure you have [`meson`](https://mesonbuild.com/Getting-meson.html) installed and then invoke it:
+```bash
+$ meson setup builddir
+$ meson compile -C builddir
+```
+
 ## Usage
 Most basic usage is writing a whole image file to a flash chip:
 ```bash

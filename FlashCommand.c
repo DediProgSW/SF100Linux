@@ -35,14 +35,14 @@ int FlashCommand_TransceiveOut(unsigned char* v, int len, int has_result_in, int
 
 int FlashCommand_TransceiveIn(unsigned char* v, int len, int Index)
 {
-    CNTRPIPE_RQ rq; 
+    CNTRPIPE_RQ rq;
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_IN;
     rq.Request = TRANSCEIVE;
-    if (Is_NewUSBCommand(Index)) { 
+    if (Is_NewUSBCommand(Index)) {
         rq.Value = 0x01;
         rq.Index = NO_REGISTER;
-    } else { 
+    } else {
         rq.Value = CTRL_TIMEOUT;
         rq.Index = NO_REGISTER;
     }
@@ -89,7 +89,7 @@ int FlashCommand_SendCommand_OneOutOneIn(unsigned char* vOut, int out_len, unsig
 }
 
 int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrRange, unsigned char modeWrite, unsigned char WriteCom, unsigned int PageSize, unsigned int AddressMode, int Index)
-{ 
+{
     unsigned char vInstruction[15];
     CNTRPIPE_RQ rq;
     // length in terms of 256/128 bytes
@@ -106,11 +106,11 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrR
         divider = 7;
         break;
     case PP_PROGRAM_ANYSIZE_PAGESIZE:
-        if(PageSize == 0x200)
+        if (PageSize == 0x200)
             divider = 9;
-        else if(PageSize == 0x400)
+        else if (PageSize == 0x400)
             divider = 10;
-        else 
+        else
             divider = 8;
     default: // 256 bytes
         divider = 8;
@@ -125,7 +125,7 @@ int FlashCommand_SendCommand_SetupPacketForBulkWrite(struct CAddressRange* AddrR
     vInstruction[3] = modeWrite; // PAGE_PROGRAM, PAGE_WRITE, AAI_1_BYTE, AAI_2_BYTE, PP_128BYTE, PP_AT26DF041
     vInstruction[4] = WriteCom;
 
-    if (Is_NewUSBCommand(Index)) { 
+    if (Is_NewUSBCommand(Index)) {
         vInstruction[5] = 0;
         vInstruction[6] = (AddrRange->start & 0xff);
         vInstruction[7] = ((AddrRange->start >> 8) & 0xff);
@@ -205,14 +205,13 @@ int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange* AddrRa
     // length in terms of 256 bytes
     size_t pageNum = AddrRange->length >> 9;
 
-
     vInstruction[0] = (unsigned char)(pageNum & 0xff); // lowest byte of length : page number
     vInstruction[1] = (unsigned char)((pageNum >> 8) & 0xff); // highest byte of length: page number
     vInstruction[2] = (unsigned char)((pageNum >> 16) & 0xff); // reserved
     vInstruction[3] = modeRead; // BULK_NORM_READ, BULK_FAST_READ
     vInstruction[4] = ReadCom;
 
-    if (Is_NewUSBCommand(Index)) { 
+    if (Is_NewUSBCommand(Index)) {
         vInstruction[5] = 0xFF;
         vInstruction[6] = (AddrRange->start & 0xff);
         vInstruction[7] = ((AddrRange->start >> 8) & 0xff);

@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 // new defined macros
-//programmer info RQ
+// programmer info RQ
 #define PROGINFO_REQUEST 0x08
 #define SET_VCC 0x09 ///< set VCC
 #define SET_VPP 0x03 ///< set VPP
@@ -19,17 +19,17 @@
 #define SET_HOLD 0x1D
 #define SET_SA 0x0A
 
-//first field of RQ
+// first field of RQ
 #define OUT_REQUEST 0x42
 #define IN_REQUEST 0xC2
 
-//second field of RQ in case of bulk transfer
-//#define TRANSCEIVE                      0x01
-//#define DTC_READ                        0x20
-//#define WRITE                           0x30
-//#define READ_EEPROM                     0x05
-//#define WRITE_EEPROM                    0x06
-// values of Request Field of a setup packet
+// second field of RQ in case of bulk transfer
+// #define TRANSCEIVE                      0x01
+// #define DTC_READ                        0x20
+// #define WRITE                           0x30
+// #define READ_EEPROM                     0x05
+// #define WRITE_EEPROM                    0x06
+//  values of Request Field of a setup packet
 typedef struct FirmwareInfo {
     char Programmer[20];
     char Version[10];
@@ -90,7 +90,7 @@ typedef struct ChipInfo {
     size_t VoltageInMv;
 } CHIP_INFO;
 
-//third field of RQ
+// third field of RQ
 #define CTRL_TIMEOUT 3000 ///< time out for control pipe or for firmwire
 
 // fourth field of RQ
@@ -123,9 +123,9 @@ typedef struct ChipInfo {
 #define BULK_FAST_READ 0x02 ///< fast read via bulk pipes
 #define BULK_AT45xx_READ 0x03 ///< fast read via bulk pipes
 #define BULK_4BYTE_FAST_READ 0x04 ///< For size is bigger than 128Mb
-#define BULK_4BYTE_FAST_READ_MICRON 0x05 //for 0x0c
+#define BULK_4BYTE_FAST_READ_MICRON 0x05 // for 0x0c
 
-//for flash card
+// for flash card
 #define POLLING 0x02 ///< polling
 #define SET_VPP 0x03 ///< set vpp
 #define VPP_OFF 0x00 ///< vpp value
@@ -137,14 +137,14 @@ typedef struct ChipInfo {
 #define FLASH_CARD 0x01 ///< flash card
 #define APPLICATION_MEMORY_2 0x02 ///< application memory chip 2
 
-//for io & LED
+// for io & LED
 #define SET_IO 0x07 ///< request
-//IO number
+// IO number
 #define IO_1 0x01
 #define IO_2 0x02
 #define IO_3 0x04
 #define IO_4 0x08
-//led number
+// led number
 #define LED_RED 0x01
 #define LED_GREEN 0x02
 #define LED_ORANGE 0x04

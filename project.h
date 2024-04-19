@@ -46,8 +46,8 @@ bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index);
 bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index);
 bool is_SF100nBoardVersionGreaterThan_5_2_0(int Index);
 bool is_SF600nBoardVersionGreaterThan_7_0_1n6_7_0(int Index);
-//bool is_SF700(int Index);
-//bool is_SF600PG2(int Index);
+// bool is_SF700(int Index);
+// bool is_SF600PG2(int Index);
 bool is_SF700_Or_SF600PG2(int Index);
 int GetFileFormatFromExt(const char* csPath);
 #if 0

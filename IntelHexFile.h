@@ -136,7 +136,7 @@ typedef struct {
 
 #define INTEL_DATA_TYPE 0
 
-//save binary data in vBuffer to file in Intel Hex format
+// save binary data in vBuffer to file in Intel Hex format
 bool BinToHexFile(const char* filePath, unsigned char* vBuffer, unsigned long FileSize);
 
 // read binary data from Intel Hex file

@@ -27,7 +27,7 @@ extern int m_boEnReadQuadIO;
 extern int m_boEnWriteQuadIO;
 extern volatile bool g_bIsSF600[16];
 extern volatile bool g_bIsSF700[16];
-extern volatile bool g_bIsSF600PG2[16]; 
+extern volatile bool g_bIsSF600PG2[16];
 extern char g_board_type[8];
 extern int g_firmversion;
 extern char* g_parameter_vcc;
@@ -145,7 +145,7 @@ unsigned int CRC32(unsigned char* v, unsigned long size)
     unsigned int dwCrc32 = 0xFFFFFFFF;
     unsigned long i;
     for (i = 0; i < size; i++)
-        dwCrc32 = ((dwCrc32) >> 8) ^ crc32_tab[(v[i]) ^ ((dwCrc32)&0x000000FF)];
+        dwCrc32 = ((dwCrc32) >> 8) ^ crc32_tab[(v[i]) ^ ((dwCrc32) & 0x000000FF)];
     // checksum += v[i];
 
     dwCrc32 = ~dwCrc32;
@@ -284,7 +284,7 @@ bool LoadFile(char* filename)
 
 bool IdentifyChipBeforeOperation(int Index)
 {
-    //printf("\n===>project.c ---- bool IdentifyChipBeforeOperation(%d)\n",Index);
+    // printf("\n===>project.c ---- bool IdentifyChipBeforeOperation(%d)\n",Index);
     bool result = false;
     CHIP_INFO binfo;
     binfo.UniqueID = 0;
@@ -340,7 +340,7 @@ bool ValidateProgramParameters(int Index)
 }
 
 bool ProgramChip(int Index)
-{  
+{
     bool need_padding = (g_ucFill != 0xFF);
     unsigned char* vc;
     struct CAddressRange real_addr[16];
@@ -358,12 +358,12 @@ bool ProgramChip(int Index)
         memcpy(vc + (DownloadAddrRange.start & 0x1FF), pBufferforLoadedFile, DownloadAddrRange.length);
     }
 
-    bool result = SerialFlash_rangeProgram(&real_addr[Index], vc, Index); 
+    bool result = SerialFlash_rangeProgram(&real_addr[Index], vc, Index);
     return result;
 }
 
 bool ReadChip(const struct CAddressRange range, int Index)
-{ 
+{
     bool result = true;
     unsigned char* vc;
     size_t addrStart = range.start;
@@ -559,8 +559,8 @@ bool threadConfiguredReadChip(int Index)
 }
 
 bool threadProgram(int Index)
-{ 
-    int pthread_mutex_init(pthread_mutex_t * restrict mutex, const pthread_mutexattr_t* restricattr);
+{
+    int pthread_mutex_init(pthread_mutex_t* restrict mutex, const pthread_mutexattr_t* restricattr);
 
     bool result = true;
 
@@ -582,15 +582,15 @@ bool threadProgram(int Index)
         result = true;
     } else {
         result = false;
-    } 
- 
+    }
+
     g_is_operation_successful[Index] = result;
     return result;
 }
 
 bool threadCompareFileAndChip(int Index)
 {
-    //printf("\n===>project.c ---- bool threadCompareFileAndChip(%d)\n",Index);
+    // printf("\n===>project.c ---- bool threadCompareFileAndChip(%d)\n",Index);
     bool result = true;
 
     SetIOMode(false, Index);
@@ -612,13 +612,13 @@ bool threadCompareFileAndChip(int Index)
     if (result) {
         ReadChip(DownloadAddrRange, Index);
 
-        size_t offset = min(DownloadAddrRange.length, g_ulFileSize); 
+        size_t offset = min(DownloadAddrRange.length, g_ulFileSize);
         unsigned int crcFile = CRC32(pBufferforLoadedFile, offset);
         unsigned int crcChip = CRC32(pBufferForLastReadData[Index], offset);
- 
-        result = (crcChip == crcFile); 
+
+        result = (crcChip == crcFile);
     }
- 
+
     g_is_operation_successful[Index] = result;
 
     return result;
@@ -664,7 +664,7 @@ size_t Condense(uintptr_t* out, unsigned char* vc, uintptr_t* addrs, size_t addr
 extern void SetPageSize(CHIP_INFO* mem, int USBIndex);
 
 bool BlazeUpdate(int Index)
-{   
+{
     struct CAddressRange down_with_lock_range;
     down_with_lock_range.start = DownloadAddrRange.start;
     down_with_lock_range.end = DownloadAddrRange.end;
@@ -677,13 +677,12 @@ bool BlazeUpdate(int Index)
         if ((LockAddrrange.start + LockAddrrange.length) > DownloadAddrRange.end)
             down_with_lock_range.end = LockAddrrange.start + LockAddrrange.length;
     }
- 
+
     struct CAddressRange effectiveRange; //(addr_round.SectionRound(down_with_lock_range));
     effectiveRange.start = down_with_lock_range.start & (~(Chip_Info.MaxErasableSegmentInByte - 1));
     effectiveRange.end = (down_with_lock_range.end + (Chip_Info.MaxErasableSegmentInByte - 1)) & (~(Chip_Info.MaxErasableSegmentInByte - 1));
     effectiveRange.length = effectiveRange.end - effectiveRange.start;
- 	
-     
+
     if (!threadReadRangeChip(effectiveRange, Index))
         return false;
 
@@ -696,48 +695,48 @@ bool BlazeUpdate(int Index)
 
     uintptr_t* addrs = (size_t*)malloc(min(DownloadAddrRange.length, g_ulFileSize));
     size_t Leng = 0;
- 
-    memcpy(vc, pBufferForLastReadData[Index], effectiveRange.length); //memory data
 
-    if (LockAddrrange.length > 0) { 
-       offsetOfRealStartAddrOffset = LockAddrrange.start - effectiveRange.start;  
+    memcpy(vc, pBufferForLastReadData[Index], effectiveRange.length); // memory data
+
+    if (LockAddrrange.length > 0) {
+        offsetOfRealStartAddrOffset = LockAddrrange.start - effectiveRange.start;
         memcpy(pBufferforLoadedFile + offsetOfRealStartAddrOffset, pBufferForLastReadData[Index] + offsetOfRealStartAddrOffset, LockAddrrange.length);
         Leng = GenerateDiff(addrs, vc, DownloadAddrRange.length, pBufferforLoadedFile, g_ulFileSize, DownloadAddrRange.start, Chip_Info.MaxErasableSegmentInByte);
-    } else { 
-        offsetOfRealStartAddrOffset = DownloadAddrRange.start - effectiveRange.start; 
-        
-Leng = GenerateDiff(addrs, vc + offsetOfRealStartAddrOffset, DownloadAddrRange.length, pBufferforLoadedFile, g_ulFileSize, DownloadAddrRange.start, Chip_Info.MaxErasableSegmentInByte);
+    } else {
+        offsetOfRealStartAddrOffset = DownloadAddrRange.start - effectiveRange.start;
+
+        Leng = GenerateDiff(addrs, vc + offsetOfRealStartAddrOffset, DownloadAddrRange.length, pBufferforLoadedFile, g_ulFileSize, DownloadAddrRange.start, Chip_Info.MaxErasableSegmentInByte);
     }
-   
-    if (Leng == 0) // speed optimisation 
+
+    if (Leng == 0) // speed optimisation
         return true;
     else {
         uintptr_t* condensed_addr = (size_t*)malloc(min(DownloadAddrRange.length, g_ulFileSize));
         size_t condensed_size;
         condensed_size = Condense(condensed_addr, vc, addrs, Leng, effectiveRange.start, Chip_Info.MaxErasableSegmentInByte);
-   
-        if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL)  
-	    SerialFlash_batchErase_W25Mxx_Large(condensed_addr, condensed_size, Index);
-        else  
-	    SerialFlash_batchErase(condensed_addr, condensed_size, Index); 
+
+        if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL)
+            SerialFlash_batchErase_W25Mxx_Large(condensed_addr, condensed_size, Index);
+        else
+            SerialFlash_batchErase(condensed_addr, condensed_size, Index);
 
         if (strstr(Chip_Info.Class, SUPPORT_MACRONIX_MX25Lxxx) != NULL) {
             TurnOFFVcc(Index);
             Sleep(100);
             TurnONVcc(Index);
         }
- 
+
         memcpy(vc + offsetOfRealStartAddrOffset, pBufferforLoadedFile, DownloadAddrRange.length);
- 
+
         size_t i = 0;
         for (i = 0; i < Leng; i++) {
             size_t idx_in_vc = addrs[i] - effectiveRange.start;
             struct CAddressRange addr_range;
             addr_range.start = addrs[i];
             addr_range.end = addrs[i] + Chip_Info.MaxErasableSegmentInByte;
-            addr_range.length = addr_range.end - addr_range.start; 
- 
-            if (SerialFlash_rangeProgram(&addr_range, vc + idx_in_vc, Index) == 0) { 
+            addr_range.length = addr_range.end - addr_range.start;
+
+            if (SerialFlash_rangeProgram(&addr_range, vc + idx_in_vc, Index) == 0) {
                 free(vc);
                 free(addrs);
                 free(condensed_addr);
@@ -762,7 +761,7 @@ bool RangeUpdateThruSectorErase(int Index)
 }
 
 bool RangeUpdateThruChipErase(int Index)
-{ 
+{
     unsigned char* vc = (unsigned char*)malloc(Chip_Info.ChipSizeInByte);
     unsigned int i = 0;
     bool boIsBlank = true;
@@ -800,7 +799,6 @@ bool RangeUpdateThruChipErase(int Index)
     addr.end = Chip_Info.ChipSizeInByte;
     addr.length = Chip_Info.ChipSizeInByte;
 
- 
     return SerialFlash_rangeProgram(&addr, vc, Index);
 }
 
@@ -823,23 +821,23 @@ bool ReplaceChipContentThruChipErase(int Index)
 }
 
 bool threadPredefinedBatchSequences(int Index)
-{ 
+{
     bool result = true;
 
     if (g_ulFileSize == 0)
-        result = false; 
+        result = false;
 
     if (result && (!ValidateProgramParameters(Index)))
-        result = false; 
- 
+        result = false;
+
     if (result) {
         switch (g_BatchIndex) {
-        case 1: //-z 
+        case 1: //-z
             result = ReplaceChipContentThruChipErase(Index);
             break;
         case 2:
-        default: 
-            result = RangeUpdate(Index); 
+        default:
+            result = RangeUpdate(Index);
             break;
         }
     }
@@ -847,7 +845,7 @@ bool threadPredefinedBatchSequences(int Index)
 }
 
 void threadRun(void* Type)
-{ 
+{
     THREAD_STRUCT* thread_data = (THREAD_STRUCT*)Type;
     OPERATION_TYPE opType = thread_data->type;
     int Index = thread_data->USBIndex;
@@ -857,17 +855,16 @@ void threadRun(void* Type)
 
     int dwUID = ReadUID(Index);
     if (g_uiAddr == 0 && g_uiLen == 0) {
-	if(is_SF700_Or_SF600PG2(Index)){
-	    if (g_bIsSF700[Index] == true)
+        if (is_SF700_Or_SF600PG2(Index)) {
+            if (g_bIsSF700[Index] == true)
                 printf("\nDevice %d (SF7%05X):", Index + 1, dwUID);
-	    else if (g_bIsSF600PG2[Index] == true) 
+            else if (g_bIsSF600PG2[Index] == true)
                 printf("\nDevice %d (S6%05X):", Index + 1, dwUID);
-	}
-        else {
-        if ((dwUID / 600000) == 0)
-            printf("\nDevice %d (DP%06d):", Index + 1, dwUID);
-        else
-            printf("\nDevice %d (SF%06d):", Index + 1, dwUID);
+        } else {
+            if ((dwUID / 600000) == 0)
+                printf("\nDevice %d (DP%06d):", Index + 1, dwUID);
+            else
+                printf("\nDevice %d (SF%06d):", Index + 1, dwUID);
         }
     }
 
@@ -883,7 +880,7 @@ void threadRun(void* Type)
     }
 
     if (1) // is_good())
-    { 
+    {
         TurnONVcc(Index);
         if (is_greater_than_5_0_0 || is_SF700_greater_than_4_0_0) {
             SetLEDOnOff(SITE_BUSY, Index);
@@ -1082,24 +1079,24 @@ void SetIOMode(bool isProg, int Index)
 
 bool is_BoardVersionGreaterThan_5_0_0(int Index)
 {
-    if (g_firmversion < FIRMWARE_VERSION(5, 0, 0)) { 
+    if (g_firmversion < FIRMWARE_VERSION(5, 0, 0)) {
         return false;
     }
     return true;
 }
 
 bool is_SF100nBoardVersionGreaterThan_5_5_0(int Index)
-{ 
-    if ((g_firmversion >= FIRMWARE_VERSION(5, 5, 0)) && strstr(g_board_type, "SF100") != NULL) 
+{
+    if ((g_firmversion >= FIRMWARE_VERSION(5, 5, 0)) && strstr(g_board_type, "SF100") != NULL)
         return true;
-  
-   return false;
+
+    return false;
 }
 
 bool is_SF600nBoardVersionGreaterThan_6_9_0(int Index)
-{ 
+{
     if (strstr(g_board_type, "SF600") != NULL) {
-        if ((g_firmversion > FIRMWARE_VERSION(7, 0, 1)) || (g_firmversion == FIRMWARE_VERSION(6, 9, 0))) { 
+        if ((g_firmversion > FIRMWARE_VERSION(7, 0, 1)) || (g_firmversion == FIRMWARE_VERSION(6, 9, 0))) {
             return true;
         }
     }
@@ -1126,26 +1123,25 @@ bool is_SF700_Or_SF600PG2(int Index)
 {
     if (strstr(g_board_type, "SF700") != NULL) {
         return true;
-    } 
-    else if (strstr(g_board_type, "SF600PG2") != NULL) {
+    } else if (strstr(g_board_type, "SF600PG2") != NULL) {
         return true;
     }
 
     return false;
-} 
+}
 CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
 {
     CHIP_INFO binfo;
     binfo.UniqueID = 0;
     unsigned int g_Vcc_temp = 0;
-    //char TypeName[1024];
+    // char TypeName[1024];
 
     // memset(TypeName, '\0', 1024);
 
     int Found = 0;
     int i = 0;
     int Loop = 3;
-    if (strcmp(g_parameter_vcc, "NO") != 0) //g_parameter_vcc!=NO
+    if (strcmp(g_parameter_vcc, "NO") != 0) // g_parameter_vcc!=NO
         Loop = 1;
 
     if (strlen(TypeName) != 0)
@@ -1201,7 +1197,7 @@ CHIP_INFO GetFirstDetectionMatch(char* TypeName, int Index)
 
     return binfo; //*TypeName;
 }
- 
+
 // fail in case of 1) USB failure, 2) unrecognised ID.
 void InitLED(int Index)
 {
@@ -1323,29 +1319,29 @@ void SetProgReadCommand(int Index)
         mcode_SegmentErase = 0xD8;
         mcode_ProgramCode_4Adr = 0x12;
         mcode_ReadCode = 0x0C;
-    }else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxxS_Large) != NULL) {
+    } else if (strstr(Chip_Info.Class, SUPPORT_SPANSION_S25FLxxS_Large) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = CHIP_ERASE;
-        if(strstr(Chip_Info.TypeName, "S25FS256T") != NULL)
+        if (strstr(Chip_Info.TypeName, "S25FS256T") != NULL)
             mcode_Read = BULK_NORM_READ;
         else
-	    mcode_Read = BULK_4BYTE_FAST_READ;
-        if(g_bIsSF600[Index] == true || g_bIsSF700[Index] == true || g_bIsSF600PG2[Index] == true)
+            mcode_Read = BULK_4BYTE_FAST_READ;
+        if (g_bIsSF600[Index] == true || g_bIsSF700[Index] == true || g_bIsSF600PG2[Index] == true)
             mcode_Program = PP_PROGRAM_ANYSIZE_PAGESIZE;
         else
             mcode_Program = PP_4ADR_256BYTE;
         mcode_SegmentErase = 0xD8;
         mcode_ProgramCode_4Adr = 0x12;
-	if (strstr(Chip_Info.TypeName, "S25HL01GT") != NULL
-		|| strstr(Chip_Info.TypeName, "S25HL512T") != NULL
-		|| strstr(Chip_Info.TypeName, "S25HL256T") != NULL
-		|| strstr(Chip_Info.TypeName, "S25FS256T") != NULL
-		|| strstr(Chip_Info.TypeName, "S35HL256T") != NULL)
-		mcode_ReadCode = 0x0B;	
-	else
-	    mcode_ReadCode = 0x0C;
-    } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL ) {
+        if (strstr(Chip_Info.TypeName, "S25HL01GT") != NULL
+            || strstr(Chip_Info.TypeName, "S25HL512T") != NULL
+            || strstr(Chip_Info.TypeName, "S25HL256T") != NULL
+            || strstr(Chip_Info.TypeName, "S25FS256T") != NULL
+            || strstr(Chip_Info.TypeName, "S35HL256T") != NULL)
+            mcode_ReadCode = 0x0B;
+        else
+            mcode_ReadCode = 0x0C;
+    } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_2Die) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = 0xC4;
@@ -1364,7 +1360,7 @@ void SetProgReadCommand(int Index)
             mcode_Read = BULK_4BYTE_FAST_READ_MICRON;
         }
 
-    }  else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL) {
+    } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large_4Die) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = 0xC4;
@@ -1373,7 +1369,7 @@ void SetProgReadCommand(int Index)
         mcode_ProgramCode_4Adr = 0x02;
         mcode_ReadCode = 0x03;
         mcode_Read = BULK_NORM_READ;
-        
+
     } else if (strstr(Chip_Info.Class, SUPPORT_NUMONYX_N25Qxxx_Large) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
@@ -1402,20 +1398,20 @@ void SetProgReadCommand(int Index)
         mcode_Read = BULK_4BYTE_FAST_READ;
         mcode_SegmentErase = SE;
         mcode_ProgramCode_4Adr = 0x02;
-        mcode_ReadCode = 0x0C; 
-    }  else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL) {
+        mcode_ReadCode = 0x0C;
+    } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = CHIP_ERASE;
-	if (strstr(g_board_type, "SF100") != NULL) // is sf100
+        if (strstr(g_board_type, "SF100") != NULL) // is sf100
             mcode_Program = PP_4ADDR_256BYTE_12;
-    	else
+        else
             mcode_Program = PP_4ADR_256BYTE;
         mcode_Read = BULK_4BYTE_FAST_READ_MICRON;
         mcode_SegmentErase = 0xDC;
         mcode_ProgramCode_4Adr = 0x12;
-        mcode_ReadCode = 0x0C; 
-    }else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx) != NULL) {
+        mcode_ReadCode = 0x0C;
+    } else if (strstr(Chip_Info.Class, SUPPORT_WINBOND_W25Pxx) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;
         mcode_ChipErase = CHIP_ERASE;
@@ -1423,7 +1419,7 @@ void SetProgReadCommand(int Index)
         mcode_Read = BULK_FAST_READ;
         mcode_SegmentErase = SE;
         mcode_ProgramCode_4Adr = 0x02;
-        mcode_ReadCode = 0x0B; 
+        mcode_ReadCode = 0x0B;
     } else if (strstr(Chip_Info.Class, SUPPORT_ST_M25Pxx_Large) != NULL) {
         mcode_RDSR = RDSR;
         mcode_WRSR = WRSR;

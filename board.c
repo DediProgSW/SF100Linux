@@ -7,9 +7,9 @@
 #define SerialFlash_TRUE 1
 #define min(a, b) (a > b ? b : a)
 
-volatile bool g_bIsSF600[16] = {false};
-volatile bool g_bIsSF700[16] = {false};
-volatile bool g_bIsSF600PG2[16] = {false};
+volatile bool g_bIsSF600[16] = { false };
+volatile bool g_bIsSF700[16] = { false };
+volatile bool g_bIsSF600PG2[16] = { false };
 extern char g_board_type[8];
 extern char g_FPGA_ver[8];
 extern char g_FW_ver[10];
@@ -34,30 +34,29 @@ bool ReadSF700AndSF600PG2SN(unsigned char* Data, int Index)
     rq.Index = 0;
     rq.Length = 6;
 
+    vBuffer[0] = 0;
+    vBuffer[1] = 0;
+    vBuffer[2] = 0;
+    vBuffer[3] = 2;
+    vBuffer[4] = 0;
+    vBuffer[5] = 0;
 
-    vBuffer[0]=0;
-    vBuffer[1]=0;
-    vBuffer[2]=0;
-    vBuffer[3]=2;
-    vBuffer[4]=0;
-    vBuffer[5]=0;
-
-    //must read twice
+    // must read twice
     if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)
         return false;
-    //first
+    // first
     unsigned char vBufferSN[512];
     BulkPipeRead(vBufferSN, USB_TIMEOUT, Index);
 
     if (OutCtrlRequest(&rq, vBuffer, 6, Index) == SerialFlash_FALSE)
         return false;
-    //second
+    // second
     BulkPipeRead(vBufferSN, USB_TIMEOUT, Index);
 
     memcpy(Data, vBufferSN, 16);
     return true;
 }
- bool ReadOnBoardFlash(unsigned char* Data, bool ReadUID, int Index)
+bool ReadOnBoardFlash(unsigned char* Data, bool ReadUID, int Index)
 {
     CNTRPIPE_RQ rq;
     unsigned char vBuffer[16];
@@ -111,7 +110,7 @@ void QueryBoard(int Index)
 
 unsigned int GetFPGAVersion(int Index)
 {
-    if ((strstr(g_board_type, "SF600PG2") == NULL)&& (strstr(g_board_type, "SF600") == NULL) && (strstr(g_board_type, "SF700") == NULL))
+    if ((strstr(g_board_type, "SF600PG2") == NULL) && (strstr(g_board_type, "SF600") == NULL) && (strstr(g_board_type, "SF700") == NULL))
         return -1;
     CNTRPIPE_RQ rq;
 
@@ -179,7 +178,7 @@ bool SetTargetFlash(unsigned char StartupMode, int Index)
 
 bool SetLEDProgBoard(size_t Color, int Index)
 {
-    //printf("\n===>board.c ---- SetLEDProgBoard(Color=%ld,SetLEDProgBoard=%d)\n",Color,Index);
+    // printf("\n===>board.c ---- SetLEDProgBoard(Color=%ld,SetLEDProgBoard=%d)\n",Color,Index);
     if (!Is_usbworking(Index)) {
         return false;
     }
@@ -193,7 +192,7 @@ bool SetLEDProgBoard(size_t Color, int Index)
     if (Is_NewUSBCommand(Index)) {
         rq.Value = Color | (g_IO1Select << 1);
         rq.Value = (rq.Value & 0xFFF7) | (g_IO4Select << 3);
-        //rq.Value = (Color & 0xFFF7) | (g_IO1Select << 1) | (g_IO4Select << 3);
+        // rq.Value = (Color & 0xFFF7) | (g_IO1Select << 1) | (g_IO4Select << 3);
         rq.Index = 0;
     } else {
         rq.Value = 0x09;
@@ -265,7 +264,7 @@ bool SetCS(size_t value, int Index)
 }
 
 bool SetIOModeToSF600(size_t value, int Index)
-{ 
+{
     if (!Is_usbworking(Index)) {
         return false;
     }
@@ -347,7 +346,7 @@ bool SetSPIClockValue(unsigned short v, int Index)
 bool SetIOMOdeValue(int Index)
 {
     if (strstr(g_board_type, "SF100"))
-	return true; 
+        return true;
     if (!Is_usbworking(Index))
         return false;
 
@@ -357,7 +356,7 @@ bool SetIOMOdeValue(int Index)
     rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
     rq.Direction = VENDOR_DIRECTION_OUT;
     rq.Request = SET_IOMODE;
-    rq.Value = 0;//single IO
+    rq.Value = 0; // single IO
     rq.Index = RFU;
     rq.Length = 0;
 
@@ -379,13 +378,11 @@ unsigned int ReadUID(int Index)
         if (ReadSF700AndSF600PG2SN(vUID, Index) == false)
             return false;
 
-
-	dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
+        dwUID = (unsigned int)vUID[2] << 16 | (unsigned int)vUID[1] << 8 | vUID[0];
         return dwUID;
-
     }
 
-    if ((g_bIsSF600[Index] == true) ) {
+    if ((g_bIsSF600[Index] == true)) {
         if (ReadOnBoardFlash(vUID, false, Index) == false)
             return false;
         if (g_bIsSF600[Index] == true)
@@ -795,9 +792,9 @@ bool GetFirmwareVer(int Index)
 
     CNTRPIPE_RQ rq;
     unsigned char vBuffer[32];
-    unsigned int BufferSize =32;
+    unsigned int BufferSize = 32;
 
-    if((g_bIsSF600[Index] == false) && (is_SF700_Or_SF600PG2(Index) == false))
+    if ((g_bIsSF600[Index] == false) && (is_SF700_Or_SF600PG2(Index) == false))
         BufferSize = 16;
 
     // first control packet
@@ -818,20 +815,16 @@ bool GetFirmwareVer(int Index)
 
     memcpy(g_board_type, &vBuffer[0], 8);
 
-    if (strstr(g_board_type, "SF600PG2") != NULL)
-    {
-    	memcpy(g_FW_ver, &vBuffer[12], 9);
+    if (strstr(g_board_type, "SF600PG2") != NULL) {
+        memcpy(g_FW_ver, &vBuffer[12], 9);
         memcpy(g_HW_ver, &vBuffer[25], 5);
-    }
-    else
-    {
+    } else {
         memcpy(g_FW_ver, &vBuffer[10], 7);
         if (strstr(g_board_type, "SF600") != NULL)
             memcpy(g_HW_ver, &vBuffer[20], 4);
         if (strstr(g_board_type, "SF700") != NULL)
             memcpy(g_HW_ver, &vBuffer[21], 4);
     }
-
 
     return true;
 }

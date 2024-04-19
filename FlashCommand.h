@@ -24,4 +24,4 @@ int FlashCommand_SendCommand_SetupPacketForAT45DBBulkWrite(struct CAddressRange*
 
 int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange* AddrRange, unsigned char modeRead, unsigned char ReadCom, unsigned int AddrLen, unsigned int DummyLen, int Index);
 
-#endif //FLASHCOMMANDS
+#endif // FLASHCOMMANDS
