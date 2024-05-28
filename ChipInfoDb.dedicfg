@@ -8,7 +8,7 @@
 <Portofolio
     Description="Property Details of all supported products">
     <!-- For all parameter values below, all sizes are represented in decimal, while instructions hexdecimal -->
-
+Fw25q
 
 <Chip TypeName="Alverstone-128M(Top)"
     ICType="SPI_NOR"
@@ -25086,7 +25086,7 @@ RDIDCommand="0x9F"/>
     Class="W25Pxx_Large"
     UniqueID="0xEF6020"
     Description="512 Mbit, Low Voltage, Serial Flash Memory With 166MHz SPI Bus Interface"
-    Manufacturer="Winbond Electronics Corp    
+    Manufacturer="Winbond Electronics Corp"
     ManufactureUrl="http://www.winbond.com/" 
     Voltage="1.8V" 
     Clock="166Mhz"
