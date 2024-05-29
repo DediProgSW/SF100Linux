@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define pathbufsize 1024
 #define testbufsize 256
 #define linebufsize 512
 #define filebufsize 1024 * 1024
@@ -14,12 +15,13 @@
 //using namespace pugi;
 //xml_document doc;
 
+#ifdef __linux__
 FILE* openChipInfoDb(void)
 {
     FILE* fp = NULL;
-    char Path[linebufsize];
+    char Path[pathbufsize];
 
-    memset(Path, 0, linebufsize);
+    memset(Path, 0, pathbufsize);
     if (readlink("/proc/self/exe", Path, 512) != -1) {
         dirname(Path);
         strcat(Path, "/ChipInfoDb.dedicfg");
@@ -41,6 +43,32 @@ FILE* openChipInfoDb(void)
 
     return fp;
 }
+#endif
+
+#ifdef __APPLE__
+FILE* openChipInfoDb(void)
+{
+    FILE* fp = NULL;
+    char Path[pathbufsize];
+    uint32_t size = sizeof(Path);
+
+    memset(Path, 0, pathbufsize);
+    if (_NSGetExecutablePath(Path, &size) == 0) {
+        strcpy(Path, dirname(Path));
+        strcat(Path, "/ChipInfoDb.dedicfg");
+        if ((fp = fopen(Path, "rt")) == NULL) {
+            // ChipInfoDb.dedicfg not in program directory
+            strcpy(Path, dirname(Path));
+            strcpy(Path, dirname(Path));
+            strcat(Path, "/share/DediProg/ChipInfoDb.dedicfg");
+            if ((fp = fopen(Path, "rt")) == NULL)
+                fprintf(stderr, "Error opening file: %s\n", Path);
+        }
+    }
+
+    return fp;
+}
+#endif
 
 long fsize(FILE* fp)
 {
