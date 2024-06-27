@@ -51,7 +51,7 @@ void SetVpp(int Index);
 void SetSPIIOMode(int Index);
 void SetSPIClock(int Index);
 void SetVcc(int Index);
-int SetVppVoltage(int vol,int Index);
+int SetVppVoltage(int vol, int Index);
 int do_loadFile(void);
 int do_loadFileWithVerify(void);
 void BlinkProgrammer(void);

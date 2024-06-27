@@ -11,8 +11,8 @@
 #define min(a, b) (((a) > (b)) ? (b) : (a))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
-//using namespace pugi;
-//xml_document doc;
+// using namespace pugi;
+// xml_document doc;
 
 FILE* openChipInfoDb(void)
 {
@@ -35,8 +35,8 @@ FILE* openChipInfoDb(void)
         }
     }
 
-    //xml_parse_result result = doc.load_file( Path );
-    //if ( result.status != xml_parse_status::status_ok )
+    // xml_parse_result result = doc.load_file( Path );
+    // if ( result.status != xml_parse_status::status_ok )
     //	return;
 
     return fp;
@@ -50,13 +50,13 @@ long fsize(FILE* fp)
     fseek(fp, prev, SEEK_SET); // go back to where we were
     return sz;
 }
- 
+
 int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
     long UniqueID,
     CHIP_INFO* Chip_Info,
     int search_all)
 {
-  
+
     FILE* fp; /*Declare file pointer variable*/
     int found_flag = 0;
     char file_line_buf[linebufsize], *tok, *file_buf, test[testbufsize];
@@ -71,7 +71,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
 
     memset(chTypeName, '\0', 1024);
 
-    memset(Chip_Info->TypeName, '\0', linebufsize); //strlen(Chip_Info->TypeName)=0
+    memset(Chip_Info->TypeName, '\0', linebufsize); // strlen(Chip_Info->TypeName)=0
 
     if ((fp = openChipInfoDb()) == NULL)
         return 1;
@@ -83,13 +83,13 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
 
     while (fgets(file_line_buf, linebufsize, fp) != NULL) {
         pch = strstr(file_line_buf, "TypeName");
-        //printf("ile_line_buf=%s",file_line_buf) ;
+        // printf("ile_line_buf=%s",file_line_buf) ;
         if (pch != NULL) {
             if (found_flag == 1) {
                 found_flag = 0;
 
                 if (strlen(Chip_Info->TypeName) == 0)
-                    *Chip_Info = Chip_Info_temp; //first chip info
+                    *Chip_Info = Chip_Info_temp; // first chip info
             }
             //   break;
 
@@ -120,7 +120,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             Chip_Info_temp.DualID = false;
             Chip_Info_temp.VppSupport = 0;
             Chip_Info_temp.MXIC_WPmode = false;
-            Chip_Info_temp.Timeout = 0; 
+            Chip_Info_temp.Timeout = 0;
             // end of struct init
             strcpy(Chip_Info_temp.TypeName, tok);
 
@@ -132,7 +132,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("Class"));
             tok = strtok(test, "\"= \t");
-            //printf("Class = %s\n",tok);
+            // printf("Class = %s\n",tok);
             strcpy(Chip_Info_temp.Class, tok);
             continue;
         }
@@ -141,11 +141,11 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("UniqueID"));
             tok = strtok(test, "\"= \t");
-            //printf("UniqueID = 0x%lx\n",strtol(tok,NULL,16));
+            // printf("UniqueID = 0x%lx\n",strtol(tok,NULL,16));
             Chip_Info_temp.UniqueID = strtol(tok, NULL, 16);
-            if ((UniqueID == Chip_Info_temp.UniqueID)) {
-                //found_flag = 1;
-                //detectICNum++;
+            if (UniqueID == Chip_Info_temp.UniqueID) {
+                // found_flag = 1;
+                // detectICNum++;
             }
 
             continue;
@@ -155,7 +155,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("Manufacturer"));
             tok = strtok(test, "\"= \t");
-            //printf("Manufacturer = %s\n",tok);
+            // printf("Manufacturer = %s\n",tok);
             strcpy(Chip_Info_temp.Manufacturer, tok);
             continue;
         }
@@ -179,13 +179,13 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("JedecDeviceID"));
             tok = strtok(test, "\"= \t");
-            //printf("JedecDeviceID = 0x%lx\n",strtol(tok,NULL,16));
+            // printf("JedecDeviceID = 0x%lx\n",strtol(tok,NULL,16));
             Chip_Info_temp.JedecDeviceID = strtol(tok, NULL, 16);
-            if ((UniqueID == Chip_Info_temp.JedecDeviceID)) {
+            if (UniqueID == Chip_Info_temp.JedecDeviceID) {
                 found_flag = 1;
 
                 strcpy(strTypeName[detectICNum], Chip_Info_temp.TypeName);
-                //printf("strTypeName[%d] = %s\n",detectICNum,strTypeName[detectICNum]);
+                // printf("strTypeName[%d] = %s\n",detectICNum,strTypeName[detectICNum]);
                 strcat(chTypeName, " ");
                 strcat(chTypeName, strTypeName[detectICNum]);
                 detectICNum++;
@@ -197,7 +197,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("ChipSizeInKByte"));
             tok = strtok(test, "\"= \t");
-            //printf("ChipSizeInKByte = %ld\n",strtol(tok,NULL,10));
+            // printf("ChipSizeInKByte = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.ChipSizeInByte = strtol(tok, NULL, 10) * 1024;
             continue;
         }
@@ -206,7 +206,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("SectorSizeInByte"));
             tok = strtok(test, "\"= \t");
-            //printf("SectorSizeInByte = %ld\n",strtol(tok,NULL,10));
+            // printf("SectorSizeInByte = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.SectorSizeInByte = strtol(tok, NULL, 10);
             continue;
         }
@@ -215,7 +215,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("BlockSizeInByte"));
             tok = strtok(test, "\"= \t");
-            //printf("BlockSizeInByte = %ld\n",strtol(tok,NULL,10));
+            // printf("BlockSizeInByte = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.BlockSizeInByte = strtol(tok, NULL, 10);
             continue;
         }
@@ -224,7 +224,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("PageSizeInByte"));
             tok = strtok(test, "\"= \t");
-            //printf("PageSizeInByte = %ld\n",strtol(tok,NULL,10));
+            // printf("PageSizeInByte = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.PageSizeInByte = strtol(tok, NULL, 10);
             continue;
         }
@@ -233,7 +233,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("AddrWidth"));
             tok = strtok(test, "\"= \t");
-            //printf("AddrWidth = %ld\n",strtol(tok,NULL,10));
+            // printf("AddrWidth = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.AddrWidth = strtol(tok, NULL, 10);
             continue;
         }
@@ -242,7 +242,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("ReadDummyLen"));
             tok = strtok(test, "\"= \t");
-            //printf("ReadDummyLen = %ld\n",strtol(tok,NULL,10));
+            // printf("ReadDummyLen = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.ReadDummyLen = strtol(tok, NULL, 10);
             continue;
         }
@@ -251,7 +251,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("IDNumber"));
             tok = strtok(test, "\"= \t");
-            //printf("IDNumber = %ld\n",strtol(tok,NULL,10));
+            // printf("IDNumber = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.IDNumber = strtol(tok, NULL, 10);
             continue;
         }
@@ -260,7 +260,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("VppSupport"));
             tok = strtok(test, "\"= \t");
-            //printf("IDNumber = %ld\n",strtol(tok,NULL,10));
+            // printf("IDNumber = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.VppSupport = strtol(tok, NULL, 10);
             continue;
         }
@@ -269,7 +269,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("RDIDCommand"));
             tok = strtok(test, "\"= \t");
-            //printf("RDIDCommand = %ld\n",strtol(tok,NULL,10));
+            // printf("RDIDCommand = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.RDIDCommand = strtol(tok, NULL, 16);
             continue;
         }
@@ -278,7 +278,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("Timeout"));
             tok = strtok(test, "\"= \t");
-            //printf("Timeout = %ld\n",strtol(tok,NULL,10));
+            // printf("Timeout = %ld\n",strtol(tok,NULL,10));
             Chip_Info_temp.Timeout = strtol(tok, NULL, 16);
             continue;
         }
@@ -292,8 +292,8 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
             else
                 Chip_Info_temp.MXIC_WPmode = false;
             // starting checking input data
-        } 
-        pch = strstr(file_line_buf, "Portofolio"); //end
+        }
+        pch = strstr(file_line_buf, "Portofolio"); // end
         if (pch != NULL) {
             if (detectICNum)
                 found_flag = 1;
@@ -303,14 +303,14 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
 
     fclose(fp); /*Close file*/
     Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
-               
+
     free(file_buf);
     return found_flag; /*Executed without errors*/
 } /*End main*/
- 
+
 int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
 {
-    //printf("Dedi_Search_Chip_Db_ByTypeName = %s\n",TypeName);
+    // printf("Dedi_Search_Chip_Db_ByTypeName = %s\n",TypeName);
     FILE* fp; /*Declare file pointer variable*/
     int found_flag = 0, i;
     char file_line_buf[linebufsize], *tok, *file_buf, test[testbufsize];
@@ -366,7 +366,7 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
                 Chip_Info->MaxErasableSegmentInByte = 0;
                 Chip_Info->DualID = false;
                 Chip_Info->VppSupport = 0;
-                Chip_Info->MXIC_WPmode = false; 
+                Chip_Info->MXIC_WPmode = false;
                 Chip_Info->Timeout = 0;
                 // end of struct init
                 strcpy(Chip_Info->TypeName, tok);
@@ -479,10 +479,10 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
             memset(test, '\0', testbufsize);
             strcpy(test, pch + strlen("ReadDummyLen"));
             tok = strtok(test, "\"= \t");
-            //printf("ReadDummyLen = %ld\n",strtol(tok,NULL,10));
+            // printf("ReadDummyLen = %ld\n",strtol(tok,NULL,10));
             Chip_Info->ReadDummyLen = strtol(tok, NULL, 10);
             continue;
-        } 
+        }
         pch = strstr(file_line_buf, "IDNumber");
         if (pch != NULL) {
             memset(test, '\0', testbufsize);
@@ -528,11 +528,11 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
                 Chip_Info->MXIC_WPmode = false;
             // starting checking input data
             continue;
-        } 
+        }
     } /*Continue until EOF is encoutered*/
     fclose(fp); /*Close file*/
     Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
-                
+
     if (found_flag == 0) {
         Chip_Info->TypeName[0] = 0;
         Chip_Info->UniqueID = 0;
