@@ -8,7 +8,6 @@
 <Portofolio
     Description="Property Details of all supported products">
     <!-- For all parameter values below, all sizes are represented in decimal, while instructions hexdecimal -->
-Fw25q
 
 <Chip TypeName="Alverstone-128M(Top)"
     ICType="SPI_NOR"
