@@ -546,27 +546,6 @@ int main(int argc, char* argv[])
         g_usb_busnum = (unsigned char)r;
     }
 
-    // Filter by DP Device num, same as setting --device flag
-    // Only touches target device since it is before OpenUSB()
-    env = getenv("DPCMD_DEVNUM");
-    if (env) {
-        r = strtoul(env, NULL, 10);
-        if (r == ULONG_MAX || r >= 256) {
-            fprintf(stderr, "E: invalid device number in"
-                            " DPCMD_DEVNUM\n");
-            return 1;
-        }
-	g_uiDevNum = (unsigned char)r;
-	bDevice = true;
-    }
-
-
-    if (OpenUSB() == 0)
-        iExitCode = EXCODE_FAIL_USB;
-
-    LeaveStandaloneMode(0);
-    QueryBoard(0);
-
     while ((c = getopt_long(argc, argv, short_options, long_options, NULL)) != -1) {
         switch (c) {
         case '?':
@@ -751,6 +730,12 @@ int main(int argc, char* argv[])
             break;
         }
     }
+
+    if (OpenUSB() == 0)
+        iExitCode = EXCODE_FAIL_USB;
+
+    LeaveStandaloneMode(0);
+    QueryBoard(0);
 
     int dev_cnt = get_usb_dev_cnt();
 
@@ -1113,7 +1098,8 @@ void sin_handler(int sig)
 
 int Handler(void)
 {
-    if (Is_usbworking(0) == true) {
+    //if (Is_usbworking(0) == true) {
+    if (Is_usbworking(g_uiDevNum - 1) == true) {
 #if 0
         if(m_vm.count("fix-device"))
         {
@@ -1123,7 +1109,6 @@ int Handler(void)
 
         AssignedDevice();
 #endif
-
         if ((g_ucOperation & BLINK) == BLINK) {
             BlinkProgrammer();
             return EXCODE_PASS;
@@ -1173,7 +1158,7 @@ bool InitProject(void)
 {
     //printf("bool InitProject(void)\n");
     int dev_cnt = get_usb_dev_cnt();
-    if (Is_usbworking(0)) {
+    if (Is_usbworking(g_uiDevNum-1)) {
         int targets[4] = {
             STARTUP_APPLI_CARD,
             STARTUP_APPLI_SF_1,
@@ -1246,7 +1231,7 @@ void CloseProject(void)
 bool DetectChip(void)
 {
     int dev_cnt = get_usb_dev_cnt();
-    Chip_Info = GetFirstDetectionMatch(strTypeName, 0);
+    Chip_Info = GetFirstDetectionMatch(strTypeName, g_uiDevNum-1);
     if (g_uiDevNum == 0) {
         for (int i = 0; i < dev_cnt; i++) {
             if (!Is_usbworking(i)) {
