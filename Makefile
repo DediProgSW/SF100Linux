@@ -58,7 +58,9 @@ install: $(PROGRAM)
 	[ $(shell id -u) -eq 0 ] || (echo "Error: install needs root privileges" && false)
 	install -v -o 0 -g 0 -m 755 -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/share/DediProg
 	echo -n "install: " && install -v -o 0 -g 0 -m 0755 $(PROGRAM) $(DESTDIR)$(PREFIX)/bin/$(PROGRAM)
+ifneq ($(NOSTRIP),1)
 	strip $(DESTDIR)$(PREFIX)/bin/$(PROGRAM)
+endif
 	install -v -o 0 -g 0 -m 755 -d $(DESTDIR)$(PREFIX)/share/DediProg
 	echo -n "install: " && install -v -o 0 -g 0 -m 0644 ChipInfoDb.dedicfg $(DESTDIR)$(PREFIX)/share/DediProg/ChipInfoDb.dedicfg
 	install -v -o 0 -g 0 -m 755 -d $(DESTDIR)/etc/udev/rules.d
