@@ -12,7 +12,7 @@ endif
 endif
 
 PROGRAM = dpcmd
-CC      = gcc
+CC     ?= gcc
 PREFIX ?= /usr/local
 
 PKG_CONFIG ?= pkg-config
