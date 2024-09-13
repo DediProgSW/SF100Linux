@@ -1098,8 +1098,8 @@ void sin_handler(int sig)
 
 int Handler(void)
 {
-    //if (Is_usbworking(0) == true) {
-    if (Is_usbworking(g_uiDevNum - 1) == true) {
+    if (Is_usbworking(0) == true) {
+    //if (Is_usbworking(g_uiDevNum - 1) == true) {
 #if 0
         if(m_vm.count("fix-device"))
         {
@@ -1158,7 +1158,8 @@ bool InitProject(void)
 {
     //printf("bool InitProject(void)\n");
     int dev_cnt = get_usb_dev_cnt();
-    if (Is_usbworking(g_uiDevNum-1)) {
+if (Is_usbworking(0) == true) {
+//    if (Is_usbworking(g_uiDevNum-1)) {
         int targets[4] = {
             STARTUP_APPLI_CARD,
             STARTUP_APPLI_SF_1,
@@ -1231,7 +1232,7 @@ void CloseProject(void)
 bool DetectChip(void)
 {
     int dev_cnt = get_usb_dev_cnt();
-    Chip_Info = GetFirstDetectionMatch(strTypeName, g_uiDevNum-1);
+    Chip_Info = GetFirstDetectionMatch(strTypeName, 0);
     if (g_uiDevNum == 0) {
         for (int i = 0; i < dev_cnt; i++) {
             if (!Is_usbworking(i)) {
