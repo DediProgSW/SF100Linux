@@ -4,6 +4,9 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __FreeBSD__
+#include <sys/auxv.h>
+#endif
 
 #define pathbufsize 1024
 #define testbufsize 256
@@ -15,7 +18,7 @@
 //using namespace pugi;
 //xml_document doc;
 
-#ifdef __linux__
+#if defined(__linux__)
 FILE* openChipInfoDb(void)
 {
     FILE* fp = NULL;
@@ -45,7 +48,7 @@ FILE* openChipInfoDb(void)
 }
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
 FILE* openChipInfoDb(void)
 {
     FILE* fp = NULL;
@@ -53,7 +56,11 @@ FILE* openChipInfoDb(void)
     uint32_t size = sizeof(Path);
 
     memset(Path, 0, pathbufsize);
+#if defined(__APPLE__)
     if (_NSGetExecutablePath(Path, &size) == 0) {
+#else
+    if (elf_aux_info(AT_EXECPATH, Path, size) == 0) {
+#endif
         strcpy(Path, dirname(Path));
         strcat(Path, "/ChipInfoDb.dedicfg");
         if ((fp = fopen(Path, "rt")) == NULL) {

@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/limits.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
