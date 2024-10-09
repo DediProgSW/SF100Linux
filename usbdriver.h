@@ -3,7 +3,11 @@
 #ifndef DEDI_USB_DRIVER
 #define DEDI_USB_DRIVER
 
+#ifdef __FreeBSD__
+#include <libusb.h>
+#else
 #include <libusb-1.0/libusb.h>
+#endif
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>

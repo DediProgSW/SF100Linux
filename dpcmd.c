@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/limits.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -501,7 +502,17 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-    printf("\nDpCmd Linux 1.14.20.%02d Engine Version:\nLast Built on %s\n\n", GetConfigVer(), __DATE__); // 1. new feature.bug.configS
+    printf("\nDpCmd %s 1.14.20.%02d Engine Version:\nLast Built on %s\n\n",
+#if defined(__APPLE__)
+           "macOS",
+#elif defined(__FreeBSD__)
+           "FreeBSD",
+#elif defined(__linux__)
+           "Linux",
+#else
+           "Unknown",
+#endif
+           GetConfigVer(), __DATE__); // 1. new feature.bug.configS
 
     g_ucOperation = 0;
     GetLogPath(g_LogPath);
