@@ -10,7 +10,9 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#ifdef __FreeBSD__
 #include <sys/limits.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
