@@ -504,7 +504,7 @@ int main(int argc, char* argv[])
     unsigned long r;
     char* env;
 
-    printf("\nDpCmd %s 1.14.20.%02d Engine Version:\nLast Built on %s\n\n",
+    printf("\nDpCmd %s 1.14.21.%02d Engine Version:\nLast Built on %s\n\n",
 #if defined(__APPLE__)
            "macOS",
 #elif defined(__FreeBSD__)
