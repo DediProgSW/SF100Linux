@@ -859,9 +859,9 @@ void threadRun(void* Type)
     if (g_uiAddr == 0 && g_uiLen == 0) {
 	if(is_SF700_Or_SF600PG2(Index)){
 	    if (g_bIsSF700[Index] == true)
-                printf("\nDevice %d (SF7%05X):", Index + 1, dwUID);
+                printf("\nDevice %d (SF7%05d):", Index + 1, dwUID);
 	    else if (g_bIsSF600PG2[Index] == true) 
-                printf("\nDevice %d (S6%05X):", Index + 1, dwUID);
+                printf("\nDevice %d (S6B%05d):", Index + 1, dwUID);
 	}
         else {
         if ((dwUID / 600000) == 0)
