@@ -11,6 +11,10 @@ Change to the directory where the sources are located and build using make:
 $ cd SF100Linux
 $ make
 ```
+or use
+```bash
+$ make install
+```
 
 The resulting binary should be called `dpcmd` and located in the root of the
 source tree. There is no install target at the moment.
