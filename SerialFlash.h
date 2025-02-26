@@ -107,5 +107,27 @@ size_t GetChipSize(void);
 size_t GetPageSize(void);
 bool SerialFlash_StartofOperation(int Index);
 bool SerialFlash_EndofOperation(int Index);
+bool DownloadICInfoForNand(DWORD dwInfoLen, int USBIndex);//SF700
+bool Nand_ReadICInfo(SELECT_SPI_NAND_INFO *nandInfo, unsigned short *BBT, unsigned short *BBT_Cnt, int USBIndex);
+bool SPINAND_ScanBadBlock( unsigned short *BBT, unsigned short *BBT_Cnt, int USBIndex);
+bool SF_Nand_HSBSet( int Index);
+bool SPINAND_chipErase(int USBIndex);
+bool SPINAND_ProtectBlock(bool bProtect,int USBIndex);
+void DownloadICInfo(bool isErase, int USBIndex);
+bool SPINAND_RangeBlankCheck(const struct CAddressRange* Range,int USBIndex);
+bool SPINAND_RangeProgram(const struct CAddressRange* Range,int USBIndex);
+bool SPINAND_BlockProgram(const DWORD dwAddr, const unsigned char *pData, unsigned char modeWrite,unsigned char WriteCom,int USBIndex);
+bool SPINAND_EnableInternalECC(bool is_ENECC,int USBIndex);
+bool Nand_CaculateErrorBit(unsigned char *pData, unsigned char *pFile, unsigned int ptr_size);
+bool SPINAND_RangeVerify( const struct CAddressRange* AddrRange,int USBIndex);
+bool Nand_bulkPipeRead(const struct CAddressRange* AddrRange, unsigned char* pBuff,unsigned char modeRead,unsigned char ReadCom,int USBIndex);
+bool SPINAND_RangeRead(const struct CAddressRange* Range,unsigned char *pBuff, int USBIndex);
+bool SPINand_SpecialErase(unsigned int BlockIndex, unsigned int BlockCnt, int USBIndex);
+
+
+
+
+
+
 
 #endif //SERIALFLASHS

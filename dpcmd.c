@@ -17,6 +17,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #define min(a, b) (a > b ? b : a)
 
 extern unsigned char* pBufferForLastReadData[16];
@@ -48,7 +51,8 @@ bool g_bEnableVpp = false;
 int g_StartupMode = STARTUP_APPLI_SF_1;
 bool g_bStatus = true;
 
-CHIP_INFO Chip_Info;
+CHIP_INFO g_ChipInfo;
+struct CNANDContext g_NANDContext = {{0x111,0x121,0x122,0x141,0x144},  {0x111,0x111,0x111,0x141,0x144},0,0,0,0};
 char* l_opt_arg;
 struct CAddressRange DownloadAddrRange;
 struct CAddressRange UploadAddrRange;
@@ -77,14 +81,23 @@ char* g_parameter_vcc = "NO";
 char* g_parameter_blink = "0";
 char* g_parameter_fw = "\0";
 char g_LogPath[512] = { 0 };
+char* g_parameter_special_program = "\0";
+char* g_parameter_special_auto = "\0";
+char* g_parameter_batch_with_forceerase = "\0";
+char* g_parameter_block_index = "\0";
+char* g_parameter_block_count = "\0";
+char* g_parameter_sparearea_use_file = "\0";
+char* g_parameter_skip_bad_block = "\0";
+char* g_parameter_file_offset = "\0";
+char* g_parameter_internal_ecc = "\0";
+
 /* to address by BUS:DEV; we'll parse the instructions from either the
  * environment or command line options and
  * usbdriver.c:FindUSBDevices() will acknowledge these settings */
 extern unsigned g_usb_devnum;
 extern unsigned g_usb_busnum;
 
-unsigned long g_ucOperation;
-struct memory_id g_ChipID;
+unsigned long long g_ucOperation;
 char g_board_type[8];
 char g_FPGA_ver[8];
 char g_FW_ver[10];
@@ -96,10 +109,18 @@ int m_isCanceled = 0;
 int m_bProtectAfterWritenErase = 0;
 int m_boEnReadQuadIO = 0;
 int m_boEnWriteQuadIO = 0;
+int g_iNandBadBlockManagement = 0; //0:skip, 1:no management
+int g_iNandBlockIndex = 0;
+int g_iNandBlockCount = 0;
+
 volatile bool g_is_operation_on_going = false;
 bool g_is_operation_successful[16] = { false };
 bool g_bDisplayTimer = true;
 bool isSendFFsequence = false;
+bool g_bSpareAreaUseFile = false;
+bool g_bNandForceErase = false;
+bool g_bNandInternalECC = true;
+bool g_bIsNANDFlash = false;
 /* only print timing progress info if this many seconds ellapsed
  * before the last time we did */
 //static float g_tv_display_delta_s = 0.5;
@@ -119,6 +140,7 @@ static const char* msg_info_checking = "\nChecking, please wait ...";
 static const char* msg_info_erasing = "\nErasing, please wait ...";
 static const char* msg_info_programming = "\nProgramming, please wait ...";
 static const char* msg_info_reading = "\nReading, please wait ...";
+static const char* msg_info_scanning = "\nScanning blocks, please wait ...";
 static const char* msg_info_auto = "\nAuto Sequences, please wait ...";
 static const char* msg_info_verifying = "\nVerifying, please wait ...";
 static const char* msg_info_chipblank = "\nThe chip is blank";
@@ -136,53 +158,70 @@ static const char* msg_info_verifyfail = "\nError: Verify Failed";
 static const char* msg_info_firmwareupdate = "\nUpdating firmware, please wait...";
 static const char* msg_info_firmwareupdateOK = "\nUpdate firmware OK";
 static const char* msg_info_firmwareupdatefail = "\nError: Update firmware Failed";
+static const char* msg_info_scanBBOK = "\nScan Bad Block OK";
+static const char* msg_info_scanBBfail    = "\nError: Scan Bad Block Failed";
+
 
 char* const short_options = "?Ldber:p:u:z:sf:I:R:a:l:vx:T:S:N:B:t:g:c:PO:ik:1:4:U:E:";
 
 struct option long_options[] = {
 
     { "help", 0, NULL, '?' },
-    { "list", 0, NULL, 'L' },
-    { "detect", 0, NULL, 'd' },
-    { "check", 0, NULL, 'C' },
-    { "blank", 0, NULL, 'b' },
-    { "erase", 0, NULL, 'e' },
-    { "read", 1, NULL, 'r' },
-    { "prog", 1, NULL, 'p' },
-    { "auto", 1, NULL, 'u' },
-    { "batch", 1, NULL, 'z' },
-    { "sum", 0, NULL, 's' },
-    { "fsum", 1, NULL, 'f' },
-    { "raw-instruction", 1, NULL, 'I' },
-    { "raw-require-return", 1, NULL, 'R' },
-    { "addr", 1, NULL, 'a' },
-    { "length", 1, NULL, 'l' },
-    { "verify", 0, NULL, 'v' },
-    { "fill", 1, NULL, 'x' },
-    { "type", 1, NULL, 'T' },
-    { "lock-start", 1, NULL, 'S' },
-    { "lock-length", 1, NULL, 'N' },
+    { "nand-BlockCount ", 1, NULL, 'A' },
     { "blink", 1, NULL, 'B' },
+    { "check", 0, NULL, 'C' },
     { "device", 1, NULL, 'D' },
-    { "device-SN", 1, NULL, 'X' },
-    //     { "fix-device",            1,   NULL,    'F'     },
-    { "list-device-id", 1, NULL, 'V' },
-    { "loadFile-with-verify", 1, NULL, 'W' },
-    { "timeout", 1, NULL, 't' },
-    { "target", 1, NULL, 'g' },
-    { "vcc", 1, NULL, 'c' },
-    { "vpp", 0, NULL, 'P' },
-    { "log", 1, NULL, 'O' },
-    { "silent", 0, NULL, 'i' },
-    { "spi-clk", 1, NULL, 'k' },
-    { "set-io1", 1, NULL, '1' },
-    { "set-io4", 1, NULL, '4' },
-    { "update-fw", 1, NULL, 'U' },
-    //    { "display-delta", 1, NULL, 'E' },
+    { "nand-SpareAreaUseFile", 1, NULL, 'E' },
+    { "sp", 1, NULL, 'F' },
     { "devnum", 1, NULL, 'G' },
     { "busnum", 1, NULL, 'H' },
-    { 0, 0, 0, 0 },
+    { "raw-instruction", 1, NULL, 'I' },
+    { "force-erase", 0, NULL, 'J' },
+	{ "se", 0, NULL, 'K' },    
+	{ "list", 0, NULL, 'L' },
+	{ "su", 1, NULL, 'M' },
+	{ "lock-length", 1, NULL, 'N' },
+	{ "log", 1, NULL, 'O' },
+	{ "vpp", 0, NULL, 'P' },
+	{ "nand-BlockIndex", 1, NULL, 'Q' },
+    { "raw-require-return", 1, NULL, 'R' },
+	{ "lock-start", 1, NULL, 'S' },
+    { "type", 1, NULL, 'T' },
+	{ "update-fw", 1, NULL, 'U' },
+    { "list-device-id", 1, NULL, 'V' },
+    { "loadFile-with-verify", 1, NULL, 'W' },
+    { "device-SN", 1, NULL, 'X' },
+    { "nand-batch-forceerase", 1, NULL, 'Y' },
+	{ "nand-skip-bad-block ", 1, NULL, 'Z' },
 
+	{ "addr", 1, NULL, 'a' },
+    { "blank", 0, NULL, 'b' },
+    { "vcc", 1, NULL, 'c' },
+    { "detect", 0, NULL, 'd' },
+    { "erase", 0, NULL, 'e' },
+    { "fsum", 1, NULL, 'f' },
+    { "target", 1, NULL, 'g' },
+    { "silent", 0, NULL, 'i' },
+	{ "nand-file-offset", 1, NULL, 'j' },
+    { "spi-clk", 1, NULL, 'k' },
+    { "length", 1, NULL, 'l' },
+	{ "nand-internal-ecc ", 1, NULL, 'm' },
+	{ "nand-BlockCount", 1, NULL, 'n' },
+
+	{ "prog", 1, NULL, 'p' },
+	
+    { "read", 1, NULL, 'r' },
+	{ "sum", 0, NULL, 's' },
+	{ "timeout", 1, NULL, 't' },
+    { "auto", 1, NULL, 'u' },
+   	{ "verify", 0, NULL, 'v' },
+   	
+   	{ "fill", 1, NULL, 'x' },
+   	
+    { "batch", 1, NULL, 'z' },
+    
+    { "set-io1", 1, NULL, '1' },
+    { "set-io4", 1, NULL, '4' },
 };
 
 int OpenUSB(void);
@@ -341,6 +380,17 @@ int Sequence()
 {
     // *** the calling order in the following block must be kept as is ***
     bool boResult = true;
+	if (strstr(g_ChipInfo.ICType, "SPI_NAND") != NULL)
+	{
+		g_bIsNANDFlash = true;
+		FillNANDContext();
+	}
+
+	if((g_ucOperation & ERASE) == 0 && (g_ucOperation & SPECIAL_ERASE)==0)
+	{     
+		boResult = ScanBB(); 
+	}
+
     boResult &= BlankCheck();
     if (boResult == false) {
         if (!(g_ucOperation & ERASE))
@@ -352,10 +402,18 @@ int Sequence()
             return EXCODE_FAIL_ERASE;
     }
 
+	boResult &= SpecialErase();
+    if (boResult == false)
+        return EXCODE_FAIL_PROG;
+	
     boResult &= Program();
     if (boResult == false)
         return EXCODE_FAIL_PROG;
 
+	//boResult &= SpecialProgram();
+    //if (boResult == false)
+    //    return EXCODE_FAIL_PROG;
+	
     boResult &= Read();
     if (boResult == false)
         return EXCODE_FAIL_READ;
@@ -369,9 +427,9 @@ int Sequence()
         if (g_ucOperation & CSUM) {
             if (g_uiLen == 0) {
                 if (g_uiDevNum == 0)
-                    return CRC32(pBufferForLastReadData[0], Chip_Info.ChipSizeInByte);
+                    return CRC32(pBufferForLastReadData[0], g_ChipInfo.ChipSizeInByte);
                 else
-                    return CRC32(pBufferForLastReadData[g_uiDevNum - 1], Chip_Info.ChipSizeInByte);
+                    return CRC32(pBufferForLastReadData[g_uiDevNum - 1], g_ChipInfo.ChipSizeInByte);
             } else {
                 if (g_uiDevNum == 0)
                     return CRC32(pBufferForLastReadData[0], g_uiLen);
@@ -462,6 +520,32 @@ void WriteLog(int ErrorCode, bool Init)
 
 int GetConfigVer()
 {
+#if 1
+	char file_path[512];
+	xmlDocPtr    doc;
+	xmlNodePtr   cur_node;
+	xmlChar      *chip_attribute;
+	int Ver = 0;
+	
+	if (GetChipDbPath(file_path) == false)
+	{
+        return 1;
+	}
+  
+	doc = xmlParseFile(file_path);
+	cur_node = xmlDocGetRootElement(doc); // DediProgChipDatabase
+	while (cur_node != NULL) {
+      if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"DediProgChipDatabase"))) {
+	  	chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Ver");
+		Ver = strtol((char*)chip_attribute, NULL, 10);
+	    xmlFree(chip_attribute);
+      	}
+	  	
+	  	cur_node = cur_node->next;
+	}
+	xmlFreeDoc(doc);
+	return Ver;
+#else
     char file_line_buf[512];
     char test[80];
     char *pch, *tok;
@@ -487,6 +571,7 @@ int GetConfigVer()
     }
     fclose(fp);
     return Ver;
+#endif
 }
 
 int main(int argc, char* argv[])
@@ -497,6 +582,7 @@ int main(int argc, char* argv[])
 
 #endif
     int c;
+	int temp = 0;
     int iExitCode = EXCODE_PASS;
     bool bDetect = false;
     bool bDevice = false;
@@ -523,6 +609,8 @@ int main(int argc, char* argv[])
         cli_classic_usage(false);
         return 0;
     }
+	if (ListTypes())
+			return EXCODE_PASS;
 
     /*
      * Obtain the (optional) bus number and device number to
@@ -558,6 +646,12 @@ int main(int argc, char* argv[])
         }
         g_usb_busnum = (unsigned char)r;
     }
+
+    if (OpenUSB() == 0)
+        iExitCode = EXCODE_FAIL_USB;
+
+    LeaveStandaloneMode(0);
+    QueryBoard(0);
 
     while ((c = getopt_long(argc, argv, short_options, long_options, NULL)) != -1) {
         switch (c) {
@@ -739,16 +833,56 @@ int main(int argc, char* argv[])
             }
             g_usb_busnum = (unsigned)r;
             break;
+		//SPI NAND
+		case 'E':
+			g_parameter_sparearea_use_file = optarg;
+			sscanf(g_parameter_sparearea_use_file, "%d", &temp);
+			g_bSpareAreaUseFile = ((temp==0)? false:true);
+            break;
+		case 'F':
+			g_parameter_special_program = optarg;
+			g_ucOperation |= SPECIAL_PROGRAM;
+			break;
+		case 'J':
+			g_bNandForceErase = true;
+			g_ucOperation |= ERASE;
+			break;
+		case 'K':
+			g_bNandForceErase = false;
+			g_ucOperation |= SPECIAL_ERASE;
+			break;
+		case 'M':
+			g_parameter_special_auto = optarg;
+			g_ucOperation |= SPECIAL_AUTO;
+			break;
+		case 'Q':
+			g_parameter_block_index = optarg;
+			sscanf(g_parameter_block_index, "%d", &g_iNandBlockIndex);
+			break;
+		case 'Y':
+			g_parameter_batch_with_forceerase = optarg;
+			g_ucOperation |= BATCH_WITH_FORCEERASE;
+			break;
+		case 'Z':
+			g_parameter_skip_bad_block = optarg;
+			sscanf(g_parameter_skip_bad_block, "%d", &g_iNandBadBlockManagement);
+			break;
+		case 'j':
+			g_parameter_file_offset = optarg;
+			break;
+		case 'm':
+			g_parameter_internal_ecc = optarg;
+			sscanf(g_parameter_internal_ecc, "%d", &temp);
+			g_bNandInternalECC = ((temp == 0)? true:false);
+			break;
+		case 'n':
+			g_parameter_block_count = optarg;
+			sscanf(g_parameter_block_count, "%d", &g_iNandBlockCount);
+			break;
         default:
             break;
         }
     }
-
-    if (OpenUSB() == 0)
-        iExitCode = EXCODE_FAIL_USB;
-
-    LeaveStandaloneMode(0);
-    QueryBoard(0);
 
     int dev_cnt = get_usb_dev_cnt();
 
@@ -785,11 +919,11 @@ int main(int argc, char* argv[])
                     printf("\nDevice %d (DP%06d):\tdetecting chip\n", g_uiDevNum, dwUID);
                 }
                 WriteLog(iExitCode, true);
-                Chip_Info = GetFirstDetectionMatch(strTypeName, g_uiDevNum - 1);
-                if (Chip_Info.UniqueID != 0) {
+                g_ChipInfo = GetFirstDetectionMatch(strTypeName, g_uiDevNum - 1);
+                if (g_ChipInfo.UniqueID != 0) {
                     if (strlen(strTypeName)) {
                         printf("By reading the chip ID, the chip applies to [ %s ]\n\n", strTypeName);
-                        printf("%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+                        printf("%s chip size is %zd bytes.\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
                     } else {
                         printf("%s", msg_err_identifychip);
                         iExitCode = EXCODE_FAIL_IDENTIFY;
@@ -817,11 +951,11 @@ int main(int argc, char* argv[])
                         printf("\nDevice %d (DP%06d):\tdetecting chip\n", i + 1, dwUID);
                     }
                     WriteLog(iExitCode, true);
-                    Chip_Info = GetFirstDetectionMatch(strTypeName, i);
-                    if (Chip_Info.UniqueID != 0) {
+                    g_ChipInfo = GetFirstDetectionMatch(strTypeName, i);
+                    if (g_ChipInfo.UniqueID != 0) {
                         if (strlen(strTypeName)) {
                             printf("By reading the chip ID, the chip applies to [ %s ]\n", strTypeName);
-                            printf("%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+                            printf("%s chip size is %zd bytes.\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
                         } else {
                             printf("%s", msg_err_identifychip);
                             iExitCode = EXCODE_FAIL_IDENTIFY;
@@ -835,13 +969,13 @@ int main(int argc, char* argv[])
         } else if (g_uiDevNum != 0) {
             WriteLog(iExitCode, true);
             printf("%d,\tdetecting chip\n", g_uiDevNum);
-            Chip_Info = GetFirstDetectionMatch(strTypeName, g_uiDevNum - 1);
+            g_ChipInfo = GetFirstDetectionMatch(strTypeName, g_uiDevNum - 1);
 
-            if (Chip_Info.UniqueID != 0) {
+            if (g_ChipInfo.UniqueID != 0) {
                 //printf("strlen(strTypeName)=%ld\n",strlen(strTypeName));
                 if (strlen(strTypeName)) {
                     printf("  \tBy reading the chip ID, the chip applies to [ %s ]\n\n", strTypeName);
-                    printf("  \t%s chip size is %zd bytes.\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+                    printf("  \t%s chip size is %zd bytes.\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
                 } else {
                     printf("%s", msg_err_identifychip);
                     iExitCode = EXCODE_FAIL_IDENTIFY;
@@ -870,6 +1004,7 @@ int main(int argc, char* argv[])
         }
         WriteLog(iExitCode, true);
     }
+	
     if (iExitCode != EXCODE_PASS)
         goto Exit;
     iExitCode = Handler();
@@ -972,6 +1107,7 @@ void cli_classic_usage(bool IsShowExample)
                "Remark: -x only works with -p");
 
     printf("(space is not needed between the switches and parameters. E.g. dpcmd -ubio.bin)\n");
+	printf("SPI NOR : Basic Switches(switches in this group are mutual exclusive):\n");
     printf("    -? [ --help ]                           show this help message\n"
            "    --list                                  print supported chip list\n"
            "    --check        			    get programmer information\n"
@@ -1006,7 +1142,7 @@ void cli_classic_usage(bool IsShowExample)
            "                                            dpcmd --raw-instruction \"06|01 0C|05\"  \n"
            "                                            --raw-require-return \"0|0|1\"	\n"
            "\n"
-           "Optional Switches that add fine-tune ability to Basic Switches:\n"
+           "SPI NOR : Optional Switches that add fine-tune ability to Basic Switches:\n"
            "    -a [ --addr ] arg                       hexadecimal starting address hexadecimal(e.g.\n"
            "                                            0x1000),\n"
            "                                            - works with --prog/read/sum/auto only\n"
@@ -1048,7 +1184,7 @@ void cli_classic_usage(bool IsShowExample)
            //	       "                                            - n: Prompt the device ID of programmer connected to USBn.\n"
            "    --loadFile-with-verify arg                         -Load a bin/hex/s19 file and verify with the memory conten.\n"
            "\n"
-           "Miscellaneous options:\n"
+           "SPI NOR : Miscellaneous options:\n"
            "    -t [ --timeout ] arg (=300)             Timeout value in seconds\n"
            "    -g [ --target ] arg (=1)                Target Options\n"
            "                                            Available values:\n"
@@ -1089,11 +1225,140 @@ void cli_classic_usage(bool IsShowExample)
            "    -E [ --display-delta ] arg (=0.5)       wait this many seconds\n"
            "                                            before refreshing the screen\n"
            "\n"
+           "SPI NAND : Basic Switches(switches in this group are mutual exclusive):\n"
+           "    -h [ --help ]                           show this help message\n"
+	  "    --blink arg							 \n"
+			   //		   "											- 0 : Blink green LED 3 times from USB1 to USBn\n"
+			   //		   "											(Default)\n"
+	   //		   "											note: the sequence is assigned by OS during USB plug-in\n"
+           "                                            - 1: Blink the programmer connected to USB1 3 times.\n"
+           "     --list                                 print supported chip list\n"
+           "    -c [ --check ]                          check programmer information\n" 
+           "    -d [ --detect ]                         detect chip\n" 
+           "    -b [ --blank ]                          blank check\n" 
+           "    -e [ --erase ]                          erase entire chip\n" 
+           "    --force-erase                           enable hard copy erase\n" 
+           "    -r [ --read ] arg                       read chip contents and save to a bin/hex/s19 file\n"
+           "                                            - use STDOUT for the console.\n" 
+           "    -p [ --prog ] arg                       program chip without erase\n" 
+           "    -z [ --batch ] arg\n"
+           "                                            automatically run the following sequence:\n"
+           "                                            - check if the chip is blank or not;\n"
+           "                                            - erase the chip memory which skip bad block(if\n"
+           "                                             not blank);\n"
+           "                                            - program a whole file starting from address 0\n"
+   /*        "    --se                                    erase entire chip and mark a new bad block, if\n"
+           "                                            bad block is generated during erase\n"
+           "    --sp arg                                 program chip without erase\n"
+           "                                            and mark a new bad block, if bad block is\n"
+           "                                            generated during programming\n"
+           "                                            - instructions must be enclosed in double\n"
+           "                                            quotation marks(\"\")\n"
+           "                                            - use \"|\" to load partition file and data file\n"
+           "                                            Example:\n"
+           "                                            dpcmd --sp \"xxx.dpmbn|aaa.bin\"\n"
+           "    --su arg                                automatically run the following sequence:\n"
+           "                                            - Erase only the blocks with data length and mark\n"
+           "                                            a new bad block\n"
+           "                                            - Program only the erased blocks with the file\n"
+           "                                            data from address 0\n"
+           "                                            or according to partition file\n"
+           "                                            - instructions must be enclosed in double\n"
+           "                                            quotation marks(\"\")\n"
+           "                                            - use \"|\" to load partition file and data file\n"
+           "                                            Example:\n"
+           "                                            dpcmd --su \"xxx.dpmbn|aaa.bin\"\n"
+           "                                            --nand-batch-forceerase arg automatically run the following sequence:\n"
+           "                                            - check if the chip is blank or not;\n"
+           "                                            - force erase the entire chip(if not blank);\n"
+           "                                            - program a whole file starting from address 0\n"*/
+           "    -s [ --sum ]                            display chip content checksum\n"
+           "    -f [ --fsum ] arg                       display the file checksum\n"
+           "                                            - needs to work with a file\n"
+           "    --raw-instruction arg                   issue raw serial flash instructions.\n"
+           "                                            - use spaces(\" \") to delimit bytes.\n"
+           "                                            - instructions must be enclosed in double\n"
+           "                                            quotation marks(\"\")\n"
+           "                                            - use \"|\" to send continuous command\n"
+           "                                            Example:\n"
+           "                                            ./dpcmd --raw-instruction 06\n"
+           "                                            ./dpcmd --raw-instruction \"06|02 00 00 00 11 22 33\"\n"
+           "    --raw-require-return arg                decimal bytes of result to return in decimal\n"
+           "                                            after issuing raw instructions.\n"
+           "                                            - used along with --raw-instruction only.\n"
+           "                                            Example:\n"
+           "                                            dpcmd --raw-instruction \"03 FF 00 12\" --raw-require-return 1\n"
+           "                                            dpcmd --raw-instruction \"06|05\" --raw-require-return \"0|2\"\n"
+           "    --loadFile-with-verify arg             Load a bin/hex/s19 file and compare with memory\n"
+           "                                            content\n"
+           "                                            Example:\n"
+           "                                            ./dpcmd --loadFile-with-verify d:\\xxx.bin\n"
+
+           "SPI NAND : Optional Switches that add fine-tune ability to Basic Switches:\n"
+           "    -v [ --verify ]                         verify checksum file and chip\n"
+           "                                            - works with --prog/batch only\n"
+           "    --type arg                              Specify a type to override auto detection\n"
+           "                                            - use --list arguement to look up supported type.\n"
+       //    "    --read-id             read chip id\n"
+          // "             - return chip id only\n"
+
+           "SPI NAND : Miscellaneous options:\n"
+           "    -t [ --timeout ] arg (=1000)            Timeout value in seconds. Default value is\n"
+           "                        1000s.\n"
+           "    -g [ --target ] arg (=1)                Target Options\n"
+           "                                            Available values:\n"
+           "                                                1, Chip 1(Default)\n"
+           "                                                2, Chip 2\n"
+           "                                                3, Socket\n"
+           "                                                0, reference card\n"
+           "    -i [ --silent ]                         suppress the display of real-time timer counting\n"
+           "                                            - used when integrating with 3rd-party tools\n"
+           "                                            (e.g. IDE)\n"
+           "    --vcc arg                               specify vcc(SF600Plus-G2 / Others)\n"
+           "                                                0, 3.3V / 3.5V\n"
+           "                                                1, 2.5V / 1.2V\n"
+           "                                                2, 1.8V / 1.8V\n"
+           "                                                3, 1.2V / 1.2V\n"
+           "                                                1200 ~ 3800, 1.2V ~ 3.8V (minimum step\n"
+           "                                                100mV)\n"
+           "    --spi-clk arg (=2)                      specify SPI clock:\n"
+           "                                                2, 12MHz (Default)\n"
+           "                                                0, 25MHz\n"
+           "                                                1, 6MHz\n"
+           "                                                3, 4MHz\n"
+           "                                                4, 2MHz\n"
+           "                                                5, 1MHz\n"
+           "                                                6, 800KHz\n"
+           "                                                7, 400KHz\n"
+           "    -i [ --silent ]                         suppress the display of real-time timer counting\n"
+           "                                            - used when integrating with 3rd-party tools\n"
+           "                                            (e.g. IDE)\n"
+           "    --set-io1 arg (=0)                      specify Level of IO1(SF100) or GPIO1(SF600/S\n"
+           "                                            F600Plus):\n"
+           "                                                0, Low(Default)\n"
+           "                                                1, High\n"
+           "    --set-io4 arg (=1)                      specify Level of IO4(SF100) or GPIO2(SF600/S\n"
+           "                                            F600Plus):\n"
+           "                                                0, Low\n"
+           "                                                1, High(Default)\n"
+           "    --nand-BlockIndex arg (=0)              Decimal starting address Decimal(e.g. 512),\n"
+           "                                            - defaults to 0, if omitted.\n"
+           "    --nand-BlockCount arg (=0)              Decimal starting address Decimal(e.g. 200),\n"
+           "                                            - defaults to whole file if omitted.\n"
+           "    --nand-SpareAreaUseFile arg (=0)        specify if the Spare Area use file:\n"
+           "                                                0, Unuse(Default)\n"
+           "                                                1, True\n"
+           "    --nand-skip-bad-block arg (=0)          specify if the Bad Block(s) are skipped:\n"
+           "                                                0, Skip(Default)\n"
+           "                                                1, No management\n"
+           "    --nand-file-offset arg (=0)             specify the file offset number\n"
+           "    --nand-internal-ecc arg (=0)            specify if the Internal ECC enable:\n"
+           "                                                0, Enable(Default)\n"
+           "                                                1, Disable\n"
            "Environment variables:\n"
            "  Specify DPCMD_USB_BUSNUM and DPCMD_USB_DEVNUM to ensure the tool touches only said device. Numbers can be found with tools such as lsusb and others.\n"
            "    - DPCMD_USB_BUSNUM                      Number of USB bus where device is\n"
            "    - DPCMD_USB_DEVNUM                      Number of device in USB bus\n"
-
            "\n\n\n");
 }
 
@@ -1109,10 +1374,20 @@ void sin_handler(int sig)
     }
 }
 
+void FillNANDContext(void)
+{
+	g_NANDContext.realSpareAreaSize = ( g_bNandInternalECC==true? (g_ChipInfo.SpareSizeInByte & 0xFFFF):((g_ChipInfo.SpareSizeInByte>>16) & 0xFFFF));
+	g_NANDContext.realPageSize = g_NANDContext.realSpareAreaSize+g_ChipInfo.PageSizeInByte;
+	g_NANDContext.realBlockSize = g_ChipInfo.BlockSizeInByte/g_ChipInfo.PageSizeInByte*g_NANDContext.realPageSize;
+	g_NANDContext.realChipSize = g_NANDContext.realBlockSize*g_ChipInfo.ChipSizeInByte/g_ChipInfo.BlockSizeInByte;
+	memcpy(&g_NANDContext.EraseCmd,&g_ChipInfo.EraseCmd, sizeof(unsigned int));
+	memcpy(&g_NANDContext.ReadCmd,&g_ChipInfo.ReadCmd, sizeof(unsigned int));
+	memcpy(&g_NANDContext.ProgramCmd,&g_ChipInfo.ProgramCmd, sizeof(unsigned int));
+}
+
 int Handler(void)
 {
     if (Is_usbworking(0) == true) {
-    //if (Is_usbworking(g_uiDevNum - 1) == true) {
 #if 0
         if(m_vm.count("fix-device"))
         {
@@ -1190,11 +1465,11 @@ if (Is_usbworking(0) == true) {
 		SetVppVoltage(0,i);
 
                 if (strlen(g_parameter_type) > 0) {
-                    if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &Chip_Info)) {
-                        printf("Chip Type %s is applied manually.\n", Chip_Info.TypeName);
-                        printf("%s chip size is %zd bytes.\n\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
-                        ProjectInitWithID(Chip_Info, i);
-                        if (!strcmp(Chip_Info.Class, "N25Qxxx_Large"))
+                    if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &g_ChipInfo)) {
+                        printf("Chip Type %s is applied manually.\n", g_ChipInfo.TypeName);
+                        printf("%s chip size is %zd bytes.\n\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
+                        ProjectInitWithID(g_ChipInfo, i);
+                        if (!strcmp(g_ChipInfo.Class, "N25Qxxx_Large"))
                             isSendFFsequence = true;
                     } else {
                         printf("Chip Type Unknow is applied manually.\n");
@@ -1214,10 +1489,10 @@ if (Is_usbworking(0) == true) {
 	    SetVppVoltage(0,g_uiDevNum - 1);
 
             if (strlen(g_parameter_type) > 0) {
-                if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &Chip_Info)) {
-                    printf("Chip Type %s is applied manually.\n", Chip_Info.TypeName);
-                    printf("%s chip size is %zd bytes.\n\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
-                    ProjectInitWithID(Chip_Info, g_uiDevNum - 1);
+                if (Dedi_Search_Chip_Db_ByTypeName(g_parameter_type, &g_ChipInfo)) {
+                    printf("Chip Type %s is applied manually.\n", g_ChipInfo.TypeName);
+                    printf("%s chip size is %zd bytes.\n\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
+                    ProjectInitWithID(g_ChipInfo, g_uiDevNum - 1);
                 } else {
                     printf("Chip Type Unknow is applied manually.\n");
                     return false;
@@ -1245,20 +1520,20 @@ void CloseProject(void)
 bool DetectChip(void)
 {
     int dev_cnt = get_usb_dev_cnt();
-    Chip_Info = GetFirstDetectionMatch(strTypeName, 0);
+    g_ChipInfo = GetFirstDetectionMatch(strTypeName, 0);
     if (g_uiDevNum == 0) {
         for (int i = 0; i < dev_cnt; i++) {
             if (!Is_usbworking(i)) {
                 printf("%s", msg_err_communication);
                 return false;
             }
-            if (0 == Chip_Info.UniqueID) {
+            if (0 == g_ChipInfo.UniqueID) {
                 printf("%s", msg_err_identifychip);
                 return false;
             }
             printf("By reading the chip ID, the chip applies to [ %s ]\n\n", strTypeName);
-            printf("%s parameters to be applied by default\n", Chip_Info.TypeName);
-            printf("%s chip size is %zd bytes.\n\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+            printf("%s parameters to be applied by default\n", g_ChipInfo.TypeName);
+            printf("%s chip size is %zd bytes.\n\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
 
             RawInstructions(i);
         }
@@ -1267,13 +1542,13 @@ bool DetectChip(void)
             printf("%s", msg_err_communication);
             return false;
         }
-        if (0 == Chip_Info.UniqueID) {
+        if (0 == g_ChipInfo.UniqueID) {
             printf("%s", msg_err_identifychip);
             return false;
         }
-        printf("By reading the chip ID, the chip applies to [ %s ]\n\n", Chip_Info.TypeName);
-        printf("%s parameters to be applied by default\n", Chip_Info.TypeName);
-        printf("%s chip size is %zd bytes.\n\n", Chip_Info.TypeName, Chip_Info.ChipSizeInByte);
+        printf("By reading the chip ID, the chip applies to [ %s ]\n\n", g_ChipInfo.TypeName);
+        printf("%s parameters to be applied by default\n", g_ChipInfo.TypeName);
+        printf("%s chip size is %zd bytes.\n\n", g_ChipInfo.TypeName, g_ChipInfo.ChipSizeInByte);
 
         RawInstructions(g_uiDevNum - 1);
 
@@ -1566,6 +1841,15 @@ void do_BlankCheck(void)
     Wait(msg_info_chipblank, msg_info_chipnotblank);
 }
 
+void do_NANDSpecialErase(void)
+{
+    printf("%s \n", msg_info_erasing);
+    Run(NAND_SPECIAL_ERASE, g_uiDevNum);
+
+    Wait(msg_info_eraseOK, msg_info_erasefail);
+}
+
+
 void do_Erase(void)
 {
     printf("%s \n", msg_info_erasing);
@@ -1578,6 +1862,7 @@ void do_Program(void)
 {
     if (!do_loadFile())
         return; 
+
     SaveProgContextChanges();
 
     printf("%s\n", msg_info_programming);
@@ -1808,6 +2093,130 @@ void do_RawInstructions(int Index)
     }
 }
 
+void do_ScanBB()
+{
+	if(g_bIsNANDFlash == false)
+		return;
+	
+    printf("%s\n", msg_info_scanning);
+    Run(NAND_SCAN_BB, g_uiDevNum);
+	Wait( msg_info_scanBBOK, msg_info_scanBBfail) ;
+} 
+#if 0
+bool do_loadFileWithPartitionTable()
+{
+	if(g_bIsNANDFlash == false)
+	{
+		return false;
+	}
+	
+    char* filename = NULL;
+    if (g_ucOperation & SPECIAL_PROGRAM)
+        filename = g_parameter_special_program;
+    else if (g_ucOperation & BATCH) {
+        switch (g_BatchIndex) {
+        case 1:
+            filename = g_parameter_batch;
+            break;
+        case 2:
+        default:
+            filename = g_parameter_auto;
+            break;
+        }
+    } else if (g_ucOperation & FSUM)
+        filename = g_parameter_fsum;
+    printf("%s", msg_info_loading);
+    printf("(%s)\n", filename);
+  
+	{
+		string s(m_vm["sp"].as<string>());
+		split(fileOut, s/*one_sequence*/,is_any_of("|"), token_compress_on); 
+	}
+
+	if(fileOut.size() == 0)
+		return false;
+	
+	if(fileOut.size() == 1)
+		return do_loadFile();
+
+	m_proj->analysisPartitionTable(m_vm["nand-SpareAreaUseFile"].as<size_t>()!=0, fileOut.at(0));
+	m_proj->get_context().file.nand_PartitionTableFilePath.assign(fileOut.at(1).begin(), fileOut.at(1).end());
+	if(m_vm.count("device"))
+		m_proj->ChecknFitPartitionTable(bDeviceArray[m_vm["device"].as<size_t>()]);
+	else if(m_vm.count("device-SN"))
+		m_proj->ChecknFitPartitionTable(DeviceNum);
+	else 
+		  m_proj->ChecknFitPartitionTable(0); 
+	
+	return do_NANDloadFile(fileOut.at(1));
+	return true;
+	
+}
+
+void do_NANDSpecialProgram()
+{ 	 
+	SaveProgContextChanges();
+	do_ScanBB();
+	
+	if(!do_loadFileWithPartitionTable())
+	{
+		m_status_result=false;
+		return;
+	}  
+
+	if( (IsAthenticated==FALSE) && (m_DetectedDeviceNum>1) )
+	{ 
+		 if( TrialCntProgram>0 )
+		 {
+             wcout << L"\nProgram trail count:#"<< 99 - TrialCntProgram << L" (Max trial count=99).\n";
+		     TrialCntProgram--;
+		 }
+		 else
+		 {
+		     wcout << L"\nProgram trial count runs out, please buy the production license.\n";
+             return;
+		 }
+	}
+ 
+    cout << msg_info_programming;
+	do_SaveAllLog((CString)msg_info_programming.c_str());
+	if(m_vm.count("device"))
+    {
+		if(bDeviceArray[m_vm["device"].as<size_t>()]==0xff)
+		{
+			outMsg="The number of programmer is not defined!";
+			OutputFormatedMsg(outMsg); 
+			do_SaveAllLog((CString)outMsg.c_str());
+			return;
+		}
+		//SiteChoosen=m_vm["device"].as<size_t>()-1;
+		m_proj->RunSingle(CProject::NAND_SPECIAL_PROGRAM,m_vm["device"].as<size_t>()-1);
+    }
+	else if(m_vm.count("device-SN"))
+	{
+		if(DeviceNum==0xffffffff)
+		{
+			OutputFormatedMsg("The number of programmer is not defined!");
+			return;
+		} 
+		//SiteChoosen=bReDeviceArray[DeviceNum]-1; 
+		m_proj->RunSingle(CProject::NAND_SPECIAL_PROGRAM,bReDeviceArray[DeviceNum]-1);
+	}
+    else
+		m_proj->RunMulti(CProject::NAND_SPECIAL_PROGRAM);
+
+    if( Wait( msg_info_progOK, msg_info_progfail ) )
+    {
+        wcout << L"\nChecksum(whole file): " << m_proj->getImageFileInfo(DediVersion::IMAGEFILE_ATTRIBUTE_CRC);
+        wcout << L"\nChecksum(Written part of file): " << m_proj->getImageFileInfo(DediVersion::IMAGEFILE_ATTRIBUTE_CRC_OF_WRITTEN_PART);
+    }
+	if(m_proj->boFileSizeFailed)
+	{
+		wcout << L"\nError: File is invalid.\n" ;
+	}
+}
+#endif
+
 void RawInstructions(int Index)
 {
     if (strlen(g_parameter_raw) > 0) {
@@ -1824,10 +2233,36 @@ bool BlankCheck(void)
     return g_bStatus;
 }
 
+bool SpecialErase()
+{ 
+	if (g_ucOperation & SPECIAL_ERASE) {
+		
+		g_bNandForceErase = false;
+        do_NANDSpecialErase();
+		if(g_bStatus)
+			do_ScanBB();
+    }
+	
+	
+    return g_bStatus;
+}
+
 bool Erase(void)
 {
-    if (g_ucOperation & ERASE)
+    if (g_ucOperation & ERASE) {
         do_Erase();
+		if(g_bStatus)
+			do_ScanBB();
+    }
+	
+	
+    return g_bStatus;
+}
+
+bool SpecialProgram(void)
+{
+//    if (g_ucOperation & SPECIAL_PROGRAM)   
+//        do_SpecialProgram(); 
     return g_bStatus;
 }
 
@@ -1896,7 +2331,7 @@ bool CalChecksum(void)
                     else
                         printf("\nDevice %d (DP%06d):", i + 1, dwUID);
 
-                    printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[i], Chip_Info.ChipSizeInByte));
+                    printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, g_ChipInfo.ChipSizeInByte, CRC32(pBufferForLastReadData[i], g_ChipInfo.ChipSizeInByte));
                 } else {
                     if (is_SF700_Or_SF600PG2(i)) {
 			if (g_bIsSF700[i] == true)
@@ -1910,7 +2345,7 @@ bool CalChecksum(void)
                     else
                         printf("\nDevice %d (DP%06d):", i + 1, ReadUID(i));
 
-                    printf("Checksum(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, g_uiLen, CRC32(pBufferForLastReadData[i], min(g_uiLen, Chip_Info.ChipSizeInByte)));
+                    printf("Checksum(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, g_uiLen, CRC32(pBufferForLastReadData[i], min(g_uiLen, g_ChipInfo.ChipSizeInByte)));
                 }
             }
         } else if (g_uiDevNum != 0) {
@@ -1928,7 +2363,7 @@ bool CalChecksum(void)
                 else
                     printf("\nDevice %d (DP%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
 
-                printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, Chip_Info.ChipSizeInByte, CRC32(pBufferForLastReadData[g_uiDevNum - 1], Chip_Info.ChipSizeInByte));
+                printf("Checksum of the whole chip(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, g_ChipInfo.ChipSizeInByte, CRC32(pBufferForLastReadData[g_uiDevNum - 1], g_ChipInfo.ChipSizeInByte));
             } else {
 		if (is_SF700_Or_SF600PG2(g_uiDevNum - 1)) {
                     if (g_bIsSF700[g_uiDevNum - 1] == true)
@@ -1941,7 +2376,7 @@ bool CalChecksum(void)
                     printf("\nDevice %d (SF%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
                 else
                     printf("\nDevice %d (DP%06d):", g_uiDevNum, ReadUID(g_uiDevNum - 1));
-                printf("Checksum(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, g_uiLen, CRC32(pBufferForLastReadData[g_uiDevNum - 1], min(g_uiLen, Chip_Info.ChipSizeInByte)));
+                printf("Checksum(address starting from: 0x%X, 0x%zX bytes in total): %08X\n", g_uiAddr, g_uiLen, CRC32(pBufferForLastReadData[g_uiDevNum - 1], min(g_uiLen, g_ChipInfo.ChipSizeInByte)));
             }
         } else
             printf("The number of programmer is not defined!\n");
@@ -2112,3 +2547,15 @@ int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index)
     }  
     return rc;
 } 
+
+bool ScanBB(void)
+{
+	if(g_bIsNANDFlash == false)
+		return true;
+	if(g_iNandBadBlockManagement == 1)
+		return true;
+
+	do_ScanBB();
+	return g_bStatus;
+}
+

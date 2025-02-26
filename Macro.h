@@ -9,14 +9,15 @@
 #include <unistd.h>
 
 // new defined macros
+#define IS_NAND_FLASH {if()}
 //programmer info RQ
 #define PROGINFO_REQUEST 0x08
 #define SET_VCC 0x09 ///< set VCC
 #define SET_VPP 0x03 ///< set VPP
-#define SET_CS 0x14
-#define SET_IOMODE 0x15
-#define SET_SPICLK 0x61
-#define SET_HOLD 0x1D
+//#define SET_CS 0x14
+//#define SET_IOMODE 0x15
+//#define SET_SPICLK 0x61
+//#define SET_HOLD 0x1D
 #define SET_SA 0x0A
 
 //first field of RQ
@@ -30,6 +31,11 @@
 //#define READ_EEPROM                     0x05
 //#define WRITE_EEPROM                    0x06
 // values of Request Field of a setup packet
+
+typedef unsigned short WORD;
+typedef unsigned char BYTE;
+typedef unsigned long DWORD;
+
 typedef struct FirmwareInfo {
     char Programmer[20];
     char Version[10];
@@ -51,13 +57,33 @@ typedef enum {
 
     READ_EEPROM = 0x05,
     WRITE_EEPROM = 0x06,
-    CHECK_SD_CARD = 0x65,
     GET_BUTTON_STATUS = 0x11,
+	GET_UID									= 0x12, 
+	SET_CS									= 0x14,
+	SET_IOMODE							= 0x15,
+	FW_UPDATE							= 0x1A,
+	FPGA_UPDATE						= 0x1B,
+	READ_FPGA_VERSION			= 0x1C,
+	SET_HOLD								= 0x1D,
+    DTC_READ_NAND					= 0x40,
+    WRITE_NAND							= 0x50, 
+	MICRON_XIP_RESET				=0x99,
+	SET_SPICLK								= 0x61,
+	DOWNLOAD_PROJECT			=0x63,
+	GET_PROJECT_NAME				=0x64,
+    CHECK_SD_CARD = 0x65,
+	READ_PROJECT						=0x66,
+	DL_IC_INFO_NAND   				=0x67,
+	READ_IC_INFO_NAND   			=0x68,
+	READ_ONBOARD_NAND         =0x73, 
+	GET_FW_STATUS   					=0x9B, //0x9A: Set  //0x9B:Get
 } USB_CMD;
 
 typedef struct ChipInfo {
     char TypeName[100];
+	char ICType[16];
     size_t UniqueID;
+	size_t ChipIDMask;
     char Class[100];
     char Description[256];
 
@@ -66,6 +92,7 @@ typedef struct ChipInfo {
     char Voltage[20];
     char Clock[20];
     char ProgramIOMethod[20];
+	char type[16];
 
     size_t ManufactureID;
     size_t JedecDeviceID;
@@ -88,7 +115,164 @@ typedef struct ChipInfo {
     size_t RDIDCommand;
     size_t Timeout;
     size_t VoltageInMv;
+	// SPI NAND
+    size_t SpareSizeInByte;//NAND
+    size_t nCA_Rd;
+    size_t nCA_Wr;
+    size_t DefaultDataUnitSize;
+    size_t DefaultErrorBits;
+    size_t BBMark;
+    size_t SupportedProduct;
+    size_t ECCParityGroup;
+    size_t ECCProtectStartAddr;
+    size_t ECCProtectDis;
+    size_t ECCProtectLength;
+    bool ECCEnable;
+
+    bool QPIEnable;
+    size_t ChipEraseTime;
+    size_t EraseCmd;
+    size_t ProgramCmd;
+    size_t ReadCmd;
+    size_t ProtectBlockMask;
+    size_t UnlockCmd;
+    size_t RDSRCnt;
+    size_t WRSRCnt;
+    size_t WRSRCmd;
+    size_t RDSRCmd;  
+    size_t WRCRCmd;
+    size_t RDCRCmd;
+    size_t QEbitAddr;
+    bool SupportLUT;
+	
 } CHIP_INFO;
+#pragma pack(push,1)
+typedef struct spi_nand_info{
+	unsigned short	Hearder;//A1A1
+	unsigned short	Version;//0x0001
+	unsigned short	Type;//0x0001 for spi nand
+	unsigned short	STsize;//size of this struct
+	unsigned int   ChipID;
+	unsigned int   ChipIDMask;
+	unsigned short   RealPagesize; //for real OP. include spare area size   , when scanBB , this size not include spare area size
+	unsigned short    PagesPerBlock;
+	unsigned int   Blocks; 
+	//24
+
+	unsigned int BlockIndex;
+	unsigned int BlockCount;
+
+	//32
+    unsigned short    EN_spareArea;
+    unsigned short    SPA_pagesize; //spare area pagesize
+    unsigned short    MA_pagesize; //main area pagesize
+
+	unsigned char    BeCmd;
+	unsigned char    RdCmd;
+	unsigned char    WrCmd;
+	unsigned char    AddrLen; 
+	unsigned char    nCA_Rd;
+	unsigned char    nCA_Wr;
+	unsigned char    Dummy;
+//44
+
+	unsigned short    MaxERR_bits;
+	unsigned short    BBMark;
+	unsigned char	BB_BYTE_TYPE;//0:not skip, 0x11:~0xFF, 0x10:~0x00, 0x21: ~0xFFFF, 0x20:~0x0000
+	unsigned char	BBM_TYPE;//0:no BBM, 1: skip BB, 2:others
+
+	unsigned short    BBK_TOTAL;//only useful after BB scan.
+	
+	//52
+	unsigned char	StartBB; //set 0: no start BB,set 1, start BB scan.  If ready, device will set 2.
+	unsigned char	UNprotect_type;// 1 enable. other default
+	unsigned char    En_internalECC;//0 disable, 1 enable. 0xff default
+//55
+	unsigned int   EraseStartBlock;
+	unsigned int   EraseEndBlock; 
+//63
+	unsigned char	EraseMode;//0:not enable; 1: force erase; 2: skip bad block(must Start BB before)
+//64
+	unsigned char	EraseStatus;//0:Pass; 1: Fail
+
+	unsigned char    saveSTA;	//enable save STA
+	//66
+	unsigned short rfu0;
+	unsigned short perPageSizeForErrBit;	
+	unsigned char   ReadSatus_mode;//1:w25N512G
+	
+	unsigned short	VFMODE;		   //[3]==0:old:[3:0]MaxErrorBit, [15:4]:ErrorBit reset size; size={256xErrorBit[7:4]+ErrorBit[15:8]}
+						   //[3]==1:new: [15:8]Max Error Bit allowed
+						   //[2:0]==MODE	0:DS 1:DSDSDS..DS 2:DDDD...DSSSS...S  3:DDD...D 4: for internal ECC skip
+
+	unsigned short	VFCOFGL;	   //for mode 0,1,2,3:
+	unsigned short	VFCOFGH;	   //[31:16]: Data Unit size;
+						   //[15:0]: Ecc Unit size;
+						   //for mode 4:
+						   //[31:16]: User Data mask
+						   //[15:0]: Internal ECC address mask	
+	unsigned short    staPVpagesize;
+	unsigned int   staPVpages;
+	unsigned int   staPVsize;
+	unsigned char    rfu[34];
+	unsigned short	crc;
+}SELECT_SPI_NAND_INFO;
+#pragma pack(pop)
+
+struct EraseCommand
+{
+	unsigned char ChipErase;
+	unsigned char SectorErase;
+	unsigned char DieErase;  
+	unsigned char RFU2; 
+} ;
+struct ReadCommand
+{
+	unsigned char SingleRead;
+	unsigned char DualRead;
+	unsigned char QuadRead;  
+	unsigned char RFU3; 
+} ;
+struct ProgramCommand
+{
+	unsigned char SingleProgram;
+	unsigned char DualProgram;
+	unsigned char QuadProgram;  
+	unsigned char RFU4; 
+} ;
+
+struct CNANDContext
+{
+    //bool is_S25FL128P_256KSectors;
+	const unsigned short cbyRLine[5];// = {0x111,0x121,0x122,0x141,0x144};
+	const unsigned short cbyPLine[5] ;//= {0x111,0x111,0x111,0x141,0x144};
+	unsigned int realPageSize;
+	unsigned int realSpareAreaSize;
+	unsigned int realBlockSize;
+	unsigned int realChipSize;
+	struct EraseCommand EraseCmd;
+	struct ReadCommand ReadCmd;
+	struct ProgramCommand ProgramCmd; 
+}; 
+
+struct Block_Parameter
+{
+	unsigned int block_sart;
+	unsigned int block_cnt;
+	unsigned int block_end;
+};
+
+struct ProgrgmPatitionTable
+{
+	unsigned int pt_cnt;
+	struct Block_Parameter PT[];
+};
+
+struct BadBlockTable
+{
+	unsigned short cnt;
+	unsigned short bbt[255];
+};
 
 //third field of RQ
 #define CTRL_TIMEOUT 3000 ///< time out for control pipe or for firmwire
@@ -124,6 +308,10 @@ typedef struct ChipInfo {
 #define BULK_AT45xx_READ 0x03 ///< fast read via bulk pipes
 #define BULK_4BYTE_FAST_READ 0x04 ///< For size is bigger than 128Mb
 #define BULK_4BYTE_FAST_READ_MICRON 0x05 //for 0x0c
+#define BULK_FAST_READ_DIE2                  0x06                ///< fast read via bulk pipes
+#define BULK_4BYTE_NORM_READ   0x07 //FW 7.2.26_FPGA_D
+#define BULK_QUAD_READ 0x09 //FW 7.2.29
+
 
 //for flash card
 #define POLLING 0x02 ///< polling
@@ -168,7 +356,7 @@ typedef struct ChipInfo {
 #define SUPPORT_ATO
 #define SUPPORT_FIDELIX
 #define SUPPORT_FUDAN
-
+#define SUPPORT_GIGADEVICE
 // memory support list
 #ifdef SUPPORT_NANTRONICS
 #define SUPPORT_NANTRONICS_N25Sxx "N25Sxx"
@@ -177,6 +365,12 @@ typedef struct ChipInfo {
 #ifdef SUPPORT_ATO
 #define SUPPORT_ATO_ATO25Qxx "ATO25Qxx"
 #endif
+
+#ifdef SUPPORT_GIGADEVICE 
+	#define SUPPORT_GIGADEVICE_GD25SXXX_LARGE "GD25Sxxx_Large"
+	#define SUPPORT_GIGADEVICE_GD5F1GQ4xCx "GD5F1GQ4xCx"
+#endif
+
 
 #ifdef SUPPORT_ST
 #define SUPPORT_ST_M25PExx "M25PExx"
@@ -298,6 +492,10 @@ typedef struct ChipInfo {
 #define BIT13 0x2000
 #define BIT14 0x4000
 #define BIT15 0x8000
+#define BIT16 0x10000
+#define BIT17 0x20000
+#define BIT18 0x40000
+
 
 #define ERASE BIT0
 #define PROGRAM BIT1
@@ -314,44 +512,15 @@ typedef struct ChipInfo {
 #define LIST_TYPE BIT12
 #define LOADFILEWITHVERIFY BIT13
 #define CHECK_INFO BIT14
+#define SPECIAL_ERASE BIT15
+#define SPECIAL_PROGRAM BIT16
+#define SPECIAL_AUTO BIT17
+#define BATCH_WITH_FORCEERASE BIT18
 
 struct CAddressRange {
     size_t start;
     size_t end;
     size_t length;
-};
-
-struct memory_id {
-    char TypeName[20];
-    size_t UniqueID;
-    char Class[20];
-    char Description[20];
-
-    char Manufacturer[20];
-    char ManufactureUrl[20];
-    char Voltage[20];
-    char Clock[20];
-    char ProgramIOMethod[20];
-
-    size_t ManufactureID;
-    size_t JedecDeviceID;
-    size_t AlternativeID;
-
-    size_t ChipSizeInByte;
-    size_t SectorSizeInByte;
-    size_t PageSizeInByte;
-    size_t BlockSizeInByte;
-
-    size_t MaxErasableSegmentInByte;
-
-    size_t AddrWidth;
-
-    bool DualID;
-    size_t VppSupport;
-    bool MXIC_WPmode;
-    size_t IDNumber;
-    size_t RDIDCommand;
-    size_t Timeout;
 };
 
 enum {
@@ -376,5 +545,39 @@ typedef enum {
     vccdo_nothing = 0xFF,
 
 } VCC_VALUE;
+
+typedef enum
+{
+	IO_Single = 0x00,
+	IO_Dual1 =0x01,
+	IO_Dual2 =0x02,//sf600 not support 122
+	IO_Quad1 =0x03,
+	IO_Quad2 =0x04,
+	IO_Quad3 =0x05, // Quad command 4-4-4
+	IO_Octa1 =0x89, // Octal command for Macronix (888)
+	IO_Octa2 =0x88, // Octal command for Micron (888)
+} IO_VALUE; 
+	  
+
+enum { // value dedicated by the spec
+    STARTUP_APPLI_SF_1 = 0,
+    STARTUP_APPLI_CARD = 1,
+    STARTUP_APPLI_SF_2 = 2,
+    STARTUP_APPLI_SF_SKT = 3,
+
+    STARTUP_SPECIFY_LATER = 0xFE,
+    STARTUP_PREVIOUS = 0xFF
+};
+
+enum {
+    clk_24M = 0x00,
+    clk_8M = 0x01,
+    clk_12M = 0x02,
+    clk_3M = 0x03,
+    clk_2180K = 0x04,
+    clk_1500K = 0x05,
+    clk_750K = 0x06,
+    clk_375K = 0x07,
+};
 
 #endif //_MACRO_H

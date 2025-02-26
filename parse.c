@@ -4,6 +4,8 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 #ifdef __FreeBSD__
 #include <sys/auxv.h>
 #endif
@@ -17,14 +19,649 @@
 
 //using namespace pugi;
 //xml_document doc;
+#if 1
+ bool GetChipDbPath(char *Path)
+{
+    FILE* fp = NULL;
 
-#if defined(__linux__)
+	if(Path == NULL)
+		return false;
+	
+	memset(Path, 0, linebufsize);
+    if (readlink("/proc/self/exe", Path, 512) != -1) {
+        dirname(Path);
+        strcat(Path, "/ChipInfoDb.dedicfg");
+        if ((fp = fopen(Path, "rt")) == NULL) {
+            // ChipInfoDb.dedicfg not in program directory
+            dirname(Path);
+            dirname(Path);
+            strcat(Path, "/share/DediProg/ChipInfoDb.dedicfg");
+            //			printf("%s\n",Path);
+            if ((fp = fopen(Path, "rt")) == NULL)
+            {
+                fprintf(stderr, "Error opening file: %s\n", Path);
+				return false;
+            }
+        }
+		if(fp)
+			fclose(fp);
+		//printf("\r\n%s\r\n", Path);
+		return true;
+	}
+	return false;
+}
+
+ 
+int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
+    long UniqueID,
+    CHIP_INFO* Chip_Info,
+    int search_all)
+{
+    int found_flag = 0;
+	char file_path[linebufsize];
+    int detectICNum = 0;
+    char strTypeName[32][100];
+    CHIP_INFO Chip_Info_temp;
+	xmlDocPtr    doc;
+	xmlNodePtr   cur_node;
+	xmlChar      *chip_attribute;
+
+    for (int i = 0; i < 32; i++)
+        memset(strTypeName[i], '\0', 100);
+
+    memset(chTypeName, '\0', 1024);
+
+    memset(Chip_Info->TypeName, '\0', sizeof(Chip_Info->TypeName)); //strlen(Chip_Info->TypeName)=0
+
+    if (GetChipDbPath(file_path) == false)
+    {
+        return 1;
+    }
+
+	doc = xmlParseFile(file_path);
+	cur_node = xmlDocGetRootElement(doc); // DediProgChipDatabase
+	cur_node = cur_node->children->next; //Portofolio
+	cur_node = cur_node->children->next; //Chip
+	//printf("UniqueID=0x%08X\n", UniqueID);
+    while (cur_node != NULL) {
+      if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"Chip"))) {
+	  	
+		if (found_flag == 1) {
+			found_flag = 0;
+
+			if (strlen(Chip_Info->TypeName) == 0)
+				*Chip_Info = Chip_Info_temp; //first chip info
+			detectICNum++;
+			memset(&Chip_Info_temp, 0, sizeof(CHIP_INFO));
+		}
+        chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"TypeName");
+		if(chip_attribute){
+            
+			strcpy(Chip_Info_temp.TypeName, (char*)chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ICType");
+		if(chip_attribute){
+            
+			strcpy(Chip_Info_temp.ICType, (char*)chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Class");
+		if(chip_attribute){
+			strcpy(Chip_Info_temp.Class, (char*)chip_attribute);
+		}
+	  	chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Manufacturer");
+		if(chip_attribute){
+			strcpy(Chip_Info_temp.Manufacturer, (char*)chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"UniqueID");
+		if(chip_attribute){
+			Chip_Info_temp.UniqueID = strtol((char*)chip_attribute, NULL, 16);;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Voltage");
+		if(chip_attribute){
+			strcpy(Chip_Info_temp.Voltage, (char*)chip_attribute);
+			if (strstr((char *)chip_attribute, "3.3V") != NULL)
+                Chip_Info_temp.VoltageInMv = 3300;
+            else if (strstr((char *)chip_attribute, "2.5V") != NULL)
+                Chip_Info_temp.VoltageInMv = 2500;
+            else if (strstr((char *)chip_attribute, "1.8V") != NULL)
+                Chip_Info_temp.VoltageInMv = 1800;
+            else
+                Chip_Info_temp.VoltageInMv = 3300;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"JedecDeviceID");
+		if(chip_attribute){
+			Chip_Info_temp.JedecDeviceID = strtol((char*)chip_attribute, NULL, 16);
+			if ((UniqueID == Chip_Info_temp.JedecDeviceID)) {
+                found_flag = 1;
+
+                strcpy(strTypeName[detectICNum], Chip_Info_temp.TypeName);
+                strcat(chTypeName, " ");
+                strcat(chTypeName, strTypeName[detectICNum]);
+            }
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ChipSizeInKByte");
+		if(chip_attribute){
+			Chip_Info_temp.ChipSizeInByte = strtol((char*)chip_attribute, NULL, 10) * 1024;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SectorSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.SectorSizeInByte = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"BlockSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.BlockSizeInByte = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"PageSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.PageSizeInByte = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"AddrWidth");
+		if(chip_attribute){
+			Chip_Info_temp.AddrWidth = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadDummyLen");
+		if(chip_attribute){
+			Chip_Info_temp.ReadDummyLen = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadDummyLen");
+		if(chip_attribute){
+			Chip_Info_temp.ReadDummyLen = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"IDNumber");
+		if(chip_attribute){
+			Chip_Info_temp.IDNumber = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"VppSupport");
+		if(chip_attribute){
+			Chip_Info_temp.VppSupport = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDIDCommand");
+		if(chip_attribute){
+			Chip_Info_temp.RDIDCommand = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Timeout");
+		if(chip_attribute){
+			Chip_Info_temp.Timeout = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"MXIC_WPmode");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.MXIC_WPmode = true;
+            else
+                Chip_Info_temp.MXIC_WPmode = false;
+		}
+		//SPI NAND
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SpareSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.SpareSizeInByte = (strtol((char*)chip_attribute, NULL, 16)/*&0xFFFF*/);
+			//printf("SpareSizeInByte=%ld\n",Chip_Info_temp.SpareSizeInByte);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"nCA_Rd");
+		if(chip_attribute){
+			Chip_Info_temp.nCA_Rd = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"nCA_Wr");
+		if(chip_attribute){
+			Chip_Info_temp.nCA_Wr = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadDummyLen");
+		if(chip_attribute){
+			Chip_Info_temp.ReadDummyLen = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"DefaultDataUnitSize");
+		if(chip_attribute){
+			Chip_Info_temp.DefaultDataUnitSize = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"DefaultErrorBits");
+		if(chip_attribute){
+			Chip_Info_temp.DefaultErrorBits = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"BBMark");
+		if(chip_attribute){
+			Chip_Info_temp.BBMark = strtol((char*)chip_attribute, NULL, 10);
+		}
+        chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SupportedProduct");
+		if(chip_attribute){
+			Chip_Info_temp.SupportedProduct = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCParityGroup");
+		if(chip_attribute){
+			Chip_Info_temp.ECCParityGroup = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCProtectStartAddr");
+		if(chip_attribute){
+			Chip_Info_temp.ECCProtectStartAddr = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCProtectDis");
+		if(chip_attribute){
+			Chip_Info_temp.ECCProtectDis = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCProtectLength");
+		if(chip_attribute){
+			Chip_Info_temp.ECCProtectLength = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCEnable");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.ECCEnable = true;
+            else
+                Chip_Info_temp.ECCEnable = false;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"QPIEnable");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.QPIEnable = true;
+            else
+                Chip_Info_temp.QPIEnable = false;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ChipEraseTime");
+		if(chip_attribute){
+			Chip_Info_temp.ChipEraseTime = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"EraseCmd");
+		if(chip_attribute){
+			Chip_Info_temp.EraseCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ProgramCmd");
+		if(chip_attribute){
+			Chip_Info_temp.ProgramCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadCmd");
+		if(chip_attribute){
+			Chip_Info_temp.ReadCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ProtectBlockMask");
+		if(chip_attribute){
+			Chip_Info_temp.ProtectBlockMask = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"UnlockCmd");
+		if(chip_attribute){
+			Chip_Info_temp.UnlockCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDSRCnt");
+		if(chip_attribute){
+			Chip_Info_temp.RDSRCnt = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"WRSRCnt");
+		if(chip_attribute){
+			Chip_Info_temp.WRSRCnt = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"WRSRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.WRSRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"WRCRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.WRCRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDSRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.RDSRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDCRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.RDCRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"QEbitAddr");
+		if(chip_attribute){
+			Chip_Info_temp.QEbitAddr = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ChipIDMask");
+		if(chip_attribute){
+			Chip_Info_temp.ChipIDMask = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SupportLUT");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.SupportLUT = true;
+            else
+                Chip_Info_temp.SupportLUT = false;
+		}
+	
+        xmlFree(chip_attribute);
+      }
+      cur_node = cur_node->next;
+  }
+
+  xmlFreeDoc(doc);
+	if(detectICNum)
+		found_flag=1;
+  Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
+    /*Read into the buffer contents within thr file stream*/
+    return found_flag; 
+}
+ 
+int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
+{
+    int found_flag = 0;
+	char file_path[linebufsize];
+    CHIP_INFO Chip_Info_temp;
+	xmlDocPtr    doc;
+	xmlNodePtr   cur_node;
+	xmlChar      *chip_attribute;
+
+    if (GetChipDbPath(file_path) == false)
+    {
+        return 1;
+    }
+
+  
+	doc = xmlParseFile(file_path);
+	cur_node = xmlDocGetRootElement(doc); // DediProgChipDatabase
+	cur_node = cur_node->children->next; //Portofolio
+	cur_node = cur_node->children->next; //C
+    //	data_temp = file_buf;
+    /*Read into the buffer contents within thr file stream*/
+    while (cur_node != NULL) {
+	    if (found_flag == 1) {
+			if (strlen(Chip_Info->TypeName) == 0)
+				*Chip_Info = Chip_Info_temp; //first chip info
+
+			break;
+		}
+		
+      if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"Chip"))) {
+	      
+          chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"TypeName");
+		  
+		  if(chip_attribute){
+		  	
+            if (!xmlStrcmp(chip_attribute, (const xmlChar *)TypeName)) {
+				found_flag = 1;
+				//printf("chip name=%s\n",chip_attribute);
+			} else 
+				found_flag = 0;
+			memset(&Chip_Info_temp, 0, sizeof(CHIP_INFO));
+			strcpy(Chip_Info_temp.TypeName, (char*)chip_attribute);
+			
+		  }
+       }
+	  if(found_flag == 0)
+	  {
+	  	cur_node = cur_node->next;
+	 	 continue;
+	  }else {
+	  	chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Class");
+		if(chip_attribute){
+			strcpy(Chip_Info_temp.Class, (char*)chip_attribute);
+        	//printf("Class: %s\n", chip_attribute);
+		}
+	  	chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Manufacturer");
+		if(chip_attribute){
+			strcpy(Chip_Info_temp.Manufacturer, (char*)chip_attribute);
+        	//printf("Manufacturer: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"UniqueID");
+		if(chip_attribute){
+			Chip_Info_temp.UniqueID = strtol((char*)chip_attribute, NULL, 16);;
+        	//printf("UniqueID: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Voltage");
+		if(chip_attribute){
+        	//printf("Voltage: %s\n", chip_attribute);
+			if (strstr((char *)chip_attribute, "3.3V") == 0)
+                Chip_Info_temp.VoltageInMv = 3300;
+            else if (strstr((char *)chip_attribute, "2.5V") == 0)
+                Chip_Info_temp.VoltageInMv = 2500;
+            else if (strstr((char *)chip_attribute, "1.8V") == 0)
+                Chip_Info_temp.VoltageInMv = 1800;
+            else
+                Chip_Info_temp.VoltageInMv = 3300;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"JedecDeviceID");
+		if(chip_attribute){
+			Chip_Info_temp.JedecDeviceID = strtol((char*)chip_attribute, NULL, 16);
+        	//printf("JedecDeviceID: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ChipSizeInKByte");
+		if(chip_attribute){
+			Chip_Info_temp.ChipSizeInByte = strtol((char*)chip_attribute, NULL, 10) * 1024;
+        	//printf("ChipSizeInKByte: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SectorSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.SectorSizeInByte = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("SectorSizeInKByte: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"BlockSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.BlockSizeInByte = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("BlockSizeInByte: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"PageSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.PageSizeInByte = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("PageSizeInByte: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"AddrWidth");
+		if(chip_attribute){
+			Chip_Info_temp.AddrWidth = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("AddrWidth: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadDummyLen");
+		if(chip_attribute){
+			Chip_Info_temp.ReadDummyLen = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("ReadDummyLen: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadDummyLen");
+		if(chip_attribute){
+			Chip_Info_temp.ReadDummyLen = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("ReadDummyLen: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"IDNumber");
+		if(chip_attribute){
+			Chip_Info_temp.IDNumber = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("IDNumber: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"VppSupport");
+		if(chip_attribute){
+			Chip_Info_temp.VppSupport = strtol((char*)chip_attribute, NULL, 10);
+        	//printf("VppSupport: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDIDCommand");
+		if(chip_attribute){
+			Chip_Info_temp.RDIDCommand = strtol((char*)chip_attribute, NULL, 16);
+        	//printf("RDIDCommand: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Timeout");
+		if(chip_attribute){
+			Chip_Info_temp.Timeout = strtol((char*)chip_attribute, NULL, 16);
+        	//printf("Timeout: %s\n", chip_attribute);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"MXIC_WPmode");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.MXIC_WPmode = true;
+            else
+                Chip_Info_temp.MXIC_WPmode = false;
+        	//printf("MXIC_WPmode: %s\n", chip_attribute);
+		}
+		//SPI NAND
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SpareSizeInByte");
+		if(chip_attribute){
+			Chip_Info_temp.SpareSizeInByte = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"nCA_Rd");
+		if(chip_attribute){
+			Chip_Info_temp.nCA_Rd = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"nCA_Wr");
+		if(chip_attribute){
+			Chip_Info_temp.nCA_Wr = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadDummyLen");
+		if(chip_attribute){
+			Chip_Info_temp.ReadDummyLen = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"DefaultDataUnitSize");
+		if(chip_attribute){
+			Chip_Info_temp.DefaultDataUnitSize = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"DefaultErrorBits");
+		if(chip_attribute){
+			Chip_Info_temp.DefaultErrorBits = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"BBMark");
+		if(chip_attribute){
+			Chip_Info_temp.BBMark = strtol((char*)chip_attribute, NULL, 10);
+		}
+        chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SupportedProduct");
+		if(chip_attribute){
+			Chip_Info_temp.SupportedProduct = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCParityGroup");
+		if(chip_attribute){
+			Chip_Info_temp.ECCParityGroup = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCProtectStartAddr");
+		if(chip_attribute){
+			Chip_Info_temp.ECCProtectStartAddr = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCProtectDis");
+		if(chip_attribute){
+			Chip_Info_temp.ECCProtectDis = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCProtectLength");
+		if(chip_attribute){
+			Chip_Info_temp.ECCProtectLength = strtol((char*)chip_attribute, NULL, 10);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ECCEnable");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.ECCEnable = true;
+            else
+                Chip_Info_temp.ECCEnable = false;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"QPIEnable");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.QPIEnable = true;
+            else
+                Chip_Info_temp.QPIEnable = false;
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ChipEraseTime");
+		if(chip_attribute){
+			Chip_Info_temp.ChipEraseTime = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"EraseCmd");
+		if(chip_attribute){
+			Chip_Info_temp.EraseCmd = strtol((char*)chip_attribute, NULL, 16);
+        }
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ProgramCmd");
+		if(chip_attribute){
+			Chip_Info_temp.ProgramCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ReadCmd");
+		if(chip_attribute){
+			Chip_Info_temp.ReadCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"ProtectBlockMask");
+		if(chip_attribute){
+			Chip_Info_temp.ProtectBlockMask = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"UnlockCmd");
+		if(chip_attribute){
+			Chip_Info_temp.UnlockCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDSRCnt");
+		if(chip_attribute){
+			Chip_Info_temp.RDSRCnt = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"WRSRCnt");
+		if(chip_attribute){
+			Chip_Info_temp.WRSRCnt = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"WRSRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.WRSRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"WRCRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.WRCRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDSRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.RDSRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"RDCRCmd");
+		if(chip_attribute){
+			Chip_Info_temp.RDCRCmd = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"QEbitAddr");
+		if(chip_attribute){
+			Chip_Info_temp.QEbitAddr = strtol((char*)chip_attribute, NULL, 16);
+		}
+		chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"SupportLUT");
+		if(chip_attribute){
+			if (strstr((char*)chip_attribute, "true") != NULL)
+                Chip_Info_temp.SupportLUT = true;
+            else
+                Chip_Info_temp.SupportLUT = false;
+		}
+	  }
+	  xmlFree(chip_attribute);
+    }
+
+	xmlFreeDoc(doc);
+    Chip_Info->MaxErasableSegmentInByte = max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
+                
+    if (found_flag == 0) {
+        Chip_Info->TypeName[0] = 0;
+        Chip_Info->UniqueID = 0;
+    }
+    return found_flag; /*Executed without errors*/
+}
+
+
+bool Dedi_List_AllChip(void)
+{
+	char file_path[linebufsize];
+	char Type[256] = { 0 };
+	xmlDocPtr    doc;
+	xmlNodePtr   cur_node;
+	xmlChar      *chip_attribute;
+
+    if (GetChipDbPath(file_path) == false)
+    {
+        return 1;
+    }
+
+	doc = xmlParseFile(file_path);
+	cur_node = xmlDocGetRootElement(doc); // DediProgChipDatabase
+	cur_node = cur_node->children->next; //Portofolio
+	cur_node = cur_node->children->next; //C
+    //	data_temp = file_buf;
+    /*Read into the buffer contents within thr file stream*/
+    while (cur_node != NULL) {
+        if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"Chip"))) {
+	  	
+            chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"TypeName");
+		    if(chip_attribute){
+			    strcpy(Type, (char*)chip_attribute);
+        	    //printf("TypeName: %s\n", chip_attribute);
+		    }
+			chip_attribute = xmlGetProp(cur_node, (const xmlChar *)"Manufacturer");
+		    if(chip_attribute){
+ 			    printf("%s\t\tby %s\n", Type, (char*)chip_attribute);
+		    }
+			xmlFree(chip_attribute);
+        }
+		cur_node = cur_node->next;
+    }
+
+	xmlFreeDoc(doc);
+
+    return true;
+
+}
+
+ #else
 FILE* openChipInfoDb(void)
 {
     FILE* fp = NULL;
-    char Path[pathbufsize];
+    char Path[linebufsize];
 
-    memset(Path, 0, pathbufsize);
+    memset(Path, 0, linebufsize);
     if (readlink("/proc/self/exe", Path, 512) != -1) {
         dirname(Path);
         strcat(Path, "/ChipInfoDb.dedicfg");
@@ -46,36 +683,6 @@ FILE* openChipInfoDb(void)
 
     return fp;
 }
-#endif
-
-#if defined(__APPLE__) || defined(__FreeBSD__)
-FILE* openChipInfoDb(void)
-{
-    FILE* fp = NULL;
-    char Path[pathbufsize];
-    uint32_t size = sizeof(Path);
-
-    memset(Path, 0, pathbufsize);
-#if defined(__APPLE__)
-    if (_NSGetExecutablePath(Path, &size) == 0) {
-#else
-    if (elf_aux_info(AT_EXECPATH, Path, size) == 0) {
-#endif
-        strcpy(Path, dirname(Path));
-        strcat(Path, "/ChipInfoDb.dedicfg");
-        if ((fp = fopen(Path, "rt")) == NULL) {
-            // ChipInfoDb.dedicfg not in program directory
-            strcpy(Path, dirname(Path));
-            strcpy(Path, dirname(Path));
-            strcat(Path, "/share/DediProg/ChipInfoDb.dedicfg");
-            if ((fp = fopen(Path, "rt")) == NULL)
-                fprintf(stderr, "Error opening file: %s\n", Path);
-        }
-    }
-
-    return fp;
-}
-#endif
 
 long fsize(FILE* fp)
 {
@@ -619,6 +1226,7 @@ bool Dedi_List_AllChip(void)
 
 } /*End main*/
 
+#endif
 /***********************PARSE.TXT (CONTENT)**********************/
 /* "Move each word to the next line"                            */
 /***********************PARSE.EXE (OUTPUT)***********************/

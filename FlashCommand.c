@@ -232,3 +232,94 @@ int FlashCommand_SendCommand_SetupPacketForBulkRead(struct CAddressRange* AddrRa
     // send rq via control pipe
     return OutCtrlRequest(&rq, vInstruction, rq.Length, Index);
 }
+
+int FlashCommand_SendCommand_SetupPacketForBulkReadNAND(unsigned int dwAddr, unsigned int PageNum, unsigned char modeRead,WORD pageSize, WORD blockPages, unsigned char ReadCom,unsigned char AddrLen, unsigned char ReadDummyLen,unsigned char nCA, int USBIndex)
+{  
+	unsigned char vInstruction[18];
+	vInstruction[0]=(dwAddr & 0xff) ;
+	vInstruction[1]=((dwAddr>>8) & 0xff);
+	vInstruction[2]=((dwAddr>>16) & 0xff);
+	vInstruction[3]=((dwAddr>>24) & 0xff);
+ 
+	//dwLength
+	vInstruction[4]=((unsigned char)(PageNum & 0xff));                // lowest byte of length : page number
+	vInstruction[5]=((unsigned char)( (PageNum >> 8) &  0xff));        // highest byte of length: page number
+	vInstruction[6]=((unsigned char)( (PageNum >> 16) &  0xff) );       
+	vInstruction[7]=((unsigned char)( (PageNum >> 24) &  0xff) );  
+
+	//dwMode
+	vInstruction[8]=(modeRead);  
+	vInstruction[9]=(modeRead>>8);
+	
+	//pagesize
+	vInstruction[10]=((unsigned char)(pageSize)); 
+	vInstruction[11]=((unsigned char)(pageSize>>8));
+
+	//blockpages
+	vInstruction[12]=((unsigned char)(blockPages));  
+	vInstruction[13]=((unsigned char)(blockPages>>8)); 	
+
+	vInstruction[14]=((unsigned char)(ReadCom));//cmd
+
+	vInstruction[15]=((unsigned char)AddrLen);//addrLen
+
+	vInstruction[16]=((unsigned char)(ReadDummyLen));
+
+	vInstruction[17]=((unsigned char)nCA); 		 
+ 
+	CNTRPIPE_RQ rq ;  
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_OUT ;
+	rq.Request = DTC_READ_NAND ;
+	rq.Value = 0 ;      
+	rq.Index = 0 ;		 
+	rq.Length = (unsigned long)(sizeof(vInstruction)) ;//40
+	 
+    // send rq via control pipe
+    return OutCtrlRequest(&rq, vInstruction,rq.Length,USBIndex);
+}
+
+bool FlashCommand_SendCommand_SetupPacketForBulkWriteNAND(unsigned int dwAddr, size_t dwLength,unsigned char modeWrite,WORD pageSize, WORD blockPages, unsigned char WriteCom,unsigned char AddrLen, unsigned char WriteDummyLen,unsigned char nCA, int USBIndex)
+{  
+	unsigned char vInstruction[40]={0};
+	//dwAddr;
+	vInstruction[0]=(dwAddr & 0xff);
+	vInstruction[1]=((dwAddr>>8) & 0xff);
+	vInstruction[2]=((dwAddr>>16) & 0xff);
+	vInstruction[3]=((dwAddr>>24) & 0xff);
+
+	//dwLength
+	vInstruction[4]=((unsigned char)(dwLength & 0xff));                // lowest byte of length : page number
+	vInstruction[5]=((unsigned char)( (dwLength >> 8) &  0xff));        // highest byte of length: page number
+	vInstruction[6]=((unsigned char)( (dwLength >> 16) &  0xff) );       
+	vInstruction[7]=((unsigned char)( (dwLength >> 24) &  0xff) );  
+
+	//dwMode
+	vInstruction[8]=((unsigned char)modeWrite);  
+	vInstruction[9]=((unsigned char)(modeWrite>>8));
+
+	//pagesize
+	vInstruction[10]=((unsigned char)pageSize); 
+	vInstruction[11]=((unsigned char)(pageSize>>8));
+
+	//blockpages
+	vInstruction[12]=(blockPages);  
+	vInstruction[13]=((unsigned char)(blockPages>>8)); 	
+	vInstruction[14]=(WriteCom);//cmd
+	vInstruction[15]=(AddrLen);//addrLen
+	vInstruction[16]=(4);
+	vInstruction[17]=(nCA); 		 
+
+	CNTRPIPE_RQ rq ; 
+  
+	rq.Function = URB_FUNCTION_VENDOR_ENDPOINT ;
+	rq.Direction = VENDOR_DIRECTION_OUT ;
+	rq.Request = WRITE_NAND ;
+	rq.Value = 0 ;      
+	rq.Index = 0 ;		 
+	rq.Length = sizeof(vInstruction);
+	 
+    // send rq via control pipe
+    return OutCtrlRequest(&rq, vInstruction,rq.Length,USBIndex);
+}
+

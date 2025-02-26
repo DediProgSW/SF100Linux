@@ -27,6 +27,11 @@ typedef enum {
     //  07.03.2009
     UPDATE_FIRMWARE,
     AUTO_UPDATE_FIRMWARE,
+	BLINK_SITE,
+	NAND_SCAN_BB,
+	NAND_SPECIAL_PROGRAM,
+	NAND_SPECIAL_ERASE,
+	NAND_SPECIAL_AUTO,
 
 } OPERATION_TYPE;
 
@@ -70,6 +75,10 @@ bool threadReadRangeChip(struct CAddressRange range, int Index);
 bool threadConfiguredReadChip(int Index);
 bool threadCompareFileAndChip(int Index);
 bool threadReadChip(int Index);
+bool threadScanBB(int Index);
+bool threadPredefinedNandBatchSequences(int Index);
+
+
 int ReadBINFile(const char* filename, unsigned char* buf, unsigned long* size);
 int WriteBINFile(const char* filename, unsigned char* buf, unsigned long size);
 bool LoadFile(char* filename);

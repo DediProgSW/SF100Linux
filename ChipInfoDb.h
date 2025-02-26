@@ -28,6 +28,7 @@ int Dedi_Search_Chip_Db(long RDIDCommand, long UniqueID, CHIP_INFO* Chip_Info, i
 int Dedi_Search_Chip_Db(char* TypeName, long RDIDCommand, long UniqueID, CHIP_INFO* Chip_Info, int search_all);
 #endif
 int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info);
-FILE* openChipInfoDb(void);
+//FILE* openChipInfoDb(void);
+bool GetChipDbPath(char *Path);
 
 #endif

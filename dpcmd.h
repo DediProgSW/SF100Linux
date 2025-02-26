@@ -21,27 +21,6 @@ enum ErrorCode {
     EXCODE_FAIL_OTHERS,
 };
 
-enum { // value dedicated by the spec
-    STARTUP_APPLI_SF_1 = 0,
-    STARTUP_APPLI_CARD = 1,
-    STARTUP_APPLI_SF_2 = 2,
-    STARTUP_APPLI_SF_SKT = 3,
-
-    STARTUP_SPECIFY_LATER = 0xFE,
-    STARTUP_PREVIOUS = 0xFF
-};
-
-enum {
-    clk_24M = 0x00,
-    clk_8M = 0x01,
-    clk_12M = 0x02,
-    clk_3M = 0x03,
-    clk_2180K = 0x04,
-    clk_1500K = 0x05,
-    clk_750K = 0x06,
-    clk_375K = 0x07,
-};
-
 int Sequence();
 void cli_classic_usage(bool IsShowExample);
 bool InitProject(void);
@@ -84,5 +63,11 @@ bool Wait(const char* strOK, const char* strFail);
 void ExitProgram(void);
 int FirmwareUpdate();
 void sin_handler(int sig);
+void FillNANDContext(void);
+bool ScanBB(void);
+void do_ScanBB(void);
+void do_NANDSpecialErase(void);
+bool SpecialErase(void);
+
 
 #endif

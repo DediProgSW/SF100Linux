@@ -72,5 +72,7 @@ int dediprog_set_vpp_voltage(int volt, int Index);
 long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Index);
 
 int BulkPipeWrite(unsigned char* pBuff, unsigned int size, unsigned int timeOut, int Index);
+int BulkPipeReadEx(unsigned char* pBuff,  unsigned int cnRead, unsigned int timeOut, int Index);
+
 
 #endif //DEDI_USB_DRIVER

@@ -16,7 +16,7 @@ extern volatile bool g_bIsSF600PG2[16];
 extern int g_CurrentSeriase;
 extern char g_board_type[8];
 extern int g_firmversion;
-extern CHIP_INFO Chip_Info;
+extern CHIP_INFO g_ChipInfo;
 extern unsigned int g_uiDevNum;
 extern bool isSendFFsequence;
 
@@ -626,3 +626,17 @@ long flash_ReadId(unsigned int read_id_code, unsigned int out_data_size, int Ind
     // printf("\n(Simon)Flash ID 0x%x (0x%x, %d)\n",rc, read_id_code, out_data_size);
     return rc;
 }
+
+int BulkPipeReadEx(unsigned char* pBuff,  unsigned int cnRead, unsigned int timeOut, int Index)
+{
+    int ret, actual_length;
+    if (Index == -1)
+        Index = DevIndex;
+ 
+    //unsigned long cnTemp = cnRead; 
+    ret = libusb_bulk_transfer(dediprog_handle[Index], 2 | LIBUSB_ENDPOINT_IN, pBuff, cnRead, &actual_length, DEFAULT_TIMEOUT);  
+    if (ret != 0) //libusb_bulk_transfer return false
+        return 0; 
+    return cnRead;
+}
+
