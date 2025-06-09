@@ -222,6 +222,7 @@ struct option long_options[] = {
     
     { "set-io1", 1, NULL, '1' },
     { "set-io4", 1, NULL, '4' },
+    { },
 };
 
 int OpenUSB(void);
