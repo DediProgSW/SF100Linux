@@ -394,7 +394,9 @@ void GetLogPath(char* pBuf)
 	memset(pBuf,0,512);
     if (readlink ("/proc/self/exe", pBuf, 512) != -1)
     {
-    	if(strlen(pBuf)<(511-sizeof("/log.txt")))
+    	size_t current_len = strlen(pBuf);
+    	size_t append_len = strlen("/log.txt");
+    	if(current_len + append_len < 511)
 	    	strcat(pBuf,"/log.txt");
 //		printf("%s\r\n",pBuf);
     }

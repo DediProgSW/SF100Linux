@@ -173,7 +173,7 @@ int InCtrlRequest( CNTRPIPE_RQ *rq, unsigned char *buf, unsigned long buf_size, 
     if( Index==-1 )
         Index = DevIndex;
 
-    if(sizeof(buf) == 0)
+    if(buf_size == 0)
         return 0;
 
 

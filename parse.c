@@ -617,10 +617,10 @@ void Dedi_List_AllChip()
 	getExecPath(Path);
 
 	/*If file doesn't exist or filetype isn't allowed exit and*/
-	/*error message & return (1) control to the OS*/
+	/*error message & return control to the OS*/
 	if ((fp = fopen(Path,"rt")) == NULL){
 		fprintf(stderr,"Error opening file: %s\n",fname);
-		return 1;
+		return;
 	}
 	sz=fsize(fp);
 	file_buf=(char*)malloc(sz);
