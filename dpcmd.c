@@ -1704,11 +1704,11 @@ bool Wait(const char* strOK,const char* strFail)
         gettimeofday (&tv , NULL);
         if(tv.tv_sec-basetv.tv_sec > timeOut)
         { 
+            timersub(&tv, &basetv, &diff);
             printf("%0.2f\t s elapsed\r",diff.tv_sec + 0.000001 * diff.tv_usec);
             printf("%s",msg_err_timeout_abortion); 
 	    g_is_operation_on_going=false;
             g_bStatus=false;
-            timersub(&tv, &basetv, &diff);
             return false;
         }
 
