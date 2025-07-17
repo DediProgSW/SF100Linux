@@ -2473,7 +2473,6 @@ int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index)
         UniqueID = 0;
         rc = 0;
         UniqueID = flash_ReadId(0x9f, 3, Index);
-
         if (UniqueID != 0) {
             rc = Dedi_Search_Chip_Db(TypeName, 0x9f, UniqueID, Chip_Info, search_all);
             strcpy(strTypeName, TypeName);

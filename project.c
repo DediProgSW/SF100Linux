@@ -1507,13 +1507,24 @@ void SetProgReadCommand(int Index)
     mcode_WREN = WREN;
     mcode_RDSR = RDSR;
     mcode_WRSR = WRSR;
+	mcode_WRDI = 0x04;
     mcode_ChipErase = CHIP_ERASE;
-    mcode_Program = PAGE_PROGRAM;
-    mcode_Read = BULK_FAST_READ;
-    mcode_SegmentErase = SE;
-    mcode_WRDI = 0x04;
-    mcode_ProgramCode_4Adr = 0xFF;
-    mcode_ReadCode = 0xFF;
+	mcode_SegmentErase = SE;
+
+	if(strstr(g_ChipInfo.Class,"_Large") == NULL)
+	{
+    	mcode_Program = PAGE_PROGRAM;
+	    mcode_Read = BULK_FAST_READ;
+	    mcode_ProgramCode_4Adr = 0xFF;
+    	mcode_ReadCode = 0xFF;
+	}
+	else
+	{
+		mcode_Program = PP_4ADR_256BYTE;
+		mcode_Read = BULK_4BYTE_FAST_READ;
+		mcode_ProgramCode_4Adr = (g_ChipInfo.ProgramCmd & 0x000000FF);// single program cmd
+		mcode_ReadCode = (g_ChipInfo.ReadCmd & 0x000000FF); // single read cmd
+	}
 
     if (strcmp(g_ChipInfo.Class, SUPPORT_SST_25xFxx) == 0) {
         mcode_RDSR = RDSR;
