@@ -45,7 +45,7 @@ unsigned int g_uiDevNum = 0;
 unsigned int g_uiDeviceID = 0;
 unsigned int g_IO1Select = 0;
 unsigned int g_IO4Select = 1;
-char g_strTypeName[64] = "\0";
+char g_strTypeName[TYPENAME_MAX_LEN] = "\0";
 
 bool g_bEnableVpp = false;
 int g_StartupMode = STARTUP_APPLI_SF_1;

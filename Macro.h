@@ -79,8 +79,9 @@ typedef enum {
 	GET_FW_STATUS   					=0x9B, //0x9A: Set  //0x9B:Get
 } USB_CMD;
 
+#define TYPENAME_MAX_LEN 64
 typedef struct ChipInfo {
-    char TypeName[100];
+    char TypeName[TYPENAME_MAX_LEN];
 	char ICType[16];
     size_t UniqueID;
 	size_t ChipIDMask;
