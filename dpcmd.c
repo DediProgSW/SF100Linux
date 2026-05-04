@@ -2477,7 +2477,7 @@ int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index)
         UniqueID = flash_ReadId(0x9f, 3, Index);
         if (UniqueID != 0) {
             rc = Dedi_Search_Chip_Db(TypeName, 0x9f, UniqueID, Chip_Info, search_all);
-            strcpy(g_strTypeName, TypeName);
+            snprintf(g_strTypeName, sizeof(g_strTypeName), "%s", TypeName);
             if (rc && (search_all == 0)) {
                 if (c == 1)
                     isSendFFsequence = true; 
