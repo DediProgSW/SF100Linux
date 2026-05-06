@@ -953,7 +953,7 @@ int main(int argc, char* argv[])
                     }
                     WriteLog(iExitCode, true);
                     g_ChipInfo = GetFirstDetectionMatch(g_strTypeName, i);
-					printf("type = %s\n\r",g_ChipInfo.ICType);
+					//printf("type = %s\n\r",g_ChipInfo.ICType);
                     if (g_ChipInfo.UniqueID != 0) {
                         if (strlen(g_ChipInfo.TypeName/* g_strTypeName*/)) {
                             printf("By reading the chip ID, the chip applies to [ %s ]\n", g_strTypeName);
@@ -2453,6 +2453,7 @@ bool Wait(const char* strOK, const char* strFail)
     }
     return g_bStatus;
 } 
+
 int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index)
 {
 
@@ -2477,7 +2478,9 @@ int FlashIdentifier(CHIP_INFO* Chip_Info, int search_all, int Index)
         UniqueID = flash_ReadId(0x9f, 3, Index);
         if (UniqueID != 0) {
             rc = Dedi_Search_Chip_Db(TypeName, 0x9f, UniqueID, Chip_Info, search_all);
-            snprintf(g_strTypeName, sizeof(g_strTypeName), "%s", TypeName);
+            strncpy(g_strTypeName, TypeName, sizeof(g_strTypeName) - 1);
+            g_strTypeName[sizeof(g_strTypeName) - 1] = '\0';
+            //snprintf(g_strTypeName, sizeof(g_strTypeName), "%s", TypeName);
             if (rc && (search_all == 0)) {
                 if (c == 1)
                     isSendFFsequence = true; 

@@ -58,7 +58,7 @@ extern unsigned int g_uiAddr;
 extern size_t g_uiLen;
 extern bool g_bEnableVpp;
 extern unsigned int g_uiDevNum;
-extern char g_strTypeName[64];
+extern char g_strTypeName[TYPENAME_MAX_LEN];
 extern bool g_bIsNANDFlash;
 extern bool g_bSpareAreaUseFile;
 extern struct CNANDContext g_NANDContext;
