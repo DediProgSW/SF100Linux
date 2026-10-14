@@ -489,6 +489,11 @@ int usb_driver_init(void)
 
     device_cnt = FindUSBDevice();
 
+    if (device_cnt == 0) {
+        printf("Error: No programmer found. Check the USB connection.\n");
+        return 0;
+    }
+
     if (g_uiDevNum == 0) {
         for (int i = 0; i < device_cnt; i++) {
             if (usb_device_entry[i].valid == 0) {
