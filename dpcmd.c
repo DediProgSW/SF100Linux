@@ -533,7 +533,7 @@ int GetConfigVer()
         return 1;
 	}
   
-	doc = xmlParseFile(file_path);
+	doc = xmlReadFile(file_path, NULL, XML_PARSE_NOWARNING);
 	cur_node = xmlDocGetRootElement(doc); // DediProgChipDatabase
 	while (cur_node != NULL) {
       if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"DediProgChipDatabase"))) {
