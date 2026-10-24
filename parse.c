@@ -314,7 +314,7 @@ int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
         return 1;
     }
 
-    doc = xmlParseFile(file_path);
+    doc = xmlReadFile(file_path, NULL, XML_PARSE_NOWARNING);
     if (!doc) {
         fprintf(stderr, "Error parsing XML file: %s\n", file_path);
         return 1;
@@ -378,7 +378,7 @@ int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
         return 1;
     }
 
-    doc = xmlParseFile(file_path);
+    doc = xmlReadFile(file_path, NULL, XML_PARSE_NOWARNING);
     if (!doc) {
         fprintf(stderr, "Error parsing XML file: %s\n", file_path);
         return 1;
@@ -438,7 +438,7 @@ bool Dedi_List_AllChip(void)
         return false;
     }
 
-    doc = xmlParseFile(file_path);
+    doc = xmlReadFile(file_path, NULL, XML_PARSE_NOWARNING);
     if (!doc) {
         fprintf(stderr, "Error parsing XML file: %s\n", file_path);
         return false;
