@@ -580,6 +580,61 @@ exit:
     return result;
 }
 
+// Fills the erase opcodes/sizes the current chip supports; a size of 0 means unsupported.
+static void GetRangeEraseCaps(unsigned char* blockCmd, size_t* blockSize, unsigned char* sectorCmd, size_t* sectorSize)
+{
+    // opcode the chip database lists for block erase
+    unsigned char dbBlockCmd = g_ChipInfo.BlockEraseCmd;
+    bool supportedClass = !g_bIsNANDFlash
+        && strstr(g_ChipInfo.Class, SUPPORT_ATMEL_45DBxxxB) == NULL
+        && strstr(g_ChipInfo.Class, SUPPORT_ATMEL_45DBxxxD) == NULL
+        && strstr(g_ChipInfo.Class, SUPPORT_SPANSION_S70FSxx_Large) == NULL
+        && strstr(g_ChipInfo.Class, "2Die") == NULL
+        && strstr(g_ChipInfo.Class, "2die") == NULL
+        && strstr(g_ChipInfo.Class, "4Die") == NULL
+        && strstr(g_ChipInfo.Class, "4die") == NULL
+        && strstr(g_ChipInfo.Class, "Octal") == NULL;
+
+    *blockCmd = mcode_SegmentErase;
+    *blockSize = 0;
+    *sectorCmd = (mcode_SegmentErase == 0xDC) ? 0x21 : 0x20;
+    *sectorSize = 0;
+
+    if (!supportedClass)
+        return;
+
+    if ((g_ChipInfo.BlockSizeInByte == 0x10000) && ((mcode_SegmentErase == 0xD8) || (mcode_SegmentErase == 0xDC)) && ((dbBlockCmd == 0xD8) || (dbBlockCmd == 0xDC)))
+        *blockSize = 0x10000;
+
+    if ((g_ChipInfo.SectorSizeInByte == 0x1000) && ((dbBlockCmd == 0xD8) || (dbBlockCmd == 0xDC) || (dbBlockCmd == 0x20)))
+        *sectorSize = 0x1000;
+}
+
+bool threadEraseRange(int Index)
+{
+    bool result = false;
+    unsigned char blockCmd, sectorCmd;
+    size_t blockSize, sectorSize, granularity;
+
+    GetRangeEraseCaps(&blockCmd, &blockSize, &sectorCmd, &sectorSize);
+    granularity = (sectorSize != 0) ? sectorSize : blockSize;
+
+    if (granularity == 0) {
+        printf("Error: Range erase is not supported for this chip.\n");
+    } else if (g_uiLen == 0) {
+        printf("Error: --length must be specified and non-zero for range erase.\n");
+    } else if ((g_uiAddr % granularity) != 0 || (g_uiLen % granularity) != 0) {
+        printf("Error: --addr (0x%X) and --length (0x%zX) must be multiples of the erase size (0x%zX).\n", g_uiAddr, g_uiLen, granularity);
+    } else if (g_uiAddr >= g_ChipInfo.ChipSizeInByte || g_uiLen > g_ChipInfo.ChipSizeInByte - g_uiAddr) {
+        printf("Error: Range 0x%X + 0x%zX exceeds the chip size (0x%zX).\n", g_uiAddr, g_uiLen, g_ChipInfo.ChipSizeInByte);
+    } else {
+        result = SerialFlash_eraseRange(g_uiAddr, g_uiLen, blockCmd, blockSize, sectorCmd, sectorSize, Index);
+    }
+
+    g_is_operation_successful[Index] = result;
+    return result;
+}
+
 bool threadEraseWholeChip(int Index)
 {
     bool result = false;
@@ -1167,6 +1222,10 @@ void threadRun(void* Type)
 
             case ERASE_WHOLE_CHIP:
                 threadEraseWholeChip(Index);
+                break;
+
+            case ERASE_RANGE:
+                threadEraseRange(Index);
                 break;
 
             case PROGRAM_CHIP:

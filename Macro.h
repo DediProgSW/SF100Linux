@@ -133,6 +133,7 @@ typedef struct ChipInfo {
     bool QPIEnable;
     size_t ChipEraseTime;
     size_t EraseCmd;
+    unsigned char BlockEraseCmd; // block erase opcode from the chip database (EraseCmd bits 15..8)
     size_t ProgramCmd;
     size_t ReadCmd;
     size_t ProtectBlockMask;
@@ -496,6 +497,7 @@ struct BadBlockTable
 #define BIT16 0x10000
 #define BIT17 0x20000
 #define BIT18 0x40000
+#define BIT19 0x80000
 
 
 #define ERASE BIT0
@@ -517,6 +519,7 @@ struct BadBlockTable
 #define SPECIAL_PROGRAM BIT16
 #define SPECIAL_AUTO BIT17
 #define BATCH_WITH_FORCEERASE BIT18
+#define ERASE_RANGE_OP BIT19
 
 struct CAddressRange {
     size_t start;
