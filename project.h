@@ -18,6 +18,7 @@ typedef enum {
     BLANKCHECK_WHOLE_CHIP,
     PROGRAM_CHIP,
     ERASE_WHOLE_CHIP,
+    ERASE_RANGE,
     READ_WHOLE_CHIP,
     READ_ANY_BY_PREFERENCE_CONFIGURATION,
     VERIFY_CONTENT,
@@ -71,6 +72,7 @@ void threadRun(void* Type);
 void Run(OPERATION_TYPE type, int DevIndex);
 bool threadBlankCheck(int Index);
 bool threadEraseWholeChip(int Index);
+bool threadEraseRange(int Index);
 bool threadReadRangeChip(struct CAddressRange range, int Index);
 bool threadConfiguredReadChip(int Index);
 bool threadCompareFileAndChip(int Index);

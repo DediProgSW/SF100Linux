@@ -35,6 +35,8 @@ unsigned int g_Vcc = vcc3_5V;
 unsigned int g_Vpp = 9;
 unsigned int g_uiAddr = 0;
 size_t g_uiLen = 0;
+bool g_bAddrGiven = false;
+bool g_bLenGiven = false;
 unsigned int g_ucFill = 0xFF;
 unsigned int g_ucTarget = 1;
 unsigned int g_uiTimeout = 10000;
@@ -377,10 +379,21 @@ int Check(int argc, char *argv[])
 
 #endif
 
+// --erase alone erases a range if --addr/--length are given; other operations use them themselves
+static bool IsRangeErase(void)
+{
+    return (g_ucOperation & ERASE) && !(g_ucOperation & (PROGRAM | BATCH | READ_TO_FILE | CSUM | BLANK)) && (g_bAddrGiven || g_bLenGiven);
+}
+
 int Sequence()
 {
     // *** the calling order in the following block must be kept as is ***
     bool boResult = true;
+
+    if (IsRangeErase() && (!g_bAddrGiven || !g_bLenGiven)) {
+        printf("Error: --addr and --length must be given together to erase a range.\n");
+        return EXCODE_FAIL_ERASE;
+    }
 	if (strstr(g_ChipInfo.ICType, "SPI_NAND") != NULL)
 	{
 		g_bIsNANDFlash = true;
@@ -710,10 +723,12 @@ int main(int argc, char* argv[])
             /* Optional Switches that add fine-tune ability to Basic Switches: */
         case 'a':
             g_parameter_addr = optarg;
+            g_bAddrGiven = true;
             g_uiAddr = 0;
             sscanf(optarg, "%x", &g_uiAddr);
             break;
         case 'l':
+            g_bLenGiven = true;
             g_uiLen = 0;
             if (strstr(optarg, "0x"))
                 sscanf(optarg, "%zx", &g_uiLen);
@@ -1115,7 +1130,15 @@ void cli_classic_usage(bool IsShowExample)
            "    --check        			    get programmer information\n"
            "    -d [ --detect ]                         detect chip\n"
            "    -b [ --blank ]                          blank check\n"
-           "    -e [ --erase ]                          erase entire chip\n"
+           "    -e [ --erase ]                          erase entire chip, or only a range when --addr and\n"
+           "                                            --length are given and no other operation is used\n"
+           "                                            - the range may have any address and length; whole 64KB blocks\n"
+           "                                              and 4KB sectors are erased where possible, and the\n"
+           "                                              partial edge sectors are read, erased and written back\n"
+           "                                              with the requested bytes set to 0xFF (do not interrupt)\n"
+           "                                            - giving only one of --addr/--length is an error\n"
+           "                                            Example:\n"
+           "                                            ./dpcmd --erase --addr 0x9900 --length 0x7E00\n"
            "    -r [ --read ] arg                       read chip contents and save to a bin/hex/s19 file\n"
            "    -p [ --prog ] arg                       program chip without erase\n"
            "    -u [ --auto ] arg                       automatically run the following sequence:\n"
@@ -1147,10 +1170,10 @@ void cli_classic_usage(bool IsShowExample)
            "SPI NOR : Optional Switches that add fine-tune ability to Basic Switches:\n"
            "    -a [ --addr ] arg                       hexadecimal starting address hexadecimal(e.g.\n"
            "                                            0x1000),\n"
-           "                                            - works with --prog/read/sum/auto only\n"
+           "                                            - works with --prog/read/sum/auto/erase only\n"
            "                                            - defaults to 0, if omitted.\n"
-           "    -l [ --length ] arg                     decimal/hexadecimal length to read/program in bytes,\n"
-           "                                            - works with --prog/read/sum/auto only\n"
+           "    -l [ --length ] arg                     decimal/hexadecimal length to read/program/erase in bytes,\n"
+           "                                            - works with --prog/read/sum/auto/erase only\n"
            "                                            - defaults to whole file if omitted\n"
            "    -v [ --verify ]                         verify checksum file and chip\n"
            "                                            - works with --prog/auto only\n"
@@ -1860,6 +1883,14 @@ void do_Erase(void)
     Wait(msg_info_eraseOK, msg_info_erasefail);
 }
 
+void do_EraseRange(void)
+{
+    printf("%s \n", msg_info_erasing);
+    Run(ERASE_RANGE, g_uiDevNum);
+
+    Wait(msg_info_eraseOK, msg_info_erasefail);
+}
+
 void do_Program(void)
 {
     if (!do_loadFile())
@@ -2252,6 +2283,15 @@ bool SpecialErase()
 bool Erase(void)
 {
     if (g_ucOperation & ERASE) {
+        if (IsRangeErase()) {
+            if (g_bIsNANDFlash) {
+                printf("Error: Range erase is not supported for SPI NAND, use --nand-BlockIndex/--nand-BlockCount.\n");
+                g_bStatus = false;
+            } else {
+                do_EraseRange();
+            }
+            return g_bStatus;
+        }
         do_Erase();
 		if(g_bStatus)
 			do_ScanBB();
