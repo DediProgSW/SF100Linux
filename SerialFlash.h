@@ -62,6 +62,7 @@ int SerialFlash_is_good();
 int SerialFlash_batchErase_W25Mxx_Large(uintptr_t* vAddrs, size_t AddrSize, int Index);
 int SerialFlash_batchErase(uintptr_t* vAddrs, size_t AddrSize, int Index);
 
+bool SerialFlash_eraseRange(size_t start, size_t length, unsigned char blockCmd, size_t blockSize, unsigned char sectorCmd, size_t sectorSize, int Index);
 int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddressRange* AddrRange, int Index);
 
 bool SerialFlash_chipErase(int Index);

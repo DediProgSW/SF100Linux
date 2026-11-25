@@ -133,6 +133,7 @@ typedef struct ChipInfo {
     bool QPIEnable;
     size_t ChipEraseTime;
     size_t EraseCmd;
+    unsigned char BlockEraseCmd; // block erase opcode from the chip database (EraseCmd bits 15..8)
     size_t ProgramCmd;
     size_t ReadCmd;
     size_t ProtectBlockMask;

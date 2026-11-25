@@ -245,6 +245,7 @@ static void parse_chip_node(xmlNodePtr cur_node, CHIP_INFO* chip) {
     chip->SectorSizeInByte = get_prop_long(cur_node, "SectorSizeInByte", 10);
     chip->BlockSizeInByte = get_prop_long(cur_node, "BlockSizeInByte", 10);
     chip->PageSizeInByte = get_prop_long(cur_node, "PageSizeInByte", 10);
+    chip->BlockEraseCmd = (unsigned char)((get_prop_long(cur_node, "EraseCmd", 16) >> 8) & 0xFF);
 
     // Voltage mapping
     str = get_prop_string(cur_node, "Voltage");

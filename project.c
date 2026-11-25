@@ -580,6 +580,166 @@ exit:
     return result;
 }
 
+// Fills the erase opcodes/sizes the current chip supports; a size of 0 means unsupported.
+struct RangeEraseCaps {
+    unsigned char blockCmd;
+    size_t blockSize;
+    unsigned char sectorCmd;
+    size_t sectorSize;
+};
+
+static void GetRangeEraseCaps(struct RangeEraseCaps* caps)
+{
+    // opcode the chip database lists for block erase
+    unsigned char dbBlockCmd = g_ChipInfo.BlockEraseCmd;
+    bool supportedClass = !g_bIsNANDFlash
+        && strstr(g_ChipInfo.Class, SUPPORT_ATMEL_45DBxxxB) == NULL
+        && strstr(g_ChipInfo.Class, SUPPORT_ATMEL_45DBxxxD) == NULL
+        && strstr(g_ChipInfo.Class, SUPPORT_SPANSION_S70FSxx_Large) == NULL
+        && strstr(g_ChipInfo.Class, "2Die") == NULL
+        && strstr(g_ChipInfo.Class, "2die") == NULL
+        && strstr(g_ChipInfo.Class, "4Die") == NULL
+        && strstr(g_ChipInfo.Class, "4die") == NULL
+        && strstr(g_ChipInfo.Class, "Octal") == NULL;
+
+    caps->blockCmd = mcode_SegmentErase;
+    caps->blockSize = 0;
+    caps->sectorCmd = (mcode_SegmentErase == 0xDC) ? 0x21 : 0x20;
+    caps->sectorSize = 0;
+
+    if (!supportedClass)
+        return;
+
+    if ((g_ChipInfo.BlockSizeInByte == 0x10000) && ((mcode_SegmentErase == 0xD8) || (mcode_SegmentErase == 0xDC)) && ((dbBlockCmd == 0xD8) || (dbBlockCmd == 0xDC)))
+        caps->blockSize = 0x10000;
+
+    if ((g_ChipInfo.SectorSizeInByte == 0x1000) && ((dbBlockCmd == 0xD8) || (dbBlockCmd == 0xDC) || (dbBlockCmd == 0x20)))
+        caps->sectorSize = 0x1000;
+}
+
+static bool IsAllErased(const unsigned char* data, size_t length)
+{
+    size_t i = 0;
+
+    while ((i < length) && (data[i] == 0xFF))
+        i++;
+    return i == length;
+}
+
+// Read one erase unit from the chip.
+static bool ReadEraseUnit(size_t unitStart, size_t unitSize, unsigned char* data, int Index)
+{
+    struct CAddressRange range;
+
+    range.start = unitStart;
+    range.end = unitStart + unitSize;
+    range.length = unitSize;
+    SetIOMode(false, Index);
+    return SerialFlash_rangeRead(&range, data, Index) != 0;
+}
+
+// Erase [start, end) when its edges are not erase unit aligned: whole units are erased
+// directly; each edge unit is read first, the requested bytes are set to 0xFF, then the unit is
+// erased and written back. Everything is read before anything is erased.
+static bool EraseRangeUnaligned(size_t start, size_t end, size_t unitSize, const struct RangeEraseCaps* caps, int Index)
+{
+    bool result = true;
+    size_t firstUnit = start - (start % unitSize);
+    size_t lastUnit = (end - 1) - ((end - 1) % unitSize);
+    size_t fullStart = (start + unitSize - 1) / unitSize * unitSize;
+    size_t fullEnd = end - (end % unitSize);
+    bool headPartial = (start % unitSize) != 0;
+    bool tailPartial = ((end % unitSize) != 0) && (!headPartial || (lastUnit != firstUnit));
+    size_t edgeStart[2];
+    unsigned char* edgeData[2] = {NULL, NULL};
+    size_t edgeCount = 0;
+    size_t i;
+
+    if (headPartial)
+        edgeStart[edgeCount++] = firstUnit;
+    if (tailPartial)
+        edgeStart[edgeCount++] = lastUnit;
+
+    for (i = 0; result && (i < edgeCount); i++) {
+        size_t lo = (start > edgeStart[i]) ? start : edgeStart[i];
+        size_t hi = (end < edgeStart[i] + unitSize) ? end : edgeStart[i] + unitSize;
+        unsigned char* data = (unsigned char*)malloc(unitSize);
+
+        if (data == NULL) {
+            printf("Error: Memory allocation failed.\n");
+            result = false;
+        } else if (!ReadEraseUnit(edgeStart[i], unitSize, data, Index)) {
+            printf("Error: Failed to read 0x%zX before erasing.\n", edgeStart[i]);
+            free(data);
+            result = false;
+        } else if (IsAllErased(data + (lo - edgeStart[i]), hi - lo)) {
+            free(data); // requested bytes are already blank
+        } else {
+            memset(data + (lo - edgeStart[i]), 0xFF, hi - lo);
+            edgeData[i] = data;
+        }
+    }
+
+    if (result && (fullStart < fullEnd))
+        result = SerialFlash_eraseRange(fullStart, fullEnd - fullStart, caps->blockCmd, caps->blockSize, caps->sectorCmd, caps->sectorSize, Index);
+
+    for (i = 0; result && (i < edgeCount); i++) {
+        struct CAddressRange range;
+        unsigned char* verify;
+
+        if (edgeData[i] == NULL)
+            continue;
+
+        printf("Read-modify-write of 0x%zX bytes at 0x%zX\n", unitSize, edgeStart[i]);
+        range.start = edgeStart[i];
+        range.end = edgeStart[i] + unitSize;
+        range.length = unitSize;
+
+        result = SerialFlash_eraseRange(edgeStart[i], unitSize, caps->blockCmd, caps->blockSize, caps->sectorCmd, caps->sectorSize, Index);
+        if (result && !IsAllErased(edgeData[i], unitSize)) {
+            SetIOMode(true, Index);
+            result = SerialFlash_rangeProgram(&range, edgeData[i], Index) != 0;
+        }
+        if (result) {
+            verify = (unsigned char*)malloc(unitSize);
+            result = (verify != NULL) && ReadEraseUnit(edgeStart[i], unitSize, verify, Index) && (memcmp(verify, edgeData[i], unitSize) == 0);
+            free(verify);
+        }
+        if (!result)
+            printf("Error: Rewriting 0x%zX bytes at 0x%zX failed; the other data in this block may be lost.\n", unitSize, edgeStart[i]);
+    }
+
+    for (i = 0; i < edgeCount; i++)
+        free(edgeData[i]);
+    return result;
+}
+
+bool threadEraseRange(int Index)
+{
+    bool result = false;
+    struct RangeEraseCaps caps;
+    size_t granularity;
+
+    GetRangeEraseCaps(&caps);
+    granularity = (caps.sectorSize != 0) ? caps.sectorSize : caps.blockSize;
+
+    if (granularity == 0) {
+        printf("Error: Range erase is not supported for this chip.\n");
+    } else if (g_uiLen == 0) {
+        printf("Error: --length must be non-zero for range erase.\n");
+    } else if (g_uiAddr >= g_ChipInfo.ChipSizeInByte || g_uiLen > g_ChipInfo.ChipSizeInByte - g_uiAddr) {
+        printf("Error: Range 0x%X + 0x%zX exceeds the chip size (0x%zX).\n", g_uiAddr, g_uiLen, g_ChipInfo.ChipSizeInByte);
+    } else if (((g_uiAddr % granularity) != 0) || ((g_uiLen % granularity) != 0)) {
+        printf("Warning: Range is not aligned to 0x%zX, edge blocks are read, erased and rewritten. Do not interrupt.\n", granularity);
+        result = EraseRangeUnaligned(g_uiAddr, g_uiAddr + g_uiLen, granularity, &caps, Index);
+    } else {
+        result = SerialFlash_eraseRange(g_uiAddr, g_uiLen, caps.blockCmd, caps.blockSize, caps.sectorCmd, caps.sectorSize, Index);
+    }
+
+    g_is_operation_successful[Index] = result;
+    return result;
+}
+
 bool threadEraseWholeChip(int Index)
 {
     bool result = false;
@@ -1167,6 +1327,10 @@ void threadRun(void* Type)
 
             case ERASE_WHOLE_CHIP:
                 threadEraseWholeChip(Index);
+                break;
+
+            case ERASE_RANGE:
+                threadEraseRange(Index);
                 break;
 
             case PROGRAM_CHIP:

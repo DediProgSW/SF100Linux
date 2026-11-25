@@ -2081,6 +2081,95 @@ int SerialFlash_batchErase(uintptr_t* vAddrs, size_t AddrSize, int Index)
     return true;
 }
 
+/*
+ * Erase [start, start + length) using blockCmd for aligned blockSize chunks
+ * and sectorCmd for the rest. A zero blockSize or sectorSize disables that
+ * erase type. start and length must be multiples of the smallest enabled size.
+ */
+bool SerialFlash_eraseRange(size_t start, size_t length, unsigned char blockCmd, size_t blockSize, unsigned char sectorCmd, size_t sectorSize, int Index)
+{
+    bool result = false;
+    bool isW25M = strstr(g_ChipInfo.Class, SUPPORT_WINBOND_W25Mxx_Large) != NULL;
+    size_t end = start + length;
+    size_t addr = start;
+    size_t eraseSize;
+    size_t addrTemp;
+    unsigned char cmd;
+    unsigned char vInstruction[5];
+    CNTRPIPE_RQ rq;
+
+    if (!SerialFlash_StartofOperation(Index))
+        return false;
+    if (SerialFlash_protectBlock(false, Index) == SerialFlash_FALSE)
+        return false;
+    SerialFlash_Enable4ByteAddrMode(true, Index);
+
+    rq.Function = URB_FUNCTION_VENDOR_ENDPOINT;
+    rq.Direction = VENDOR_DIRECTION_OUT;
+    rq.Request = TRANSCEIVE;
+    if (Is_NewUSBCommand(Index)) {
+        rq.Value = NO_RESULT_IN;
+        rq.Index = RFU;
+    } else {
+        rq.Value = RFU;
+        rq.Index = NO_RESULT_IN;
+    }
+
+    result = true;
+    while (result && (addr < end)) {
+        if ((blockSize != 0) && ((addr % blockSize) == 0) && ((end - addr) >= blockSize)) {
+            cmd = blockCmd;
+            eraseSize = blockSize;
+        } else {
+            cmd = sectorCmd;
+            eraseSize = sectorSize;
+        }
+        if (eraseSize == 0) {
+            result = false;
+            continue;
+        }
+
+        SerialFlash_waitForWEL(Index);
+
+        addrTemp = addr;
+        if (isW25M) {
+            // second die starts at 0x2000000 in the flat address space
+            if (addr >= 0x2000000) {
+                SerialFlash_doSelectDie(0x01, Index);
+                addrTemp = addr - 0x2000000;
+            } else {
+                SerialFlash_doSelectDie(0x00, Index);
+            }
+        }
+
+        vInstruction[0] = cmd;
+        if (isW25M || (g_ChipInfo.ChipSizeInByte > 0x1000000)) {
+            vInstruction[1] = (unsigned char)((addrTemp >> 24) & 0xff);
+            vInstruction[2] = (unsigned char)((addrTemp >> 16) & 0xff);
+            vInstruction[3] = (unsigned char)((addrTemp >> 8) & 0xff);
+            vInstruction[4] = (unsigned char)(addrTemp & 0xff);
+            rq.Length = 5;
+        } else {
+            vInstruction[1] = (unsigned char)((addrTemp >> 16) & 0xff);
+            vInstruction[2] = (unsigned char)((addrTemp >> 8) & 0xff);
+            vInstruction[3] = (unsigned char)(addrTemp & 0xff);
+            rq.Length = 4;
+        }
+
+        if ((OutCtrlRequest(&rq, vInstruction, rq.Length, Index) == SerialFlash_FALSE) || m_isCanceled)
+            result = false;
+        else
+            SerialFlash_waitForWIP(Index);
+
+        addr += eraseSize;
+    }
+
+    SerialFlash_Enable4ByteAddrMode(false, Index);
+    if (!SerialFlash_EndofOperation(Index))
+        result = false;
+    return result;
+}
+
 int SerialFlash_rangeErase(unsigned char cmd, size_t sectionSize, struct CAddressRange* AddrRange, int Index)
 {
     if (strstr(g_ChipInfo.Class, SUPPORT_ATMEL_45DBxxxB) != NULL || strstr(g_ChipInfo.Class, SUPPORT_ATMEL_45DBxxxD) != NULL)
