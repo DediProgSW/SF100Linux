@@ -7,6 +7,7 @@
 #include "usbdriver.h"
 #include <ctype.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -262,8 +263,9 @@ int ReadBINFileForNAND(const char* filename)
 int ReadBINFile(const char* filename, unsigned char* buf, unsigned long* size)
 {
     FILE* pFile;
-    long lSize;
-    size_t result;
+    struct stat st;
+    unsigned char* pData;
+    int result = 0;
 
     pFile = fopen(filename, "rb");
     if (pFile == NULL) {
@@ -272,36 +274,25 @@ int ReadBINFile(const char* filename, unsigned char* buf, unsigned long* size)
         return 0;
     }
 
-    // obtain file size:
-    fseek(pFile, 0, SEEK_END);
-    lSize = ftell(pFile);
-
-    rewind(pFile);
-    // allocate memory to contain the whole file:
-    if (pBufferforLoadedFile != NULL)
-        free(pBufferforLoadedFile);
-
-    pBufferforLoadedFile = (unsigned char*)malloc(lSize);
-
-    if (pBufferforLoadedFile == NULL) {
-        fputs("Memory error\n", stderr);
-        return 0;
+    if (fstat(fileno(pFile), &st) != 0 || !S_ISREG(st.st_mode)) {
+        printf("Error: %s is not a regular file\n", filename);
+    } else {
+        pData = (unsigned char*)malloc(st.st_size);
+        if (pData == NULL) {
+            fputs("Memory error\n", stderr);
+        } else if (fread(pData, 1, st.st_size, pFile) != (size_t)st.st_size) {
+            fputs("Reading error\n", stderr);
+            free(pData);
+        } else {
+            free(pBufferforLoadedFile);
+            pBufferforLoadedFile = pData;
+            g_ulFileSize = st.st_size;
+            result = 1;
+        }
     }
-
-    // copy the file into the buffer:
-    result = fread(pBufferforLoadedFile, 1, lSize, pFile);
-    if (result != lSize) {
-        fputs("Reading error\n", stderr);
-        return 0;
-    }
-
-    /* the whole file is now loaded in the memory buffer. */
-
-    // terminate
-    g_ulFileSize = lSize;
 
     fclose(pFile);
-    return 1;
+    return result;
 }
 
 int WriteBINFile(const char* filename, unsigned char* buf, unsigned long size)
@@ -384,10 +375,19 @@ bool WriteFile(const char* csPath, unsigned char* buffer, unsigned int FileSize)
 
 bool LoadFile(char* filename)
 {
-    bool result = true;
+    bool result;
     unsigned long size;
-    result &= ReadFile(filename, pBufferforLoadedFile, &size, g_ucFill);
-    g_uiFileChecksum = CRC32(pBufferforLoadedFile, g_ulFileSize);
+
+    g_ulFileSize = 0;
+    result = ReadFile(filename, pBufferforLoadedFile, &size, g_ucFill);
+    if (!result) {
+        printf("Error: Failed to load file %s\n", filename);
+    } else if (g_ulFileSize == 0) {
+        printf("Error: File %s is empty\n", filename);
+        result = false;
+    } else {
+        g_uiFileChecksum = CRC32(pBufferforLoadedFile, g_ulFileSize);
+    }
     return result;
 }
 
@@ -436,15 +436,21 @@ bool ValidateProgramParameters(int Index)
 
     /// if file size exceeds memory size, it's an error
     /// if user-specified length exceeds, just ignore
-    if (DownloadAddrRange.start > g_ChipInfo.ChipSizeInByte - 1)
+    if (DownloadAddrRange.start > g_ChipInfo.ChipSizeInByte - 1) {
+        printf("Error: Start address 0x%zX is outside the chip (0x%zX bytes)\n", DownloadAddrRange.start, g_ChipInfo.ChipSizeInByte);
         return false;
+    }
 
     size_t size = DownloadAddrRange.length;
-    if (size > g_ulFileSize && g_ucFill == 0xFF)
+    if (size > g_ulFileSize && g_ucFill == 0xFF) {
+        printf("Error: --length (0x%zX) is larger than the file (0x%lX bytes)\n", size, g_ulFileSize);
         return false;
+    }
 
-    if (DownloadAddrRange.end > g_ChipInfo.ChipSizeInByte)
+    if (DownloadAddrRange.end > g_ChipInfo.ChipSizeInByte) {
+        printf("Error: Data of 0x%zX bytes at address 0x%zX does not fit in the chip (0x%zX bytes)\n", DownloadAddrRange.length, DownloadAddrRange.start, g_ChipInfo.ChipSizeInByte);
         return false;
+    }
     return true;
 }
 
