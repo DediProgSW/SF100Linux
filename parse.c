@@ -6,10 +6,9 @@
 #include <string.h>
 #ifdef __FreeBSD__
 #include <sys/auxv.h>
-#else
+#endif
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#endif
 
 #define pathbufsize 1024
 #define testbufsize 256
@@ -18,185 +17,6 @@
 #define min(a, b) (((a) > (b)) ? (b) : (a))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
-#ifdef __FreeBSD__
-FILE* openChipInfoDb(void)
-{
-    FILE* fp = NULL;
-    char Path[linebufsize];
-
-    memset(Path, 0, linebufsize);
-    if (readlink("/proc/self/exe", Path, 512) != -1) {
-        dirname(Path);
-        strcat(Path, "/ChipInfoDb.dedicfg");
-        if ((fp = fopen(Path, "rt")) == NULL) {
-            // ChipInfoDb.dedicfg not in program directory
-            dirname(Path);
-            dirname(Path);
-            strcat(Path, "/share/DediProg/ChipInfoDb.dedicfg");
-            if ((fp = fopen(Path, "rt")) == NULL)
-                fprintf(stderr, "Error opening file: %s\n", Path);
-        }
-    }
-    return fp;
-}
-
-long fsize(FILE* fp)
-{
-    long prev = ftell(fp);
-    fseek(fp, 0L, SEEK_END);
-    long sz = ftell(fp);
-    fseek(fp, prev, SEEK_SET); // go back to where we were
-    return sz;
-}
-
-int Dedi_Search_Chip_Db(char* chTypeName, long RDIDCommand,
-    long UniqueID,
-    CHIP_INFO* Chip_Info,
-    int search_all)
-{
-    FILE* fp;
-    int found_flag = 0;
-    char file_line_buf[linebufsize], *tok, *pch;
-    char test[testbufsize];
-    int detectICNum = 0;
-    char strTypeName[32][TYPENAME_MAX_LEN];
-    CHIP_INFO Chip_Info_temp;
-
-    for (int i = 0; i < 32; i++)
-        memset(strTypeName[i], '\0', TYPENAME_MAX_LEN);
-
-    memset(chTypeName, '\0', 1024);
-    memset(Chip_Info->TypeName, '\0', linebufsize);
-
-    if ((fp = openChipInfoDb()) == NULL)
-        return 1;
-
-    while (fgets(file_line_buf, linebufsize, fp) != NULL) {
-        pch = strstr(file_line_buf, "TypeName");
-        if (pch != NULL) {
-            if (found_flag == 1) {
-                found_flag = 0;
-                if (strlen(Chip_Info->TypeName) == 0)
-                    *Chip_Info = Chip_Info_temp;
-            }
-            memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("TypeName"));
-            tok = strtok(test, "\"= \t");
-            memset(&Chip_Info_temp, 0, sizeof(CHIP_INFO));
-            strcpy(Chip_Info_temp.TypeName, tok);
-            continue;
-        }
-
-        pch = strstr(file_line_buf, "UniqueID");
-        if (pch != NULL) {
-            memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("UniqueID"));
-            tok = strtok(test, "\"= \t");
-            Chip_Info_temp.UniqueID = strtol(tok, NULL, 16);
-            if ((UniqueID == Chip_Info_temp.UniqueID)) {
-                found_flag = 1;
-                strcpy(strTypeName[detectICNum], Chip_Info_temp.TypeName);
-                strcat(chTypeName, " ");
-                strcat(chTypeName, strTypeName[detectICNum]);
-                detectICNum++;
-            }
-            continue;
-        }
-
-        pch = strstr(file_line_buf, "Manufacturer");
-        if (pch != NULL) {
-            memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("Manufacturer"));
-            tok = strtok(test, "\"= \t");
-            strcpy(Chip_Info_temp.Manufacturer, tok);
-            continue;
-        }
-    }
-
-    fclose(fp);
-
-    if (detectICNum)
-        found_flag = 1;
-
-    Chip_Info->MaxErasableSegmentInByte =
-        max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
-
-    return found_flag;
-}
-
-int Dedi_Search_Chip_Db_ByTypeName(char* TypeName, CHIP_INFO* Chip_Info)
-{
-    FILE* fp;
-    char file_line_buf[linebufsize], *tok, *pch;
-    char test[testbufsize];
-    CHIP_INFO Chip_Info_temp;
-    int found_flag = 0;
-
-    if ((fp = openChipInfoDb()) == NULL)
-        return 1;
-
-    while (fgets(file_line_buf, linebufsize, fp) != NULL) {
-        pch = strstr(file_line_buf, "TypeName");
-        if (pch != NULL) {
-            memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("TypeName"));
-            tok = strtok(test, "\"= \t");
-            memset(&Chip_Info_temp, 0, sizeof(CHIP_INFO));
-            strcpy(Chip_Info_temp.TypeName, tok);
-
-            if (!strcmp(Chip_Info_temp.TypeName, TypeName)) {
-                found_flag = 1;
-                *Chip_Info = Chip_Info_temp;
-                break;
-            }
-        }
-    }
-
-    fclose(fp);
-
-    if (!found_flag) {
-        Chip_Info->TypeName[0] = 0;
-        Chip_Info->UniqueID = 0;
-    }
-
-    Chip_Info->MaxErasableSegmentInByte =
-        max(Chip_Info->SectorSizeInByte, Chip_Info->BlockSizeInByte);
-
-    return found_flag;
-}
-
-bool Dedi_List_AllChip(void)
-{
-    FILE* fp;
-    char file_line_buf[linebufsize], *tok, *pch;
-    char test[testbufsize];
-    char Type[256] = {0};
-
-    if ((fp = openChipInfoDb()) == NULL)
-        return false;
-
-    while (fgets(file_line_buf, linebufsize, fp) != NULL) {
-        pch = strstr(file_line_buf, "TypeName");
-        if (pch != NULL) {
-            memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("TypeName"));
-            tok = strtok(test, "\"= \t");
-            strcpy(Type, tok);
-        }
-
-        pch = strstr(file_line_buf, "Manufacturer");
-        if (pch != NULL) {
-            memset(test, '\0', testbufsize);
-            strcpy(test, pch + strlen("Manufacturer"));
-            tok = strtok(test, "\"= \t");
-            printf("%s\t\tby %s\n", Type, tok);
-        }
-    }
-
-    fclose(fp);
-    return true;
-}
-#else
 
 // ---------------- 工具函式 ----------------
 static char* get_prop_string(xmlNodePtr node, const char* propName) {
@@ -266,6 +86,14 @@ static void parse_chip_node(xmlNodePtr cur_node, CHIP_INFO* chip) {
 }
 
 // ---------------- 原本接口 ----------------
+static bool get_executable_path(char* path, size_t size) {
+#ifdef __FreeBSD__
+    return elf_aux_info(AT_EXECPATH, path, size) == 0;
+#else
+    return readlink("/proc/self/exe", path, size - 1) != -1;
+#endif
+}
+
 bool GetChipDbPath(char *Path) {
     FILE* fp = NULL;
 
@@ -273,7 +101,7 @@ bool GetChipDbPath(char *Path) {
         return false;
 
     memset(Path, 0, linebufsize);
-    if (readlink("/proc/self/exe", Path, 512) != -1) {
+    if (get_executable_path(Path, linebufsize)) {
         dirname(Path);
         strcat(Path, "/ChipInfoDb.dedicfg");
         if ((fp = fopen(Path, "rt")) == NULL) {
@@ -479,4 +307,3 @@ bool Dedi_List_AllChip(void)
     xmlFreeDoc(doc);
     return true;
 }
-#endif
